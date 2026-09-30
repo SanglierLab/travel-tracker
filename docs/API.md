@@ -1,35 +1,38 @@
-# Contrat d'API (v1)
+# Contrat d'API — Travel Tracker 2.0
 
-Base : `/api`
+Convention : routes et champs JSON en anglais, libellés d'interface en français.
 
-## Public (aucune authentification)
+## Public (sans authentification)
 | Méthode | Route | Description |
 |---|---|---|
-| GET | `/api/galeries?page=0&size=5` | Liste anti-chronologique paginée (résumés) |
-| GET | `/api/galeries/carte` | Toutes les galeries en version légère (marqueurs) |
-| GET | `/api/galeries/{id}` | Détail : entête + éléments ordonnés |
-| GET | `/api/trace?depuis=&jusqu=&source=` | Points de trace (device / adsb / ais) |
-| GET | `/api/trajets` | Trajets configurés (type, statut, libellé) |
-| GET | `/media/{taille}/{fichier}` | `miniature` \| `plein` \| `original` |
+| GET | `/api/galleries?page=0&size=5` | Liste anti-chronologique paginée |
+| GET | `/api/galleries/markers` | Version allégée pour les marqueurs Leaflet |
+| GET | `/api/galleries/{id}` | Détail + éléments ordonnés |
+| GET | `/api/trace?source=&from=&to=` | Points de trace |
+| GET | `/api/trips` | Vols / traversées configurés |
+| GET | `/media/{size}/**` | `thumb` \| `medium` \| `original` |
 
-## Admin (session, login/mdp du fichier de conf)
+## Admin (session HTTP, comptes du fichier de conf)
 | Méthode | Route |
 |---|---|
-| POST | `/api/auth/login` / `/api/auth/logout` / GET `/api/auth/moi` |
-| POST/PUT/DELETE | `/api/admin/galeries[/{id}]` |
-| POST | `/api/admin/galeries/{id}/medias` (multipart, n fichiers) |
-| POST | `/api/admin/galeries/{id}/textes` (bloc markdown) |
-| PUT/DELETE | `/api/admin/elements/{id}` (légende, texte, suppression) |
-| PUT | `/api/admin/galeries/{id}/ordre` (liste d'ids ordonnée) |
-| GET/PUT/DELETE | `/api/admin/trace[/{id}]` (liste paginée, correction, suppression) |
-| GET/POST/PUT/DELETE | `/api/admin/trajets[/{id}]` |
+| POST | `/api/auth/login`, `/api/auth/logout`, GET `/api/auth/me` |
+| POST PUT DELETE | `/api/admin/galleries[/{id}]` |
+| POST | `/api/admin/galleries/{id}/media` (multipart, n fichiers) |
+| POST | `/api/admin/galleries/{id}/text` (bloc markdown) |
+| PUT DELETE | `/api/admin/elements/{id}` |
+| PUT | `/api/admin/galleries/{id}/order` (liste d'ids ordonnée) |
+| GET PUT DELETE | `/api/admin/trace[/{id}]` |
+| GET POST PUT DELETE | `/api/admin/trips[/{id}]` |
 
 ## Ingestion temps réel (token)
-`POST /api/ingest/points` – en-tête `Authorization: Bearer <token>`
+`POST /api/ingest/points` — en-tête `Authorization: Bearer <token>`
+
+Point unique **ou** tableau de points (rattrapage après coupure réseau) :
 ```json
-{ "source":"DEVICE", "mesureLe":"2026-10-10T12:34:00Z",
-  "latitude":35.686, "longitude":139.753,
-  "altitudeM":12.0, "vitesseKmh":4.3, "capDeg":180, "precisionM":8 }
+[{ "source":"DEVICE", "measuredAt":"2026-10-10T12:34:00Z",
+   "latitude":35.686, "longitude":139.753,
+   "altitudeM":12.0, "speedKmh":4.3, "headingDeg":180, "accuracyM":8 }]
 ```
-Accepte aussi un tableau de points (envoi groupé après perte de réseau).
-Réponses : `201` / `401` / `400`.
+Réponses : `201 Created` (avec le nombre de points insérés / ignorés), `401`, `400`.
+La contrainte `uk_trace_dedup` rend l'envoi **idempotent** : un renvoi du même
+lot n'insère pas de doublon.

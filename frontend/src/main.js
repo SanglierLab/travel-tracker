@@ -1,1 +1,1 @@
-// TODO – squelette : src/main.js
+// TODO — squelette : src/main.js

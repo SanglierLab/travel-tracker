@@ -1,15 +1,24 @@
-# Carnet de voyage (alternative DIY à Polarsteps)
+# Travel Tracker 2.0
 
-Monorepo : `backend/` (Spring Boot + MariaDB) et `frontend/` (Vue 3 + Vite + Leaflet).
-Déploiement : 2 conteneurs Docker sur NAS Synology, derrière HAProxy.
+Carnet de voyage auto-hébergé : galeries photo/vidéo géolocalisées + trace GPS temps réel.
+Alternative DIY à Polarsteps, à usage familial.
 
-## Arborescence
-- `backend/`  : API REST, stockage médias, ingestion des positions temps réel
-- `frontend/` : SPA publique + interface d'administration
-- `docker-compose.yml` : orchestration locale / NAS
-- `media/`    : volume des médias (monté dans le conteneur backend)
+## Monorepo
+- `backend/`  : Spring Boot 3 + MariaDB + stockage médias local
+- `frontend/` : Vue 3 + Vite + Leaflet
+- `docs/`     : contrat d'API, décisions d'architecture
+- `media/`    : volume des médias (hors Git)
+
+## Conventions
+- **Code, base de données et API : anglais** (cohérent avec le code média réutilisé).
+- **Interface utilisateur : français uniquement.**
 
 ## Démarrage dev
-1. MariaDB local (ou conteneur) + base `carnet`
-2. `cd backend && ./mvnw spring-boot:run` (profil dev)
-3. `cd frontend && npm install && npm run dev` (proxy Vite -> :8080)
+```bash
+# 1. base
+docker compose up -d db
+# 2. backend
+cd backend && ./mvnw spring-boot:run
+# 3. frontend
+cd frontend && npm install && npm run dev
+```

@@ -1,1 +1,1 @@
-<!-- TODO – squelette : src/App.vue -->
+<!-- TODO — squelette : src/App.vue -->

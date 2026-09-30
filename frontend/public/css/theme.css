@@ -1,15 +1,16 @@
-/* ============================================================
-   theme.css – SEULEMENT des variables : à remplacer manuellement
-   pour adapter le style à la destination du voyage.
-   ============================================================ */
+/* =====================================================================
+   theme.css — UNIQUEMENT des variables.
+   Fichier à remplacer à la main pour adapter le style à la destination.
+   Éditable directement sur le NAS (servi depuis public/, pas bundlé).
+   ===================================================================== */
 :root{
-  --c-fond:#fdfcf9;
-  --c-texte:#23201c;
-  --c-accent:#b03a2e;      /* Japon : rouge sceau */
-  --c-trait:#e0dbd2;
-  --c-trace-device:#2b6cb0;
-  --c-trace-adsb:#8e44ad;
-  --c-trace-ais:#138d75;
-  --police:"Noto Sans", system-ui, sans-serif;
-  --rayon:4px;
+  --bg:#fdfcf9;
+  --fg:#23201c;
+  --accent:#b03a2e;          /* Japon : rouge sceau */
+  --line:#e0dbd2;
+  --trace-device:#2b6cb0;    /* trait plein   */
+  --trace-adsb:#8e44ad;      /* pointillés    */
+  --trace-ais:#138d75;       /* tirets longs  */
+  --font:"Noto Sans", system-ui, sans-serif;
+  --radius:4px;
 }

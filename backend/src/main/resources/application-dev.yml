@@ -1,9 +1,10 @@
 spring:
   jpa:
     show-sql: true
-carnet:
+app:
   media:
     dir: ./media
+  tmp-dir: ./tmp
 logging:
   level:
-    fr.carnet: DEBUG
+    fr.sanglierlab.travel: DEBUG

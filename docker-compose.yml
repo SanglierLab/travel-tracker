@@ -1,40 +1,46 @@
 services:
   db:
     image: mariadb:11
-    container_name: carnet-db
+    container_name: tt-db
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: carnet
-      MARIADB_USER: carnet
+      MARIADB_DATABASE: travel
+      MARIADB_USER: travel
       MARIADB_PASSWORD: change-me
       MARIADB_ROOT_PASSWORD: change-me-too
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     volumes:
       - ./data/mysql:/var/lib/mysql
+    ports:
+      - "3307:3306"   # dev uniquement, à retirer sur le NAS
 
   backend:
     build: ./backend
-    container_name: carnet-backend
+    container_name: tt-backend
     restart: unless-stopped
     depends_on: [db]
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      DB_URL: jdbc:mariadb://db:3306/carnet
-      DB_USER: carnet
+      DB_URL: jdbc:mariadb://db:3306/travel
+      DB_USER: travel
       DB_PASSWORD: change-me
-      CARNET_MEDIA_DIR: /media
-      CARNET_ADMIN_USERS: "voyageur:motdepasse"      # login:motdepasse, séparés par des virgules
-      CARNET_INGEST_TOKEN: "changez-ce-token"
-      CARNET_PAGE_SIZE: "5"
+      TT_MEDIA_DIR: /media
+      TT_ADMIN_USERS: "voyageur:motdepasse"
+      TT_INGEST_TOKEN: "changez-ce-token"
+      TT_PAGE_SIZE: "5"
+      TT_FFMPEG: "/usr/bin/ffmpeg"
+      TT_HEIF_CONVERT: "/usr/bin/heif-convert"
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70"
     volumes:
       - ./media:/media
+      - ./tmp:/tmp/tt      # fichiers temporaires d'upload (hors tmpfs RAM)
     ports:
-      - "8080:8080"      # exposé à HAProxy
+      - "8080:8080"
 
   frontend:
     build: ./frontend
-    container_name: carnet-frontend
+    container_name: tt-frontend
     restart: unless-stopped
     depends_on: [backend]
     ports:
-      - "8081:80"        # exposé à HAProxy
+      - "8081:80"

@@ -1,17 +1,13 @@
-# Java
 target/
 *.jar
-!**/src/main/**/target/
-# Node
 node_modules/
 dist/
 .vite/
-# IDE
 .idea/
 *.iml
 .vscode/
-# Local
 .env
 .env.local
 media/
+data/
 *.log

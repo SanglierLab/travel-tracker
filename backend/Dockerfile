@@ -9,8 +9,11 @@ RUN mvn -q -B clean package -DskipTests
 # --- run ---
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-# ffmpeg requis si l'extraction de vignette vidéo repose dessus (à confirmer avec ton code existant)
-RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
-COPY --from=build /app/target/carnet-backend-*.jar app.jar
+# ffmpeg      : vignette + durée des vidéos (VideoThumbnailService)
+# libheif-examples : heif-convert, pour les photos HEIC des iPhone
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ffmpeg libheif-examples \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build /app/target/travel-tracker.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java","-XX:MaxRAMPercentage=75","-jar","/app/app.jar"]
+ENTRYPOINT ["java","-jar","/app/app.jar"]

@@ -1,1 +1,1 @@
-// TODO – squelette : src/api/http.js
+// TODO — squelette : src/api/http.js

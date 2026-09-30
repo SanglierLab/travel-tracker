@@ -1,45 +1,72 @@
 spring:
   application:
-    name: carnet
+    name: travel-tracker
   datasource:
-    url: ${DB_URL:jdbc:mariadb://localhost:3306/carnet}
-    username: ${DB_USER:carnet}
-    password: ${DB_PASSWORD:carnet}
+    url: ${DB_URL:jdbc:mariadb://localhost:3307/travel}
+    username: ${DB_USER:travel}
+    password: ${DB_PASSWORD:change-me}
+    hikari:
+      maximum-pool-size: 5          # NAS : inutile de saturer MariaDB
   jpa:
     hibernate:
-      ddl-auto: validate          # le schéma est géré par Flyway
+      ddl-auto: validate            # schéma géré par Flyway
     open-in-view: false
   flyway:
     enabled: true
   servlet:
     multipart:
-      max-file-size: 512MB        # vidéos
+      enabled: true
+      max-file-size: 1GB
       max-request-size: 2GB
+      file-size-threshold: 1MB      # au-delà : écriture disque, pas de RAM
+      location: ${TT_TMP_DIR:/tmp/tt}
   jackson:
     default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
 
 server:
   port: 8080
   forward-headers-strategy: framework   # derrière HAProxy
   compression:
     enabled: true
+    mime-types: application/json,text/html,text/css,application/javascript
+  tomcat:
+    connection-timeout: 120s            # upload 4G depuis l'étranger
 
-carnet:
-  # --- Comptes admin : "login:motdepasse", séparés par des virgules ---
-  admin-users: ${CARNET_ADMIN_USERS:admin:admin}
-  # --- Token de l'API d'ingestion des positions ---
-  ingest-token: ${CARNET_INGEST_TOKEN:changez-ce-token}
-  # --- Stockage des médias ---
+app:
+  site-title: "Carnet de voyage"
+  admin-users: ${TT_ADMIN_USERS:admin:admin}      # "login:mdp,login2:mdp2"
+  ingest-token: ${TT_INGEST_TOKEN:change-me}
+  page-size: ${TT_PAGE_SIZE:5}
+  tmp-dir: ${TT_TMP_DIR:/tmp/tt}
+
   media:
-    dir: ${CARNET_MEDIA_DIR:./media}
-    miniature-largeur: 400
-    plein-largeur: 1600
-    qualite-jpeg: 0.85
-  # --- Affichage ---
-  page-size: ${CARNET_PAGE_SIZE:5}
-  titre-site: "Carnet de voyage"
+    dir: ${TT_MEDIA_DIR:./media}
+    thumb-width: 400
+    medium-width: 1600
+    jpeg-quality: 0.85
+    accepted-image-mime:
+      - image/jpeg
+      - image/png
+      - image/heic
+      - image/heif
+      - image/webp
+    accepted-video-mime:
+      - video/mp4
+      - video/quicktime
+    max-file-size-mb: 1024
+
+  ffmpeg:
+    path: ${TT_FFMPEG:ffmpeg}
+    timeout-s: 90
+    frame-at-second: 1        # 0 donne souvent une image noire
+
+  heic:
+    converter-path: ${TT_HEIF_CONVERT:heif-convert}
+    timeout-s: 60
 
 logging:
   level:
     root: INFO
-    fr.carnet: INFO
+    fr.sanglierlab.travel: INFO
