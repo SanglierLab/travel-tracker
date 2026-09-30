@@ -1,0 +1,406 @@
+# travel-tracker 2.0.0 — Spécifications
+
+> Site de partage de voyage (photos, vidéos, position, trajets), alternative « maison » à Polarsteps.
+> Usage familial. Consultation libre, administration réservée à quelques voyageurs.
+>
+> Projet : `fr.sanglierlab:travel-tracker:2.0.0` (réécriture complète, la version 1 existe déjà).
+> Statut du document : spécification validée, avant toute ligne de code.
+
+---
+
+## 1. Principes directeurs
+
+- **Simplicité avant tout** : pas d'usine à gaz, pas de paramétrage à outrance.
+- **Léger** : peu de dépendances, peu d'animations (fluide sur un mobile ancien).
+- **Autonome** : aucun service externe, à l'exception des tuiles OpenStreetMap et, plus tard, des fournisseurs de données ADS-B et AIS.
+- **Mobile d'abord pour l'admin** (utilisée en voyage depuis un téléphone), **confortable aussi sur grand écran** pour le public.
+- **Français uniquement** pour l'interface, mais saisie libre de tout caractère (japonais, etc.) sans traduction.
+
+---
+
+## 2. Besoins utilisateurs
+
+### 2.1 Acteurs
+
+| Acteur | Droits |
+|---|---|
+| Visiteur | Consultation de la partie publique uniquement. Aucun compte, aucune inscription. |
+| Admin (voyageur) | Toute modification. Comptes définis dans la configuration du serveur. |
+| Outil mobile (GPSLogger) | Envoi de positions via l'API, authentifié par un token. |
+
+### 2.2 Partie publique
+
+- Une **carte** avec un pictogramme par galerie et le **tracé du parcours**, dont le style dépend de la source (`device`, `adsb`, `ais`).
+- Une **liste de galeries** en ordre anti-chronologique, **paginée** (pas de défilement infini, pas de recherche), reliées par une **timeline verticale** qui donne une impression de suite logique.
+- **Synchronisation carte / liste** :
+  - un clic sur un marqueur affiche la galerie correspondante, avec changement de page si nécessaire ;
+  - un clic sur une galerie la met en évidence sur la carte.
+- La carte affiche **toutes** les galeries et tout le tracé, quelle que soit la page courante.
+- Chaque galerie a une **adresse directe** (`/galerie/12`) qui ouvre la bonne page et centre la carte.
+- **Photos** : affichées en miniatures ; un clic les ouvre en plein écran ; un bouton permet de télécharger l'originale.
+- **Vidéos** : miniature extraite de la vidéo avec un pictogramme de lecture par-dessus ; un clic ouvre la lecture en plein écran.
+- **Blocs de texte** intercalés entre les médias (markdown minimal).
+- Le bouton « retour » du téléphone ferme la visionneuse au lieu de quitter le site.
+
+### 2.3 Partie admin
+
+- **Menu principal** avec de grosses icônes (Galeries, Trajets, Points, Config, Voir le site, Déconnexion), et une barre de navigation en bas sur mobile.
+- **Galeries** : créer, modifier, supprimer (avec avertissement de confirmation).
+- **Création d'une galerie** : un morceau de carte permet de placer directement un point. Un bouton « Me positionner » place automatiquement le point grâce à la géolocalisation du navigateur. Dans les deux cas, le point **reste déplaçable**.
+- **Contenu d'une galerie** : ajout progressif de photos, vidéos et blocs de texte ; suppression d'éléments ; réordonnancement par boutons monter/descendre.
+- **Upload** : sélection de plusieurs fichiers, envoi **un par un** avec progression par fichier et bouton « Réessayer » en cas d'échec. L'admin choisit ce qu'il envoie selon sa connexion (4G, wifi d'hôtel…).
+- **Points de trajet** : page dédiée pour lister, modifier ou supprimer un point (point mal placé, par exemple).
+- **Trajets suivis** (vols et traversées) : création et configuration (voir §3.4).
+- **Config** : page en lecture seule (informations de version, limites, nombre de points…). Les secrets ne s'affichent jamais.
+
+### 2.4 API de positions en temps réel
+
+- Un outil de géolocalisation mobile (**GPSLogger** sous Android) envoie les positions au serveur.
+- Chaque point est stocké pas à pas en base (latitude, longitude, heure).
+- Plusieurs **sources** sont possibles, représentées différemment sur la carte : `device` (téléphone), `adsb` (transport aérien), `ais` (transport maritime).
+
+### 2.5 Hors périmètre (pour l'instant)
+
+- Likes et commentaires (phase 2 éventuelle).
+- Transcodage des vidéos (pas d'iPhone dans la famille : les fichiers sont servis tels quels).
+- Code fonctionnel du batch ADS-B / AIS (seuls le stockage et la configuration sont prévus maintenant).
+- Recherche, inscription, multilingue, regroupement de marqueurs (clustering).
+
+---
+
+## 3. Règles de gestion
+
+### 3.1 Galeries
+
+1. Champs obligatoires : **titre**, **nom du lieu**, **date** (jour seul, sans heure), **latitude**, **longitude**.
+2. Pas de brouillon : une galerie est visible dès sa création.
+3. Tri : date de la galerie décroissante ; à date égale, la plus récemment créée en premier.
+4. Pagination : **10 galeries par page** (configurable).
+5. Exemple d'intitulé affiché : « 10 octobre — Tokyo — Palais impérial ».
+
+### 3.2 Contenu d'une galerie
+
+6. Suite ordonnée d'éléments de trois types : **photo**, **vidéo**, **bloc de texte**. Ordre par défaut : ordre d'ajout.
+7. Texte en **markdown limité** (paragraphes, gras, italique, listes, liens). **HTML brut interdit**. Le rendu est fait côté serveur.
+8. Formats acceptés : **JPEG, PNG, WebP** (photos) et **MP4** (vidéos). La vérification porte sur le contenu réel du fichier, pas sur l'extension. Un refus affiche un message clair.
+9. Tailles maximales configurables (valeurs proposées : **30 Mo** par photo, **500 Mo** par vidéo).
+10. Trois versions par photo : **miniature** (~400 px), **pleine page** (~1920 px), **originale**. L'orientation EXIF est appliquée avant redimensionnement.
+11. **EXIF GPS** retiré des versions miniature et pleine page, conservé sur l'originale.
+12. Pour une vidéo : miniature extraite par ffmpeg, pictogramme de lecture superposé, fichier original servi en lecture **et** en téléchargement.
+13. Supprimer un média efface ses fichiers sur disque **et** sa ligne en base. Supprimer une galerie supprime tout son contenu, après confirmation. Aucun fichier orphelin ne doit subsister.
+
+### 3.3 Trajet en temps réel
+
+14. Un point contient : latitude, longitude, source (`device` / `adsb` / `ais`), date/heure, et éventuellement le trajet suivi auquel il se rattache.
+15. Validation : latitude entre -90 et 90, longitude entre -180 et 180, token obligatoire.
+16. La date/heure est celle fournie par l'appareil, sinon celle du serveur. Les envois sont **idempotents** : un point déjà reçu (même source, même heure) est ignoré sans erreur (GPSLogger renvoie les points en rafale après une coupure réseau).
+17. Affichage : un style par source (couleur, pointillés). Pour `device`, la ligne est **coupée** quand deux points consécutifs sont espacés de plus de X heures (défaut : 6 h). Pour `adsb` et `ais`, un trajet suivi correspond à une ligne.
+18. L'admin peut modifier ou supprimer un point individuellement.
+19. Position **publique, affichage immédiat** (usage familial, choix assumé).
+
+### 3.4 Trajets suivis (vols et traversées)
+
+20. Champs : **type** (avion / bateau), **libellé** libre, **date/heure théorique de départ**, **identifiant** (callsign pour un avion ; MMSI pour un bateau, 9 chiffres contrôlés), **statut** (`planifié`, `en cours`, `terminé`).
+21. La date/heure de départ est **saisie en UTC** (le formulaire l'indique explicitement) et stockée en UTC.
+22. Le futur batch fera évoluer le statut automatiquement (actif à l'heure de départ, terminé quand les données le signalent). L'admin peut aussi le forcer à la main.
+23. Supprimer un trajet suivi demande si ses points de route sont supprimés avec lui ou conservés.
+24. On peut ajouter des vols ou traversées à volonté via l'interface.
+
+### 3.5 Accès et sécurité
+
+25. Site public ouvert à tous. Tout ce qui est admin exige une session, sinon redirection vers la connexion.
+26. Session longue (**7 jours** par défaut), protection CSRF, limitation des tentatives de connexion échouées.
+27. **Non-indexation** à trois niveaux : `robots.txt`, balise `<meta name="robots" content="noindex">` et en-tête HTTP `X-Robots-Tag`.
+
+---
+
+## 4. Exigences non fonctionnelles
+
+**Sécurité**
+- Mots de passe admin en **bcrypt** dans la configuration ; token d'API comparé en temps constant ; aucun secret dans le dépôt (fichier de configuration externe monté dans le conteneur).
+- Cookie de session `HttpOnly`, `Secure`, `SameSite`.
+- Noms de fichiers stockés générés (UUID), jamais ceux fournis par l'utilisateur (protection contre les attaques par chemin).
+- En-têtes de sécurité : CSP, `X-Content-Type-Options`, `Referrer-Policy`.
+
+**Vie privée**
+- Aucun traceur, aucune statistique, donc pas de bandeau cookies. Seul cookie : la session admin.
+
+**Performance et mobile**
+- Chargement différé des miniatures, cache HTTP long sur les médias.
+- Peu d'animations, pas de bibliothèque d'animation.
+- Mémoire maîtrisée (voir §7.3).
+
+**Exploitation**
+- Sauvegarde : dump MariaDB + répertoire des médias, via les outils Synology.
+- Journaux sur la sortie standard de Docker ; endpoint de santé pour les healthchecks.
+- Horodatages en **UTC** en base, affichage en heure locale côté navigateur. La date d'une galerie reste un jour simple.
+- Base de données en **utf8mb4** de bout en bout.
+- Navigateurs : versions récentes de Chrome, Safari, Firefox, Edge (mobile et PC).
+- Tests ciblés sur les parties à risque (validation des uploads, pagination, API de positions).
+
+---
+
+## 5. Stack technique
+
+> Versions vérifiées le 30/09/2026, à revérifier à l'initialisation du projet.
+
+### 5.1 Backend
+
+| Élément | Choix |
+|---|---|
+| Langage | Java 25 (LTS) |
+| Framework | Spring Boot **4.1.1** |
+| Modules | Web MVC, Security, Data JPA, Validation, Actuator (health uniquement) |
+| Base | MariaDB (existante sur le NAS), utf8mb4 |
+| Migrations | Flyway (`V1__init.sql`, …) |
+| Markdown | commonmark-java (rendu serveur, HTML brut échappé) |
+| Images / vidéos | Code existant de l'autre projet (upload, miniatures, ffmpeg), à adapter |
+| Build | Maven (`fr.sanglierlab:travel-tracker:2.0.0`) |
+
+- **Pas d'extension spatiale** : latitude et longitude sont des colonnes `DECIMAL(9,6)`.
+- **Authentification** : session Spring Security, comptes dans la configuration. Token d'API dans l'en-tête `X-API-Token`.
+
+### 5.2 Frontend
+
+| Élément | Choix |
+|---|---|
+| Framework | Vue 3.5.x (stable) |
+| Build | Vite 8.x |
+| Routage | Vue Router |
+| État | Pas de Pinia : un composable suffit |
+| Carte | Leaflet 1.9.x + tuiles OpenStreetMap |
+| Langage | JavaScript (pas de TypeScript) |
+| CSS | Un CSS général + un fichier de thème (variables uniquement), sans framework CSS |
+
+- Application unique : les routes admin sont **chargées à la demande**.
+- Téléchargement de l'originale : lien `<a download>` (même origine).
+- Dépendances runtime : Vue, Vue Router, Leaflet.
+
+### 5.3 Infrastructure
+
+- Hébergement : **Synology DS220+** (Intel, amd64, 6 Go de RAM), Docker.
+- Accès : sous-domaine derrière **HAProxy** (sur le NAS).
+- Deux conteneurs orchestrés par `docker-compose.yml` :
+  1. **`api`** : JAR Spring Boot sur image Java légère, avec **ffmpeg** installé.
+  2. **`web`** : nginx qui sert l'application Vue compilée, relaie `/api` vers `api`, et sert **directement** `/media/` depuis un volume en lecture seule (Range supporté pour la vidéo).
+- HAProxy ne pointe que vers `web` : **même origine**, donc pas de CORS et cookies simples.
+- Volumes : médias, fichier de configuration, fichier de thème CSS, (MariaDB déjà en place).
+- HAProxy à régler pour les gros uploads (taille de corps et timeouts).
+
+### 5.4 Structure du dépôt
+
+```
+travel-tracker/
+├── SPECIFICATIONS.md
+├── backend/      (Maven, fr.sanglierlab.traveltracker)
+├── frontend/     (Vue + Vite)
+└── docker/       (docker-compose.yml, nginx, Dockerfiles, exemples de config)
+```
+
+---
+
+## 6. Architecture
+
+```
+Navigateur ──► HAProxy ──► conteneur web (nginx)
+                             ├─ /          → application Vue compilée
+                             ├─ /media/*   → fichiers (volume en lecture seule)
+                             └─ /api/*     → conteneur api (Spring Boot + ffmpeg)
+                                                ├─ MariaDB
+                                                └─ volume médias (lecture/écriture)
+GPSLogger ──► /api/track/points (token)
+```
+
+### 6.1 Découpage du backend
+
+Package racine `fr.sanglierlab.traveltracker` :
+
+- `config` : propriétés, sécurité, en-têtes, noindex.
+- `gallery` : galeries et éléments (entités, services, contrôleurs public et admin).
+- `media` : stockage, miniatures, extraction vidéo.
+- `track` : points de route, trajets suivis, API d'ingestion.
+- `auth` : connexion / déconnexion par session.
+
+### 6.2 Modèle de données
+
+**`gallery`**
+
+| Colonne | Type | Remarque |
+|---|---|---|
+| id | BIGINT, PK | |
+| title | VARCHAR(200) | obligatoire |
+| place_name | VARCHAR(200) | obligatoire |
+| gallery_date | DATE | jour seul |
+| latitude, longitude | DECIMAL(9,6) | obligatoires |
+| created_at, updated_at | DATETIME (UTC) | |
+
+Index : (gallery_date DESC, id DESC).
+
+**`gallery_item`**
+
+| Colonne | Type | Remarque |
+|---|---|---|
+| id | BIGINT, PK | |
+| gallery_id | FK, ON DELETE CASCADE | |
+| position | INT | ordre dans la galerie |
+| type | PHOTO / VIDEO / TEXT | |
+| text_markdown | TEXT | pour TEXT uniquement |
+| file_key | CHAR(36) | UUID de stockage (médias) |
+| original_filename | VARCHAR(255) | nom proposé au téléchargement |
+| extension | VARCHAR(10) | |
+| size_bytes, width, height | | dimensions pour réserver la place à l'affichage |
+| created_at | DATETIME | |
+
+**`tracked_trip`**
+
+| Colonne | Type | Remarque |
+|---|---|---|
+| id | BIGINT, PK | |
+| type | PLANE / BOAT | |
+| label | VARCHAR(200) | libre |
+| scheduled_departure | DATETIME (UTC) | |
+| identifier | VARCHAR(20) | callsign ou MMSI (9 chiffres) |
+| status | PLANNED / ACTIVE / FINISHED | |
+| created_at, updated_at | DATETIME | |
+
+**`track_point`**
+
+| Colonne | Type | Remarque |
+|---|---|---|
+| id | BIGINT, PK | |
+| source | DEVICE / ADSB / AIS | |
+| latitude, longitude | DECIMAL(9,6) | |
+| recorded_at | DATETIME(3) (UTC) | |
+| trip_id | FK nullable | vers `tracked_trip` |
+| created_at | DATETIME | |
+
+Index : (source, recorded_at) ; trip_id. Contrainte d'unicité sur (source, recorded_at, latitude, longitude) ou équivalent pour l'idempotence (à préciser en phase 4).
+
+Les comptes admin et le token d'API n'ont **pas** de table : ils sont dans la configuration.
+
+### 6.3 Stockage des fichiers
+
+```
+media/{galerie}/{uuid}-thumb.jpg      miniature (~400 px), photo et vidéo
+media/{galerie}/{uuid}-display.jpg    pleine page (~1920 px), photo uniquement
+media/{galerie}/{uuid}-original.{ext} original (photo) ou vidéo MP4 (lecture + téléchargement)
+```
+
+Supprimer une galerie supprime son dossier ; supprimer un média supprime ses fichiers puis sa ligne.
+
+### 6.4 API
+
+**Publique (lecture seule)**
+
+| Endpoint | Rôle |
+|---|---|
+| `GET /api/public/galleries?page=n` | Une page de galeries avec leurs éléments (markdown déjà rendu en HTML sûr) ; renvoie aussi `pageSize`. |
+| `GET /api/public/map` | Toutes les galeries en version légère (id, titre, lieu, date, coordonnées, miniature de couverture), même tri que la liste. |
+| `GET /api/public/track` | Tous les trajets, déjà découpés en segments avec leur source. |
+
+La page d'une galerie se calcule côté client : `rang / pageSize`.
+
+**Authentification**
+
+| Endpoint | Rôle |
+|---|---|
+| `POST /api/auth/login` | Connexion |
+| `POST /api/auth/logout` | Déconnexion |
+| `GET /api/auth/me` | État de la session |
+
+**Admin (session + CSRF)**
+
+| Domaine | Endpoints |
+|---|---|
+| Galeries | `GET`, `POST`, `PUT`, `DELETE /api/admin/galleries[/{id}]` |
+| Éléments | `POST /api/admin/galleries/{id}/items/media` (un fichier par appel), `POST .../items/text`, `PUT` / `DELETE /api/admin/items/{id}`, `POST /api/admin/items/{id}/move` |
+| Trajets suivis | `GET`, `POST`, `PUT`, `DELETE /api/admin/trips[/{id}]` (`?deletePoints=true/false`) |
+| Points | `GET /api/admin/points` (filtres source, trajet, pagination), `GET`, `PUT`, `DELETE /api/admin/points/{id}` |
+| Config | `GET /api/admin/info` (lecture seule) |
+
+**API de positions (en-tête `X-API-Token`)**
+
+- `POST /api/track/points` : `latitude`, `longitude` et `recordedAt` (l'heure du point, pas celle de l'envoi). Réponse **200** avec un petit JSON.
+- La source est toujours `DEVICE` ; les points `ADSB` / `AIS` seront insérés par le futur batch interne.
+- Configuration GPSLogger (URL personnalisée, en-tête, corps JSON avec les variables de position et d'heure) : à documenter à la phase 4 après vérification de la documentation de GPSLogger.
+
+### 6.5 Frontend : routes et écrans
+
+**Public**
+- `/` et `/?page=2` : écran principal carte + liste.
+- `/galerie/:id` : même écran, galerie ciblée sélectionnée.
+- `/connexion`.
+- Visionneuse photo/vidéo : surcouche inscrite dans l'historique du navigateur (pas une route).
+
+**Admin (chargé à la demande)**
+- `/admin` : menu à grosses icônes.
+- `/admin/galeries`, `/admin/galeries/nouvelle`, `/admin/galeries/:id`.
+- `/admin/trajets`, `/admin/trajets/nouveau`, `/admin/trajets/:id`.
+- `/admin/points`, `/admin/points/:id`.
+- `/admin/config`.
+
+**Comportement de l'écran principal**
+- **Grand écran** : deux colonnes plein écran, carte fixe à gauche, liste défilante à droite, largeur de lecture raisonnable, davantage de colonnes de miniatures si la place le permet. Pas de « smartphone au milieu d'un écran géant ».
+- **Mobile** : carte en haut (~40 % de la hauteur) avec un bouton pour l'agrandir ; seule la liste défile en dessous.
+- **Timeline** : ligne verticale reliant les galeries, un nœud par galerie avec sa date ; photos consécutives en grille, interrompue par les blocs de texte.
+- **Marqueurs** : pictogramme identique pour toutes les galeries, galerie sélectionnée mise en évidence, petite vignette de couverture dans l'infobulle.
+- **Trajets** : `device` en trait plein, `adsb` en pointillés, `ais` en tirets espacés, une couleur par source.
+
+**Thème** : `style.css` (mise en page) + `theme.css` (variables : couleurs, polices, arrondis), ce dernier placé dans un volume Docker pour être modifié sans reconstruire l'image.
+
+---
+
+## 7. Configuration serveur
+
+### 7.1 `application.yml` externe (clés prévues)
+
+- Comptes admin : identifiant + hash bcrypt.
+- Token d'API.
+- Dossier des médias.
+- Tailles maximales (photo, vidéo).
+- Taille de page.
+- Seuil de coupure des traces `device` (heures).
+- Durée de session.
+- Chemin de ffmpeg.
+
+### 7.2 Réseau
+
+- HAProxy : taille de corps et timeouts élevés sur la route d'upload.
+
+### 7.3 Mémoire (DS220+, 6 Go)
+
+- Tas JVM limité (~1 Go) + limite mémoire sur le conteneur.
+- **Pas de `byte[]` pour les fichiers entiers** : flux (`InputStream`) et fichiers temporaires sur disque. L'upload d'une vidéo de 500 Mo ne doit pas coûter 500 Mo de RAM.
+- Décodage d'images **sérialisé** (une photo à la fois), contrôle des dimensions en pixels avant décodage.
+
+---
+
+## 8. Plan de réalisation
+
+Chaque phase se termine par quelque chose qui tourne et se teste.
+
+| Phase | Contenu | Résultat |
+|---|---|---|
+| **0 — Socle** | Structure du dépôt, `pom.xml`, projet Vite, `docker-compose.yml`, nginx, Flyway (schéma complet), `application.yml`, sécurité, noindex | Le site démarre sur le NAS, connexion admin OK, écran vide |
+| **1 — Galeries et médias (backend)** | Entités, services, API galeries et éléments, markdown, réordonnancement, **intégration du code existant** (upload, miniatures, ffmpeg) | Tout se teste en API (curl / Postman) |
+| **2 — Site public** | Carte + liste, timeline, pagination, synchronisation, `/galerie/:id`, visionneuse, téléchargement, CSS général + thème | Le site se consulte |
+| **3 — Interface admin** | Menu, création/édition de galeries (mini-carte, « Me positionner »), upload un par un avec progression, blocs de texte, monter/descendre, suppressions | Utilisable en voyage pour les galeries |
+| **4 — Trajet en temps réel** | Endpoint GPSLogger, stockage, tracé par source avec coupures, pages admin des points | Le parcours s'affiche en direct |
+| **5 — Trajets suivis** | CRUD vols/traversées, contrôle MMSI, statuts, choix à la suppression | Stockage et configuration prêts pour le futur batch |
+| **6 — Finitions et production** | Images Docker finales, limites mémoire, healthchecks, HAProxy, sauvegardes, tests sur mobile réel, tests ciblés | Mise en production |
+
+### À fournir au début de la phase 1
+
+- Les classes d'upload et de gestion de fichiers, de création de miniatures et d'extraction vidéo (ffmpeg).
+- Les dépendances Maven correspondantes.
+- La façon dont ffmpeg est appelé (chemin, options) et le `Dockerfile` de l'autre projet, s'il existe.
+
+---
+
+## 9. Évolutions possibles (hors périmètre actuel)
+
+- Likes et commentaires.
+- Transcodage des vidéos HEVC/.mov en MP4/H.264 (ffmpeg déjà présent).
+- Batch ADS-B (callsign) et AIS (MMSI), activé à l'heure de départ et arrêté quand les données le signalent.
+- Regroupement de marqueurs si la carte devient illisible.
+- Simplification des tracés si le nombre de points devient élevé.
