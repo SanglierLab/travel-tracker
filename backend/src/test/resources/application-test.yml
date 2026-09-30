@@ -1,0 +1,35 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:travel;MODE=MySQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: false
+
+app:
+  site-title: "Carnet de voyage (test)"
+  admin-users: "testeur:motdepasse"
+  ingest-token: "jeton-de-test"
+  page-size: 5
+  tmp-dir: ${java.io.tmpdir}/tt-test
+  media:
+    dir: ${java.io.tmpdir}/tt-test-media
+    thumb-width: 400
+    medium-width: 1600
+    jpeg-quality: 0.85
+    accepted-image-mime: [image/jpeg, image/png]
+    accepted-video-mime: [video/mp4]
+    max-file-size-mb: 10
+  trip:
+    polling-interval: PT5M
+    maximum-duration-hours: 36
+
+  ffmpeg:
+    path: ffmpeg
+    probe-path: ffprobe
+    timeout-s: 30
+    frame-at-second: 1

@@ -1,6 +1,11 @@
 spring:
   jpa:
     show-sql: true
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false     # http://localhost en développement
 app:
   media:
     dir: ./media

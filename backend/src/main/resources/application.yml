@@ -6,10 +6,10 @@ spring:
     username: ${DB_USER:travel}
     password: ${DB_PASSWORD:change-me}
     hikari:
-      maximum-pool-size: 5          # NAS : inutile de saturer MariaDB
+      maximum-pool-size: 5
   jpa:
     hibernate:
-      ddl-auto: validate            # schéma géré par Flyway
+      ddl-auto: validate
     open-in-view: false
   flyway:
     enabled: true
@@ -18,7 +18,7 @@ spring:
       enabled: true
       max-file-size: 1GB
       max-request-size: 2GB
-      file-size-threshold: 1MB      # au-delà : écriture disque, pas de RAM
+      file-size-threshold: 1MB
       location: ${TT_TMP_DIR:/tmp/tt}
   jackson:
     default-property-inclusion: non_null
@@ -27,16 +27,24 @@ spring:
 
 server:
   port: 8080
-  forward-headers-strategy: framework   # derrière HAProxy
+  forward-headers-strategy: framework
   compression:
     enabled: true
     mime-types: application/json,text/html,text/css,application/javascript
   tomcat:
-    connection-timeout: 120s            # upload 4G depuis l'étranger
+    connection-timeout: 120s
+  servlet:
+    session:
+      timeout: 30d              # l'admin reste connecté tout le voyage
+      cookie:
+        name: TTSESSION
+        http-only: true
+        same-site: strict       # tient lieu de protection CSRF
+        secure: ${TT_COOKIE_SECURE:true}
 
 app:
   site-title: "Carnet de voyage"
-  admin-users: ${TT_ADMIN_USERS:admin:admin}      # "login:mdp,login2:mdp2"
+  admin-users: ${TT_ADMIN_USERS:admin:admin}
   ingest-token: ${TT_INGEST_TOKEN:change-me}
   page-size: ${TT_PAGE_SIZE:5}
   tmp-dir: ${TT_TMP_DIR:/tmp/tt}
@@ -49,22 +57,22 @@ app:
     accepted-image-mime:
       - image/jpeg
       - image/png
-      - image/heic
-      - image/heif
       - image/webp
     accepted-video-mime:
       - video/mp4
       - video/quicktime
+      - video/x-matroska
     max-file-size-mb: 1024
+
+  trip:
+    polling-interval: ${TT_TRIP_POLLING:PT2M}
+    maximum-duration-hours: 36
 
   ffmpeg:
     path: ${TT_FFMPEG:ffmpeg}
+    probe-path: ${TT_FFPROBE:}     # déduit de « path » si vide
     timeout-s: 90
-    frame-at-second: 1        # 0 donne souvent une image noire
-
-  heic:
-    converter-path: ${TT_HEIF_CONVERT:heif-convert}
-    timeout-s: 60
+    frame-at-second: 1
 
 logging:
   level:

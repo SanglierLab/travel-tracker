@@ -12,7 +12,7 @@ services:
     volumes:
       - ./data/mysql:/var/lib/mysql
     ports:
-      - "3307:3306"   # dev uniquement, à retirer sur le NAS
+      - "3307:3306"   # dev uniquement
 
   backend:
     build: ./backend
@@ -25,15 +25,16 @@ services:
       DB_USER: travel
       DB_PASSWORD: change-me
       TT_MEDIA_DIR: /media
+      TT_TMP_DIR: /tmp/tt
       TT_ADMIN_USERS: "voyageur:motdepasse"
       TT_INGEST_TOKEN: "changez-ce-token"
       TT_PAGE_SIZE: "5"
       TT_FFMPEG: "/usr/bin/ffmpeg"
-      TT_HEIF_CONVERT: "/usr/bin/heif-convert"
+      TT_COOKIE_SECURE: "true"     # HAProxy termine le TLS
       JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=70"
     volumes:
       - ./media:/media
-      - ./tmp:/tmp/tt      # fichiers temporaires d'upload (hors tmpfs RAM)
+      - ./tmp:/tmp/tt
     ports:
       - "8080:8080"
 
