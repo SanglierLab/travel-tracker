@@ -1,0 +1,40 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: carnet-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: carnet
+      MARIADB_USER: carnet
+      MARIADB_PASSWORD: change-me
+      MARIADB_ROOT_PASSWORD: change-me-too
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+
+  backend:
+    build: ./backend
+    container_name: carnet-backend
+    restart: unless-stopped
+    depends_on: [db]
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_URL: jdbc:mariadb://db:3306/carnet
+      DB_USER: carnet
+      DB_PASSWORD: change-me
+      CARNET_MEDIA_DIR: /media
+      CARNET_ADMIN_USERS: "voyageur:motdepasse"      # login:motdepasse, séparés par des virgules
+      CARNET_INGEST_TOKEN: "changez-ce-token"
+      CARNET_PAGE_SIZE: "5"
+    volumes:
+      - ./media:/media
+    ports:
+      - "8080:8080"      # exposé à HAProxy
+
+  frontend:
+    build: ./frontend
+    container_name: carnet-frontend
+    restart: unless-stopped
+    depends_on: [backend]
+    ports:
+      - "8081:80"        # exposé à HAProxy

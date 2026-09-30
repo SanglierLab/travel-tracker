@@ -1,0 +1,45 @@
+spring:
+  application:
+    name: carnet
+  datasource:
+    url: ${DB_URL:jdbc:mariadb://localhost:3306/carnet}
+    username: ${DB_USER:carnet}
+    password: ${DB_PASSWORD:carnet}
+  jpa:
+    hibernate:
+      ddl-auto: validate          # le schéma est géré par Flyway
+    open-in-view: false
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 512MB        # vidéos
+      max-request-size: 2GB
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: 8080
+  forward-headers-strategy: framework   # derrière HAProxy
+  compression:
+    enabled: true
+
+carnet:
+  # --- Comptes admin : "login:motdepasse", séparés par des virgules ---
+  admin-users: ${CARNET_ADMIN_USERS:admin:admin}
+  # --- Token de l'API d'ingestion des positions ---
+  ingest-token: ${CARNET_INGEST_TOKEN:changez-ce-token}
+  # --- Stockage des médias ---
+  media:
+    dir: ${CARNET_MEDIA_DIR:./media}
+    miniature-largeur: 400
+    plein-largeur: 1600
+    qualite-jpeg: 0.85
+  # --- Affichage ---
+  page-size: ${CARNET_PAGE_SIZE:5}
+  titre-site: "Carnet de voyage"
+
+logging:
+  level:
+    root: INFO
+    fr.carnet: INFO

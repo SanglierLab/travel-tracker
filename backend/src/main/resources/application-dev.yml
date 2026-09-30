@@ -1,0 +1,9 @@
+spring:
+  jpa:
+    show-sql: true
+carnet:
+  media:
+    dir: ./media
+logging:
+  level:
+    fr.carnet: DEBUG

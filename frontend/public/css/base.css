@@ -1,0 +1,12 @@
+/* ============================================================
+   base.css – mise en page, structure, responsive (NE PAS THÉMER ICI)
+   Les couleurs/typo/arrondis sont pilotés par les variables
+   définies dans theme.css.
+   ============================================================ */
+:root{
+  /* Valeurs de repli si theme.css est absent */
+  --c-fond:#fff; --c-texte:#222; --c-accent:#2b6cb0; --c-trait:#ddd;
+  --rayon:6px; --police:system-ui, sans-serif;
+  --h-carte-mobile: 45vh;
+}
+/* TODO : reset, grille carte/timeline, composants, media queries */
