@@ -406,3 +406,20 @@ Chaque phase se termine par quelque chose qui tourne et se teste.
 - Batch ADS-B (callsign) et AIS (MMSI), activé à l'heure de départ et arrêté quand les données le signalent.
 - Regroupement de marqueurs si la carte devient illisible.
 - Simplification des tracés si le nombre de points devient élevé.
+
+---
+
+## 10. Décisions d'implémentation (phase 1)
+
+- **Formats** : détectés sur les premiers octets du fichier, jamais sur l'extension ni le type MIME envoyé par le client. JPEG, PNG, WebP, MP4. Le QuickTime (`.mov`), l'HEIC et le reste sont refusés.
+- **WebP** : converti en JPEG par ffmpeg avant redimensionnement (Java ne lit pas le WebP) ; l'original WebP est conservé tel quel.
+- **Pas de détection de doublons** (hash) : non demandée, et l'envoi un par un avec « Réessayer » ne crée pas de doublon puisque les fichiers d'un envoi échoué sont supprimés.
+- **Images** : la photo est décodée une seule fois ; la miniature (400 px) est calculée à partir de l'image pleine page (1920 px). Jamais d'agrandissement. Refus au-delà de 100 mégapixels, contrôlé avant le décodage. Les JPEG produits ne contiennent aucune métadonnée (donc pas de GPS).
+- **`width` / `height`** : dimensions de l'image pleine page (photo) ou de la miniature (vidéo), pour réserver la place. Pour une vidéo, `NULL` signifie « pas de miniature » (échec ffmpeg) : la vidéo est conservée plutôt que de perdre l'envoi.
+- **Mémoire** : les fichiers ne passent jamais par un `byte[]` ; l'upload est écrit sur disque puis traité à partir du fichier. Les traitements d'images et les appels ffmpeg sont sérialisés. Pas de transaction ouverte pendant un envoi.
+- **Suppression** : les fichiers ne sont effacés qu'après validation (commit) de la suppression en base.
+- **Markdown** : paragraphes, gras, italique, listes, liens. Titres, citations, code, séparateurs et images sont désactivés ; HTML brut échappé ; liens en `target="_blank" rel="noopener noreferrer nofollow"`.
+- **API publique** : `GET /api/public/galleries?page=n` (n à partir de 1, taille de page lue dans la configuration) et `GET /api/public/map` (toutes les galeries, avec miniature de couverture).
+- **Réordonnancement** : `POST /api/admin/items/{id}/move?direction=UP|DOWN` échange l'élément avec son voisin.
+- **Erreurs** : corps JSON `{"message": "..."}` en français.
+- **Développement** : le profil Spring `dev` sert `/media/**` depuis le dossier des médias (en production, c'est nginx).

@@ -19,6 +19,8 @@
 
     <properties>
         <java.version>25</java.version>
+        <thumbnailator.version>0.4.21</thumbnailator.version>
+        <commonmark.version>0.30.0</commonmark.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -57,6 +59,19 @@
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
             <scope>runtime</scope>
+        </dependency>
+
+        <!-- Miniatures et images pleine page (redimensionnement, orientation EXIF) -->
+        <dependency>
+            <groupId>net.coobird</groupId>
+            <artifactId>thumbnailator</artifactId>
+            <version>${thumbnailator.version}</version>
+        </dependency>
+        <!-- Markdown des blocs de texte (rendu côté serveur) -->
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>${commonmark.version}</version>
         </dependency>
 
         <dependency>

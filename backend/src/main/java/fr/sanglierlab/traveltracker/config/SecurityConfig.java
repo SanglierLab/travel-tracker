@@ -37,6 +37,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login", "/api/auth/logout").permitAll()
                         .requestMatchers("/api/actuator/health", "/api/actuator/health/**").permitAll()
+                        // Page d'erreur interne de Spring : sans cela, un 400/500 est remplacé par un 401.
+                        .requestMatchers("/error").permitAll()
+                        // /media est servi par nginx en production ; ici seulement pour le profil dev.
+                        .requestMatchers(HttpMethod.GET, "/media/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         // Tout le reste est fermé par défaut (l'API de positions /api/track/** arrive en phase 4).
                         .anyRequest().denyAll())
