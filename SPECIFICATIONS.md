@@ -142,7 +142,7 @@
 
 ## 5. Stack technique
 
-> Versions vérifiées le 30/09/2026, à revérifier à l'initialisation du projet.
+> Versions vérifiées le 01/10/2026 : Spring Boot 4.1.1, Vue 3.5.43 (3.6 en RC), Vue Router 5.3.1, Vite 8.3.1, Node 24 pour le build. Starters Spring Boot 4 : `webmvc` (et non `web`) et `flyway` (obligatoire).
 
 ### 5.1 Backend
 
@@ -166,7 +166,7 @@
 |---|---|
 | Framework | Vue 3.5.x (stable) |
 | Build | Vite 8.x |
-| Routage | Vue Router |
+| Routage | Vue Router 5 |
 | État | Pas de Pinia : un composable suffit |
 | Carte | Leaflet 1.9.x + tuiles OpenStreetMap |
 | Langage | JavaScript (pas de TypeScript) |
@@ -184,6 +184,8 @@
   1. **`api`** : JAR Spring Boot sur image Java légère, avec **ffmpeg** installé.
   2. **`web`** : nginx qui sert l'application Vue compilée, relaie `/api` vers `api`, et sert **directement** `/media/` depuis un volume en lecture seule (Range supporté pour la vidéo).
 - HAProxy ne pointe que vers `web` : **même origine**, donc pas de CORS et cookies simples.
+- **Réseau** : les deux conteneurs sont en `network_mode: host` (MariaDB est sur `127.0.0.1:3306` du NAS, invisible depuis un réseau bridge). `api` écoute sur `127.0.0.1:18080` (non exposé), `web` sur le port **18081**.
+- Les Dockerfiles sont dans `docker/` (`api.Dockerfile`, `web.Dockerfile`), le contexte de build est la racine du dépôt.
 - Volumes : médias, fichier de configuration, fichier de thème CSS, (MariaDB déjà en place).
 - HAProxy à régler pour les gros uploads (taille de corps et timeouts).
 
@@ -242,7 +244,7 @@ Index : (gallery_date DESC, id DESC).
 |---|---|---|
 | id | BIGINT, PK | |
 | gallery_id | FK, ON DELETE CASCADE | |
-| position | INT | ordre dans la galerie |
+| sort_order | INT | ordre dans la galerie (`position` est un mot-clé SQL, évité) |
 | type | PHOTO / VIDEO / TEXT | |
 | text_markdown | TEXT | pour TEXT uniquement |
 | file_key | CHAR(36) | UUID de stockage (médias) |
@@ -274,7 +276,7 @@ Index : (gallery_date DESC, id DESC).
 | trip_id | FK nullable | vers `tracked_trip` |
 | created_at | DATETIME | |
 
-Index : (source, recorded_at) ; trip_id. Contrainte d'unicité sur (source, recorded_at, latitude, longitude) ou équivalent pour l'idempotence (à préciser en phase 4).
+Contrainte d'unicité sur (source, recorded_at, latitude, longitude) pour l'idempotence (déjà dans la migration V1) ; index sur trip_id. Supprimer un trajet suivi détache ses points (`ON DELETE SET NULL`), le service les supprime si l'admin le demande.
 
 Les comptes admin et le token d'API n'ont **pas** de table : ils sont dans la configuration.
 

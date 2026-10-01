@@ -1,0 +1,49 @@
+# Valeurs par défaut embarquées dans le JAR (aucun secret ici).
+# Tout est surchargé par le fichier externe  ./config/application.yml  (monté dans /app/config en production).
+
+spring:
+  application:
+    name: travel-tracker
+  datasource:
+    url: jdbc:mariadb://127.0.0.1:3306/traveltracker
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none          # le schéma est géré uniquement par Flyway
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      # Upload : les fichiers sont écrits sur disque, pas gardés en mémoire.
+      # Garder ces limites >= app.max-video-size (et <= client_max_body_size de nginx).
+      max-file-size: 600MB
+      max-request-size: 600MB
+
+server:
+  forward-headers-strategy: native   # IP et protocole réels derrière nginx / HAProxy
+  servlet:
+    session:
+      timeout: 7d
+      cookie:
+        http-only: true
+        secure: true                 # mettre false uniquement en développement local (http)
+        same-site: lax
+  error:
+    include-message: never
+    include-stacktrace: never
+
+management:
+  endpoints:
+    web:
+      base-path: /api/actuator
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+# app.* : voir AppProperties et docker/config/application.example.yml
