@@ -5,7 +5,9 @@ spring:
   application:
     name: travel-tracker
   datasource:
-    url: jdbc:mariadb://127.0.0.1:3306/traveltracker
+    url: jdbc:mariadb://192.168.1.40:3316/traveltracker
+    username: traveltracker
+    password: CHANGE_ME
   jpa:
     open-in-view: false
     hibernate:
@@ -47,3 +49,28 @@ management:
       show-details: never
 
 # app.* : voir AppProperties et docker/config/application.example.yml
+app:
+  # Comptes admin (autant que nécessaire). Hash bcrypt : voir README.md, section « Mot de passe admin ».
+  admins:
+    - username: voyageur
+      password-hash: '$2a$12$q6QMNBPF2YcB3mTWIpAtBebFgpxYftiF1FrRfBcK7nOtMXQl2DZGu'
+
+  # Token de l'API de positions (GPSLogger). 24 caractères minimum, aléatoire.
+  api-token: 'REMPLACER_PAR_UNE_LONGUE_CHAINE_ALEATOIRE'
+
+  media-dir: /data/media          # ne pas changer : correspond au volume Docker
+  max-photo-size: 30MB
+  max-video-size: 500MB
+  page-size: 10                   # galeries par page
+  track-gap-hours: 6              # coupure du tracé device au-delà de cet écart
+  max-login-failures: 5           # échecs avant blocage de l'IP
+  login-lock-duration: 15m
+  ffmpeg-path: ffmpeg
+
+# Développement local uniquement (HTTP, sans HTTPS) : décommenter.
+# server:
+#   servlet:
+#     session:
+#       cookie:
+#         secure: false
+
