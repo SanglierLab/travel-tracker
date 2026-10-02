@@ -391,6 +391,20 @@ Chaque phase se termine par quelque chose qui tourne et se teste.
 | **5 — Trajets suivis** | CRUD vols/traversées, contrôle MMSI, statuts, choix à la suppression | Stockage et configuration prêts pour le futur batch |
 | **6 — Finitions et production** | Images Docker finales, limites mémoire, healthchecks, HAProxy, sauvegardes, tests sur mobile réel, tests ciblés | Mise en production |
 
+### Découpage fin des phases 2 et 3
+
+Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
+
+| Étape | Contenu |
+|---|---|
+| **2a** | Écran principal : mise en page (carte / liste), liste paginée, timeline, grilles de miniatures, textes, pastille de lecture des vidéos |
+| **2b** | Carte Leaflet : marqueurs, synchronisation marqueur/liste avec changement de page, adresse `/galerie/:id` |
+| **2c** | Visionneuse plein écran (photo et vidéo), bouton de téléchargement, bouton « retour » du téléphone |
+| **2d** | Finitions : carte agrandissable sur mobile, thème, réglages responsive |
+| **3a** | Admin : liste des galeries, création/modification avec mini-carte et « Me positionner », suppression |
+| **3b** | Admin : envoi de médias un par un (progression, « Réessayer »), suppression de médias |
+| **3c** | Admin : blocs de texte, boutons monter/descendre |
+
 ### À fournir au début de la phase 1
 
 - Les classes d'upload et de gestion de fichiers, de création de miniatures et d'extraction vidéo (ffmpeg).
