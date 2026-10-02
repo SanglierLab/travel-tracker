@@ -14,6 +14,8 @@
   --color-accent-contrast: #ffffff;
   --color-danger: #b3261e;
   --color-placeholder: #cfd8d5;   /* fond des miniatures en attente et de la carte avant chargement */
+  --color-marker: #0b6b73;            /* marqueur de galerie sur la carte */
+  --color-marker-selected: #d9480f;   /* marqueur de la galerie sélectionnée */
   --color-overlay: rgba(10, 25, 30, 0.55);   /* pastille de lecture sur les vidéos */
 
   /* Tracés sur la carte, selon la source */

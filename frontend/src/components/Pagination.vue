@@ -8,7 +8,7 @@ const props = defineProps({
 
 // Page 1 = les galeries les plus récentes. La page 1 n'a pas de paramètre dans l'adresse.
 function target(n) {
-  return { query: n === 1 ? {} : { page: n } }
+  return { name: 'home', query: n === 1 ? {} : { page: n } }
 }
 const newer = computed(() => (props.page > 1 ? target(props.page - 1) : null))
 const older = computed(() => (props.page < props.totalPages ? target(props.page + 1) : null))

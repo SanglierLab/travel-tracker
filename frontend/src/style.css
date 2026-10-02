@@ -129,12 +129,6 @@ a { color: var(--color-accent); }
   background: var(--color-placeholder);
 }
 
-.home__map-placeholder {
-  margin: 0;
-  padding: 1rem;
-  color: var(--color-muted);
-}
-
 .home__list {
   flex: 1 1 auto;
   min-height: 0;
@@ -269,3 +263,38 @@ a { color: var(--color-accent); }
 .pager__info { color: var(--color-muted); font-size: 0.9rem; text-align: center; }
 .btn[aria-disabled="true"] { opacity: 0.4; cursor: default; pointer-events: none; }
 .btn--small { min-height: 40px; padding: 0 0.9rem; font-size: 0.95rem; }
+
+/* ------------------------------------------------------------------ */
+/* Carte (Leaflet)                                                      */
+/* ------------------------------------------------------------------ */
+
+.travel-map {
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* les panneaux internes de Leaflet restent sous tout ce qui s'affiche par-dessus */
+}
+.travel-map.leaflet-container {
+  font-family: var(--font-body);
+  background: var(--color-placeholder);
+}
+
+/* Marqueur de galerie : épingle dessinée en CSS/SVG, aucune image à charger */
+.pin { background: none; border: 0; }
+.pin svg { display: block; width: 100%; height: 100%; }
+.pin path { fill: var(--color-marker); stroke: #fff; stroke-width: 2; }
+.pin circle { fill: #fff; }
+.pin--selected path { fill: var(--color-marker-selected); }
+
+/* Infobulle : miniature + titre + date et lieu */
+.leaflet-tooltip.pin-tip {
+  max-width: 16rem;
+  padding: 0.4rem;
+  white-space: normal;
+  color: var(--color-text);
+  font-family: var(--font-body);
+  border-radius: var(--radius-small);
+}
+.pin-tip__body { display: flex; align-items: center; gap: 0.5rem; }
+.pin-tip__body img { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }
+.pin-tip__body div { display: flex; flex-direction: column; min-width: 0; }
+.pin-tip__body span { color: var(--color-muted); font-size: 0.85rem; }

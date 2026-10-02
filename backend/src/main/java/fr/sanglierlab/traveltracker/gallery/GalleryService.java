@@ -11,6 +11,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -92,10 +93,15 @@ public class GalleryService {
         for (GalleryItem cover : items.findCovers()) {
             covers.putIfAbsent(cover.getGalleryId(), MediaUrls.thumb(cover.getGalleryId(), cover.getFileKey()));
         }
-        return galleries.findAll(ORDER).stream()
-                .map(g -> new GallerySummary(g.getId(), g.getTitle(), g.getPlaceName(), g.getGalleryDate(),
-                        g.getLatitude(), g.getLongitude(), covers.get(g.getId())))
-                .toList();
+        List<Gallery> all = galleries.findAll(ORDER);
+        int pageSize = properties.pageSize();
+        List<GallerySummary> result = new ArrayList<>(all.size());
+        for (int rank = 0; rank < all.size(); rank++) {
+            Gallery g = all.get(rank);
+            result.add(new GallerySummary(g.getId(), g.getTitle(), g.getPlaceName(), g.getGalleryDate(),
+                    g.getLatitude(), g.getLongitude(), covers.get(g.getId()), rank / pageSize + 1));
+        }
+        return result;
     }
 
     // -----------------------------------------------------------------------

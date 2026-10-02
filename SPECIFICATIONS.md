@@ -297,10 +297,10 @@ Supprimer une galerie supprime son dossier ; supprimer un média supprime ses fi
 | Endpoint | Rôle |
 |---|---|
 | `GET /api/public/galleries?page=n` | Une page de galeries avec leurs éléments (markdown déjà rendu en HTML sûr) ; renvoie aussi `pageSize`. |
-| `GET /api/public/map` | Toutes les galeries en version légère (id, titre, lieu, date, coordonnées, miniature de couverture), même tri que la liste. |
+| `GET /api/public/map` | Toutes les galeries en version légère (id, titre, lieu, date, coordonnées, miniature de couverture, **numéro de la page** où elles apparaissent), même tri que la liste. |
 | `GET /api/public/track` | Tous les trajets, déjà découpés en segments avec leur source. |
 
-La page d'une galerie se calcule côté client : `rang / pageSize`.
+Le numéro de page de chaque galerie est calculé côté serveur (`rang / taille de page + 1`) : le front n'a pas besoin de connaître la taille de page. L'adresse `/galerie/:id` est la seule source de vérité de la sélection : sélectionner une galerie (depuis la carte ou la liste) change l'adresse.
 
 **Authentification**
 
