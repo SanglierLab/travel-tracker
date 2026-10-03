@@ -449,3 +449,12 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Carte agrandissable (mobile et tablette)** : un bouton passe la carte en plein écran, la liste est masquée mais conserve sa position. Choisir un marqueur réduit la carte et montre la galerie. En paysage sur téléphone, carte et liste passent côte à côte.
 - **Animations réduites** : pas de fondu des tuiles ni d'animation des marqueurs ; aucune animation de zoom si le visiteur demande de réduire les animations. Repli `vh` pour les navigateurs sans `dvh`.
 - **Thème** : `frontend/public/theme.css` est le thème par défaut ; `frontend/themes/japon.css` est un exemple complet (mêmes variables). Le titre de l'onglet reflète la galerie sélectionnée.
+
+## 12. Décisions d'implémentation (phase 3a : administration des galeries)
+
+- **Routes** : `/admin/galeries` (liste), `/admin/galeries/nouvelle`, `/admin/galeries/:id` (modification). Toutes chargées à la demande et protégées par la session ; une réponse 401 (session expirée) renvoie vers la connexion, puis revient sur la page en cours.
+- **Navigation admin** : barre fixe en bas sur mobile (cibles de 56 px, marges de sécurité), barre en haut sur grand écran. Les entrées Trajets, Points et Config s'ajouteront avec leurs phases.
+- **Position** : carte où l'on touche pour placer le point, qu'on peut faire glisser ; bouton « Me positionner » (géolocalisation du navigateur, avec précision affichée et messages clairs en cas de refus, de délai dépassé ou d'indisponibilité) ; saisie manuelle des coordonnées en secours. À la création, la carte est centrée près de la dernière galerie. Le point est obligatoire.
+- **Création** : après l'enregistrement, on arrive sur la page de modification de la nouvelle galerie (où le contenu s'ajoutera aux étapes 3b et 3c).
+- **Suppression** : boîte de confirmation native (`<dialog>`) qui annonce le contenu supprimé (photos, vidéos, textes) et le caractère définitif ; les fichiers du serveur sont effacés avec la galerie.
+- **Saisie** : tous les caractères sont acceptés (japonais, etc.) sans traduction ; la date du jour est proposée à la création.

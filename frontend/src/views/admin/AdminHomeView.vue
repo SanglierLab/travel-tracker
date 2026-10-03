@@ -16,9 +16,9 @@ async function onLogout() {
     <p class="muted">Connecté : {{ session.username }}</p>
 
     <nav class="tiles" aria-label="Menu d'administration">
-      <div class="tile tile--soon" aria-disabled="true">
-        <span class="tile__icon" aria-hidden="true">🖼️</span>Galeries<small>Bientôt</small>
-      </div>
+      <RouterLink class="tile" to="/admin/galeries">
+        <span class="tile__icon" aria-hidden="true">🖼️</span>Galeries
+      </RouterLink>
       <div class="tile tile--soon" aria-disabled="true">
         <span class="tile__icon" aria-hidden="true">✈️</span>Trajets<small>Bientôt</small>
       </div>

@@ -8,6 +8,13 @@ export class ApiError extends Error {
   }
 }
 
+let unauthorizedHandler = null
+
+/** Appelé quand une route /api/admin répond 401 (session expirée) : renvoie l'admin vers la connexion. */
+export function onUnauthorized(handler) {
+  unauthorizedHandler = handler
+}
+
 function csrfToken() {
   const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/)
   return match ? decodeURIComponent(match[1]) : null
@@ -37,6 +44,9 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
   const isJson = (response.headers.get('content-type') || '').includes('application/json')
   const data = isJson ? await response.json() : null
 
-  if (!response.ok) throw new ApiError(response.status, data)
+  if (!response.ok) {
+    if (response.status === 401 && path.startsWith('/api/admin')) unauthorizedHandler?.()
+    throw new ApiError(response.status, data)
+  }
   return data
 }

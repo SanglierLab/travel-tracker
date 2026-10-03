@@ -16,6 +16,24 @@ const router = createRouter({
       component: () => import('./views/admin/AdminHomeView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/admin/galeries',
+      name: 'admin-galleries',
+      component: () => import('./views/admin/AdminGalleriesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin/galeries/nouvelle',
+      name: 'admin-gallery-new',
+      component: () => import('./views/admin/AdminGalleryFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin/galeries/:id(\\d+)',
+      name: 'admin-gallery',
+      component: () => import('./views/admin/AdminGalleryFormView.vue'),
+      meta: { requiresAuth: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })
