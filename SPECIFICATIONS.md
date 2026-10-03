@@ -458,3 +458,12 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Création** : après l'enregistrement, on arrive sur la page de modification de la nouvelle galerie (où le contenu s'ajoutera aux étapes 3b et 3c).
 - **Suppression** : boîte de confirmation native (`<dialog>`) qui annonce le contenu supprimé (photos, vidéos, textes) et le caractère définitif ; les fichiers du serveur sont effacés avec la galerie.
 - **Saisie** : tous les caractères sont acceptés (japonais, etc.) sans traduction ; la date du jour est proposée à la création.
+
+## 13. Décisions d'implémentation (phase 3b : envoi et suppression de médias)
+
+- **Envoi** : `XMLHttpRequest` (et non `fetch`, qui ne sait pas mesurer l'envoi) pour une vraie progression par fichier. Quand les octets sont partis, l'état passe à « Traitement sur le serveur… » jusqu'à la réponse (miniatures, ffmpeg).
+- **File d'attente** : les fichiers partent **un par un**. Un échec n'arrête pas les suivants ; chaque fichier en échec affiche le message du serveur (format refusé, fichier trop volumineux, session expirée, réseau) avec « Réessayer » ou « Retirer », et un « Tout réessayer » est proposé. Un envoi en cours peut être annulé (il est interrompu net, sans erreur). Pas de reprise d'un envoi partiel.
+- **Garde-fous** : avertissement du navigateur si l'onglet se ferme, et confirmation si l'on quitte la page pendant un envoi (qui est alors interrompu). L'écran est maintenu allumé pendant les envois (Wake Lock, quand le navigateur le permet).
+- **Zone d'envoi** : bouton pour le téléphone (sélection multiple, formats JPEG/PNG/WebP/MP4), glisser-déposer sur ordinateur.
+- **Liste du contenu** : éléments dans l'ordre d'affichage avec miniature (qui ouvre l'image en grand), nom d'origine et taille ; vidéo sans miniature signalée ; extrait pour les textes. Suppression d'un élément avec confirmation (fichiers effacés du serveur).
+- **Limites** : la taille maximale d'un fichier est contrôlée par le serveur (30 Mo par photo, 500 Mo par vidéo par défaut), qui répond par un message clair. Une application mise en arrière-plan par le téléphone peut suspendre l'envoi : garder l'écran allumé et l'onglet au premier plan.

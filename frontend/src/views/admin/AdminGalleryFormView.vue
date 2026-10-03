@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AdminLayout from '../../components/AdminLayout.vue'
 import ConfirmDialog from '../../components/ConfirmDialog.vue'
+import GalleryContent from '../../components/GalleryContent.vue'
 import LocationPicker from '../../components/LocationPicker.vue'
 import { api, ApiError } from '../../api'
 
@@ -192,9 +193,16 @@ async function remove() {
         </button>
       </form>
 
+      <GalleryContent
+        v-if="id !== null"
+        :key="id"
+        :gallery-id="id"
+        :items="detail.items"
+        @update:items="(items) => (detail.items = items)"
+      />
+
       <section v-if="id !== null" class="card admin__section">
-        <h2>Contenu</h2>
-        <p class="muted">{{ contentSummary || 'Aucun contenu pour le moment.' }}</p>
+        <h2>Actions</h2>
         <p><RouterLink :to="{ name: 'gallery', params: { id } }">Voir sur le site</RouterLink></p>
         <button class="btn btn--ghost btn--danger-text" type="button" @click="confirmDelete = true">
           Supprimer la galerie

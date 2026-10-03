@@ -15,7 +15,11 @@ export function onUnauthorized(handler) {
   unauthorizedHandler = handler
 }
 
-function csrfToken() {
+export function notifyUnauthorized() {
+  unauthorizedHandler?.()
+}
+
+export function csrfToken() {
   const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/)
   return match ? decodeURIComponent(match[1]) : null
 }
@@ -45,8 +49,55 @@ export async function api(path, { method = 'GET', body, headers = {} } = {}) {
   const data = isJson ? await response.json() : null
 
   if (!response.ok) {
-    if (response.status === 401 && path.startsWith('/api/admin')) unauthorizedHandler?.()
+    if (response.status === 401 && path.startsWith('/api/admin')) notifyUnauthorized()
     throw new ApiError(response.status, data)
   }
   return data
+}
+
+/**
+ * Envoie UN fichier (champ « file ») avec une vraie progression : fetch() ne sait pas mesurer l'envoi,
+ * XMLHttpRequest oui. Résout avec la réponse JSON ; rejette avec une ApiError (réponse refusée),
+ * une Error (réseau) ou une AbortError (annulé via le signal).
+ * @param {string} path
+ * @param {File} file
+ * @param {{ onProgress?: (fraction: number) => void, signal?: AbortSignal }} [options]
+ */
+export function uploadFile(path, file, { onProgress, signal } = {}) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Annulé', 'AbortError'))
+      return
+    }
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', path)
+    xhr.setRequestHeader('Accept', 'application/json')
+    const token = csrfToken()
+    if (token) xhr.setRequestHeader('X-XSRF-TOKEN', token)
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress?.(event.loaded / event.total)
+    }
+    xhr.onload = () => {
+      let data = null
+      try {
+        data = xhr.responseText ? JSON.parse(xhr.responseText) : null
+      } catch {
+        /* réponse non JSON (ex. page d'erreur d'un proxy) : pas de détail */
+      }
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve(data)
+      } else {
+        if (xhr.status === 401 && path.startsWith('/api/admin')) unauthorizedHandler?.()
+        reject(new ApiError(xhr.status, data))
+      }
+    }
+    xhr.onerror = () => reject(new Error('Erreur réseau'))
+    xhr.onabort = () => reject(new DOMException('Annulé', 'AbortError'))
+    signal?.addEventListener('abort', () => xhr.abort(), { once: true })
+
+    const form = new FormData()
+    form.append('file', file)
+    xhr.send(form)
+  })
 }
