@@ -446,3 +446,6 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Navigation** : boutons précédent/suivant, flèches du clavier, balayage au doigt (photos seulement, désactivé quand l'image est zoomée), Échap pour fermer. Les photos voisines sont préchargées. Les blocs de texte sont ignorés dans la visionneuse.
 - **Vidéo illisible** (ex. HEVC non supporté par le navigateur, puisqu'il n'y a pas de transcodage) : message explicatif et téléchargement possible.
 - **Accessibilité** : fenêtre modale (`role="dialog"`), focus placé puis restitué, Tab qui reste dans la fenêtre.
+- **Carte agrandissable (mobile et tablette)** : un bouton passe la carte en plein écran, la liste est masquée mais conserve sa position. Choisir un marqueur réduit la carte et montre la galerie. En paysage sur téléphone, carte et liste passent côte à côte.
+- **Animations réduites** : pas de fondu des tuiles ni d'animation des marqueurs ; aucune animation de zoom si le visiteur demande de réduire les animations. Repli `vh` pour les navigateurs sans `dvh`.
+- **Thème** : `frontend/public/theme.css` est le thème par défaut ; `frontend/themes/japon.css` est un exemple complet (mêmes variables). Le titre de l'onglet reflète la galerie sélectionnée.

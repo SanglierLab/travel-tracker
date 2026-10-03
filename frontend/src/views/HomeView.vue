@@ -1,5 +1,5 @@
 <script setup>
-import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import GalleryCard from '../components/GalleryCard.vue'
 import MediaViewer from '../components/MediaViewer.vue'
@@ -96,9 +96,14 @@ function scrollToGallery(id, smooth) {
 }
 
 // Sélection depuis la carte (scrollToCard = true) ou depuis un en-tête de galerie (false : elle est déjà à l'écran).
-function selectGallery(id, scrollToCard) {
+async function selectGallery(id, scrollToCard) {
   const gallery = journal.galleries.find((g) => g.id === id)
   if (!gallery) return
+  // Carte agrandie sur mobile : on la réduit pour montrer la galerie choisie (et on attend que la mise en page suive).
+  if (scrollToCard && mapExpanded.value) {
+    mapExpanded.value = false
+    await nextTick()
+  }
   if (id === selectedId.value) {
     if (scrollToCard) scrollToGallery(id, true)
     return
@@ -109,6 +114,25 @@ function selectGallery(id, scrollToCard) {
   if (gallery.page === journal.data?.page) router.replace(location)
   else router.push(location)
 }
+
+// ---------------------------------------------------------------------------
+// Carte agrandie (mobile) et titre de l'onglet
+// ---------------------------------------------------------------------------
+
+const mapExpanded = ref(false)
+
+const BASE_TITLE = 'Journal de voyage'
+const selectedGallery = computed(() => journal.galleries.find((g) => g.id === selectedId.value))
+watch(
+  selectedGallery,
+  (gallery) => {
+    document.title = gallery ? `${gallery.title} · ${gallery.placeName} — ${BASE_TITLE}` : BASE_TITLE
+  },
+  { immediate: true },
+)
+onBeforeUnmount(() => {
+  document.title = BASE_TITLE
+})
 
 // ---------------------------------------------------------------------------
 // Visionneuse
@@ -161,9 +185,20 @@ watch([settled, viewerItemId, viewer], () => {
 </script>
 
 <template>
-  <div class="home">
+  <div class="home" :class="{ 'home--map-expanded': mapExpanded }">
     <section class="home__map" aria-label="Carte du voyage">
       <TravelMap :galleries="journal.galleries" :selected-id="selectedId" @select="(id) => selectGallery(id, true)" />
+      <!-- Visible sur mobile seulement : la carte passe en plein écran, ou revient à sa taille normale -->
+      <button
+        class="map-toggle"
+        type="button"
+        :aria-expanded="mapExpanded"
+        :aria-label="mapExpanded ? 'Réduire la carte' : 'Agrandir la carte'"
+        @click="mapExpanded = !mapExpanded"
+      >
+        <svg v-if="!mapExpanded" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
+        <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
+      </button>
     </section>
 
     <main ref="listElement" class="home__list">

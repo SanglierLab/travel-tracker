@@ -117,6 +117,7 @@ a { color: var(--color-accent); }
 /* ------------------------------------------------------------------ */
 
 .home {
+  height: 100vh; /* repli pour les navigateurs sans « dvh » */
   height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -124,6 +125,8 @@ a { color: var(--color-accent); }
 }
 
 .home__map {
+  position: relative;
+  flex: 0 0 40vh;
   flex: 0 0 40dvh;
   min-height: 0;
   background: var(--color-placeholder);
@@ -394,3 +397,59 @@ a { color: var(--color-accent); }
 }
 .viewer__nav--prev { left: calc(0.5rem + env(safe-area-inset-left, 0px)); }
 .viewer__nav--next { right: calc(0.5rem + env(safe-area-inset-right, 0px)); }
+
+/* ------------------------------------------------------------------ */
+/* Finitions : carte agrandie, paysage, largeur de lecture              */
+/* ------------------------------------------------------------------ */
+
+/* Colonne de lecture : sur tablette, les lignes ne s'étirent pas sur toute la largeur */
+.home__list > * { max-width: 46rem; margin-left: auto; margin-right: auto; }
+
+/* Bouton agrandir / réduire la carte (mobile et tablette) */
+.map-toggle {
+  display: none;
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  cursor: pointer;
+}
+.map-toggle svg {
+  width: 1.4rem;
+  height: 1.4rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 59.99rem) {
+  .map-toggle { display: flex; }
+  .home--map-expanded .home__map { flex: 1 1 auto; }
+  /* Liste masquée mais conservée : sa position de défilement n'est pas perdue */
+  .home--map-expanded .home__list { flex: 0 0 0; padding-top: 0; padding-bottom: 0; visibility: hidden; }
+}
+
+/* Téléphone en paysage : la carte à gauche, la liste à droite (la carte à 40 % de la hauteur serait minuscule) */
+@media (max-width: 59.99rem) and (max-height: 32rem) and (orientation: landscape) {
+  .home { flex-direction: row; }
+  .home__map, .home--map-expanded .home__map { flex: 1 1 50%; }
+  .home__list, .home--map-expanded .home__list {
+    flex: 1 1 50%;
+    padding-top: 1rem;
+    padding-bottom: calc(2rem + env(safe-area-inset-bottom, 0px));
+    visibility: visible;
+    border-left: 1px solid var(--color-border);
+  }
+  .map-toggle { display: none; }
+}

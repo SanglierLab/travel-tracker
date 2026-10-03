@@ -17,6 +17,7 @@ let map = null
 let layer = null
 let observer = null
 let fitted = false
+let reducedMotion = false
 const markers = new Map() // id de galerie -> { marker, gallery }
 
 const PIN_PATH = 'M16 1C7.7 1 1 7.6 1 15.7 1 26.5 16 39 16 39s15-12.5 15-23.3C31 7.6 24.3 1 16 1z'
@@ -112,12 +113,20 @@ function applySelection(id, previousId) {
   const current = id != null ? markers.get(id) : null
   if (current) {
     style(current, true)
-    map.setView(current.marker.getLatLng(), Math.max(map.getZoom(), 6))
+    map.setView(current.marker.getLatLng(), Math.max(map.getZoom(), 6), { animate: !reducedMotion })
   }
 }
 
 onMounted(() => {
-  map = L.map(element.value, { worldCopyJump: true })
+  // Peu d'animations : pas de fondu des tuiles ni d'animation des marqueurs, et aucune animation
+  // de zoom si le visiteur a demandé de réduire les animations.
+  reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
+  map = L.map(element.value, {
+    worldCopyJump: true,
+    fadeAnimation: false,
+    markerZoomAnimation: false,
+    zoomAnimation: !reducedMotion,
+  })
   map.attributionControl.setPrefix(false)
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,

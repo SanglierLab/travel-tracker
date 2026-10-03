@@ -128,6 +128,16 @@ curl -s $BASE/api/public/map
 Les fichiers sont écrits dans `<media-dir>/<id galerie>/` : `<uuid>-thumb.jpg`, `<uuid>-display.jpg`, `<uuid>-original.<ext>`.
 Supprimer un élément ou une galerie efface aussi les fichiers. Un fichier non reconnu (même renommé en `.jpg`) est refusé avec un message en français.
 
+## Personnaliser le thème
+
+La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.
+
+1. Copier `frontend/public/theme.css` (thème par défaut) ou `frontend/themes/japon.css` (exemple) vers `<TT_BASE_DIR>/theme/theme.css` sur le NAS.
+2. Dans `docker/docker-compose.yml`, décommenter la ligne `theme.css` du service `web`.
+3. `docker compose up -d` : le nouveau thème est pris en compte au rechargement de la page, sans reconstruire d'image.
+
+Le fichier doit être complet (toutes les variables du thème par défaut) et exister avant le démarrage du conteneur.
+
 ## Développement local
 
 1. Créer `backend/config/application.yml` (dossier ignoré par git) à partir de l'exemple, avec `server.servlet.session.cookie.secure: false`.
