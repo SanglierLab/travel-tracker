@@ -1,18 +1,23 @@
 <script setup>
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
 import { api, ApiError, uploadFile } from '../api'
 import { formatSize } from '../format'
 import { createUploadQueue } from '../uploadQueue'
 import ConfirmDialog from './ConfirmDialog.vue'
+import TextEditorDialog from './TextEditorDialog.vue'
 
 // Contenu d'une galerie : envoi de photos et vidéos (un par un, avec progression et « Réessayer »),
-// liste des éléments, suppression. `items` est géré par le parent (v-model:items).
+// blocs de texte, réordonnancement, suppression. `items` est géré par le parent (v-model:items).
 const props = defineProps({
   galleryId: { type: Number, required: true },
   items: { type: Array, required: true },
 })
 const emit = defineEmits(['update:items'])
+
+function messageOf(e, fallback) {
+  return e instanceof ApiError && e.body?.message ? e.body.message : fallback
+}
 
 // --- Envoi ---------------------------------------------------------------
 
@@ -89,6 +94,63 @@ onBeforeUnmount(() => {
   wakeLock?.release?.().catch(() => {})
 })
 
+// --- Textes ---------------------------------------------------------------------
+
+const editor = ref(null) // { item } : item = null pour un nouveau texte
+const editorSaving = ref(false)
+const editorError = ref('')
+
+function openEditor(item = null) {
+  editor.value = { item }
+  editorError.value = ''
+}
+
+async function saveText(markdown) {
+  editorSaving.value = true
+  editorError.value = ''
+  try {
+    const item = editor.value.item
+    if (item) {
+      const updated = await api(`/api/admin/items/${item.id}`, { method: 'PUT', body: { markdown } })
+      emit('update:items', props.items.map((existing) => (existing.id === updated.id ? updated : existing)))
+    } else {
+      addItem(await api(`/api/admin/galleries/${props.galleryId}/items/text`, { method: 'POST', body: { markdown } }))
+    }
+    editor.value = null
+  } catch (e) {
+    editorError.value = messageOf(e, "L'enregistrement a échoué. Vérifiez votre connexion et réessayez.")
+  } finally {
+    editorSaving.value = false
+  }
+}
+
+// --- Réordonnancement ---------------------------------------------------------
+
+const moving = ref(false)
+
+async function move(index, direction) {
+  const target = index + (direction === 'UP' ? -1 : 1)
+  if (moving.value || target < 0 || target >= props.items.length) return
+  const first = props.items[index]
+  const second = props.items[target]
+  moving.value = true
+  error.value = ''
+  try {
+    await api(`/api/admin/items/${first.id}/move?direction=${direction}`, { method: 'POST' })
+    // Le serveur échange les deux éléments voisins : on fait de même ici, sans recharger la galerie.
+    const next = [...props.items]
+    next[index] = { ...second, sortOrder: first.sortOrder }
+    next[target] = { ...first, sortOrder: second.sortOrder }
+    emit('update:items', next)
+    await nextTick()
+    document.getElementById(`item-${first.id}`)?.scrollIntoView({ block: 'nearest' })
+  } catch (e) {
+    error.value = messageOf(e, 'Le déplacement a échoué. Vérifiez votre connexion et réessayez.')
+  } finally {
+    moving.value = false
+  }
+}
+
 // --- Liste et suppression ----------------------------------------------------
 
 const toDelete = ref(null)
@@ -119,7 +181,7 @@ async function confirmDeletion() {
     await api(`/api/admin/items/${item.id}`, { method: 'DELETE' })
     emit('update:items', props.items.filter((existing) => existing.id !== item.id))
   } catch (e) {
-    error.value = e instanceof ApiError && e.body?.message ? e.body.message : 'La suppression a échoué.'
+    error.value = messageOf(e, 'La suppression a échoué.')
   } finally {
     deleting.value = false
     toDelete.value = null
@@ -133,16 +195,19 @@ async function confirmDeletion() {
 
     <!-- Zone d'envoi : bouton pour le téléphone, glisser-déposer pour l'ordinateur -->
     <div class="dropzone" @dragover.prevent @drop.prevent="onDrop">
-      <label class="btn btn--block">
-        Ajouter des photos ou des vidéos
-        <input
-          class="visually-hidden"
-          type="file"
-          multiple
-          accept="image/jpeg,image/png,image/webp,video/mp4"
-          @change="onPick"
-        />
-      </label>
+      <div class="dropzone__buttons">
+        <label class="btn btn--block">
+          Ajouter des photos ou des vidéos
+          <input
+            class="visually-hidden"
+            type="file"
+            multiple
+            accept="image/jpeg,image/png,image/webp,video/mp4"
+            @change="onPick"
+          />
+        </label>
+        <button class="btn btn--ghost btn--block" type="button" @click="openEditor()">Ajouter un texte</button>
+      </div>
       <p class="muted dropzone__hint">
         JPEG, PNG, WebP ou MP4. Les fichiers partent un par un : gardez l'écran allumé jusqu'à la fin.
       </p>
@@ -195,10 +260,10 @@ async function confirmDeletion() {
 
     <p v-if="error" class="error" role="alert">{{ error }}</p>
 
-    <!-- Éléments de la galerie, dans l'ordre d'affichage -->
+    <!-- Éléments de la galerie, dans l'ordre d'affichage du site -->
     <p v-if="items.length === 0" class="muted">Aucun contenu pour le moment.</p>
     <ul v-else class="items">
-      <li v-for="item in items" :key="item.id" class="items__row">
+      <li v-for="(item, index) in items" :id="`item-${item.id}`" :key="item.id" class="items__row">
         <component
           :is="item.type === 'TEXT' ? 'span' : 'a'"
           class="items__thumb"
@@ -214,11 +279,50 @@ async function confirmDeletion() {
           <strong>{{ label(item) }}</strong>
           <span class="muted">{{ details(item) }}</span>
         </span>
-        <button class="btn btn--ghost btn--icon" type="button" aria-label="Supprimer" @click="toDelete = item">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
-        </button>
+        <span class="items__actions">
+          <button
+            class="btn btn--ghost btn--icon"
+            type="button"
+            aria-label="Monter"
+            :disabled="index === 0 || moving"
+            @click="move(index, 'UP')"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+          </button>
+          <button
+            class="btn btn--ghost btn--icon"
+            type="button"
+            aria-label="Descendre"
+            :disabled="index === items.length - 1 || moving"
+            @click="move(index, 'DOWN')"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+          <button
+            v-if="item.type === 'TEXT'"
+            class="btn btn--ghost btn--icon"
+            type="button"
+            aria-label="Modifier le texte"
+            @click="openEditor(item)"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" /></svg>
+          </button>
+          <button class="btn btn--ghost btn--icon" type="button" aria-label="Supprimer" @click="toDelete = item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></svg>
+          </button>
+        </span>
       </li>
     </ul>
+
+    <TextEditorDialog
+      v-if="editor"
+      :title="editor.item ? 'Modifier le texte' : 'Nouveau texte'"
+      :initial="editor.item?.textMarkdown ?? ''"
+      :saving="editorSaving"
+      :error="editorError"
+      @save="saveText"
+      @cancel="editor = null"
+    />
 
     <ConfirmDialog
       v-if="toDelete"

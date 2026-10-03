@@ -467,3 +467,12 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Zone d'envoi** : bouton pour le téléphone (sélection multiple, formats JPEG/PNG/WebP/MP4), glisser-déposer sur ordinateur.
 - **Liste du contenu** : éléments dans l'ordre d'affichage avec miniature (qui ouvre l'image en grand), nom d'origine et taille ; vidéo sans miniature signalée ; extrait pour les textes. Suppression d'un élément avec confirmation (fichiers effacés du serveur).
 - **Limites** : la taille maximale d'un fichier est contrôlée par le serveur (30 Mo par photo, 500 Mo par vidéo par défaut), qui répond par un message clair. Une application mise en arrière-plan par le téléphone peut suspendre l'envoi : garder l'écran allumé et l'onglet au premier plan.
+
+## 14. Décisions d'implémentation (phase 3c : textes et ordre du contenu)
+
+- **Blocs de texte** : ajout (« Ajouter un texte », en dernière position) et modification (crayon sur la ligne) dans une fenêtre d'édition. Saisie en markdown limité (voir §10), 20 000 caractères maximum, tous caractères acceptés.
+- **Mise en forme sur téléphone** : boutons Gras, Italique, Liste à puces et Lien qui entourent la sélection (ou insèrent un modèle) ; pour un lien, le curseur est placé directement sur l'adresse.
+- **Aperçu** : calculé par le serveur (`POST /api/admin/markdown/preview`) avec le même rendu que la partie publique : ce que l'on voit est ce que verront les visiteurs. Pas de bibliothèque markdown côté navigateur.
+- **Abandon** : une confirmation est demandée si le texte a été modifié ; elle ne l'est pas sinon.
+- **Ordre** : boutons Monter / Descendre sur chaque ligne (photos, vidéos et textes se mélangent librement), inactifs aux extrémités et pendant un déplacement. Le serveur échange l'élément avec son voisin ; l'écran fait de même sans recharger la galerie, et l'élément déplacé reste visible.
+- **Hors périmètre** : glisser-déposer pour réordonner (moins fiable sur mobile), insertion d'un texte à une position précise (on l'ajoute en dernier, puis on le monte).
