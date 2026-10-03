@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, nextTick, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import GalleryCard from '../components/GalleryCard.vue'
+import MediaViewer from '../components/MediaViewer.vue'
 import Pagination from '../components/Pagination.vue'
 import { journal, loadMap, loadPage } from '../journal'
 
@@ -13,25 +14,36 @@ const router = useRouter()
 const listElement = ref(null)
 
 // L'adresse est l'unique source de vérité :
-//   /?page=2        -> page 2, aucune galerie sélectionnée
-//   /galerie/12     -> galerie 12 sélectionnée, sur la page où elle se trouve
+//   /?page=2          -> page 2, aucune galerie sélectionnée
+//   /galerie/12       -> galerie 12 sélectionnée, sur la page où elle se trouve
+//   ...?media=345     -> visionneuse ouverte sur le média 345 (le bouton « retour » la ferme)
 const selectedId = computed(() => (route.name === 'gallery' ? Number(route.params.id) : null))
 const queryPage = computed(() => {
   const n = parseInt(route.query.page, 10)
   return Number.isInteger(n) && n > 0 ? n : 1
 })
+const viewerItemId = computed(() => {
+  const n = parseInt(route.query.media, 10)
+  return Number.isInteger(n) && n > 0 ? n : null
+})
 
 // La carte est rechargée à chaque visite de l'écran (de nouvelles galeries ont pu être ajoutées).
 const mapReady = loadMap()
 
+// ---------------------------------------------------------------------------
+// Liste : chargement de la bonne page, sélection, défilement
+// ---------------------------------------------------------------------------
+
 let run = 0
 let first = true
 let suppressScroll = false
+const settled = ref(false) // false tant que la page demandée n'est pas chargée
 
 async function sync(force = false) {
   const current = ++run
   const initial = first
   first = false
+  settled.value = false
 
   let target = queryPage.value
   if (selectedId.value !== null) {
@@ -65,9 +77,15 @@ async function sync(force = false) {
     listElement.value?.scrollTo({ top: 0 })
   }
   suppressScroll = false
+  settled.value = true
 }
 
-watch(() => route.fullPath, () => sync(), { immediate: true })
+// La visionneuse (?media=) ne doit pas relancer le chargement : on ne surveille que la page et la galerie.
+watch(
+  () => `${String(route.name)}|${route.params.id ?? ''}|${route.query.page ?? ''}`,
+  () => sync(),
+  { immediate: true },
+)
 
 function scrollToGallery(id, smooth) {
   const list = listElement.value
@@ -92,10 +110,54 @@ function selectGallery(id, scrollToCard) {
   else router.push(location)
 }
 
-// Provisoire (étape 2a) : la visionneuse plein écran arrive à l'étape 2c.
-function open(gallery, item) {
-  window.open(item.displayUrl || item.originalUrl, '_blank', 'noopener')
+// ---------------------------------------------------------------------------
+// Visionneuse
+// ---------------------------------------------------------------------------
+
+// Média demandé par l'adresse, retrouvé dans la page chargée, avec ses voisins (photos et vidéos de la galerie).
+const viewer = computed(() => {
+  const id = viewerItemId.value
+  if (id === null || !journal.data) return null
+  for (const gallery of journal.data.content) {
+    const media = gallery.items.filter((item) => item.type !== 'TEXT')
+    const index = media.findIndex((item) => item.id === id)
+    if (index >= 0) return { gallery, media, index }
+  }
+  return null
+})
+
+let openedByUs = false // vrai si c'est un clic qui a ajouté l'entrée d'historique
+
+function locationWith(mediaId) {
+  const { media, ...query } = route.query
+  return { name: route.name, params: route.params, query: mediaId ? { ...query, media: mediaId } : query }
 }
+
+function open(gallery, item) {
+  openedByUs = true
+  router.push(locationWith(item.id))
+}
+
+function closeViewer() {
+  if (openedByUs) {
+    openedByUs = false
+    router.back() // revient exactement où l'on était
+  } else {
+    router.replace(locationWith(null)) // arrivée directe par un lien
+  }
+}
+
+function navigateViewer(index) {
+  router.replace(locationWith(viewer.value.media[index].id)) // pas d'entrée d'historique supplémentaire
+}
+
+watch([settled, viewerItemId, viewer], () => {
+  if (viewerItemId.value === null) {
+    openedByUs = false
+  } else if (settled.value && !viewer.value) {
+    router.replace(locationWith(null)) // média inconnu ou supprimé
+  }
+})
 </script>
 
 <template>
@@ -134,5 +196,14 @@ function open(gallery, item) {
         <RouterLink to="/admin" class="muted">Administration</RouterLink>
       </footer>
     </main>
+
+    <MediaViewer
+      v-if="viewer"
+      :items="viewer.media"
+      :index="viewer.index"
+      :title="viewer.gallery.title"
+      @close="closeViewer"
+      @navigate="navigateViewer"
+    />
   </div>
 </template>

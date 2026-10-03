@@ -298,3 +298,99 @@ a { color: var(--color-accent); }
 .pin-tip__body img { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }
 .pin-tip__body div { display: flex; flex-direction: column; min-width: 0; }
 .pin-tip__body span { color: var(--color-muted); font-size: 0.85rem; }
+
+/* ------------------------------------------------------------------ */
+/* Visionneuse plein écran (photos et vidéos)                           */
+/* ------------------------------------------------------------------ */
+
+.viewer {
+  position: fixed;
+  inset: 0;
+  z-index: 3000; /* au-dessus de la carte et de ses commandes */
+  display: flex;
+  flex-direction: column;
+  background: rgba(0, 0, 0, 0.94);
+  color: #fff;
+  overscroll-behavior: contain;
+}
+
+.viewer__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: calc(0.5rem + env(safe-area-inset-top, 0px)) calc(0.75rem + env(safe-area-inset-right, 0px))
+    0.5rem calc(0.75rem + env(safe-area-inset-left, 0px));
+}
+.viewer__title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
+.viewer__count { font-size: 0.9rem; opacity: 0.8; white-space: nowrap; }
+
+.viewer__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+.viewer__btn svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.viewer__btn:focus-visible { outline-color: #fff; }
+.viewer__label { display: none; }
+@media (min-width: 40rem) {
+  .viewer__label { display: inline; }
+}
+
+.viewer__stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.viewer__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.viewer__video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+.viewer__error { padding: 2rem 1.5rem; text-align: center; }
+
+.viewer__nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 52px;
+  min-height: 64px;
+  background: rgba(0, 0, 0, 0.45);
+}
+.viewer__nav--prev { left: calc(0.5rem + env(safe-area-inset-left, 0px)); }
+.viewer__nav--next { right: calc(0.5rem + env(safe-area-inset-right, 0px)); }

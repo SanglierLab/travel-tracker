@@ -437,3 +437,12 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Réordonnancement** : `POST /api/admin/items/{id}/move?direction=UP|DOWN` échange l'élément avec son voisin.
 - **Erreurs** : corps JSON `{"message": "..."}` en français.
 - **Développement** : le profil Spring `dev` sert `/media/**` depuis le dossier des médias (en production, c'est nginx).
+
+## 11. Décisions d'implémentation (phase 2)
+
+- **Sélection pilotée par l'adresse** : `/?page=n`, `/galerie/:id` (galerie sélectionnée, page ouverte, carte centrée) et `?media=:id` (visionneuse ouverte). L'adresse est l'unique source de vérité ; Leaflet est chargé à part.
+- **Visionneuse** : ouvre une entrée d'historique (le bouton « retour » du téléphone la ferme et ramène exactement où l'on était) ; passer d'un média à l'autre remplace l'entrée au lieu d'en ajouter. Un lien `?media=` reste partageable ; un média inconnu est ignoré.
+- **Contenu** : photos affichées en version « pleine page » (la miniature, déjà en cache, apparaît pendant le chargement) ; vidéos lues depuis le fichier original (`<video>` natif, lecture automatique) ; téléchargement de l'original par un lien `download` (même origine) avec son nom d'origine et sa taille.
+- **Navigation** : boutons précédent/suivant, flèches du clavier, balayage au doigt (photos seulement, désactivé quand l'image est zoomée), Échap pour fermer. Les photos voisines sont préchargées. Les blocs de texte sont ignorés dans la visionneuse.
+- **Vidéo illisible** (ex. HEVC non supporté par le navigateur, puisqu'il n'y a pas de transcodage) : message explicatif et téléchargement possible.
+- **Accessibilité** : fenêtre modale (`role="dialog"`), focus placé puis restitué, Tab qui reste dans la fenêtre.
