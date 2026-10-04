@@ -128,6 +128,48 @@ curl -s $BASE/api/public/map
 Les fichiers sont écrits dans `<media-dir>/<id galerie>/` : `<uuid>-thumb.jpg`, `<uuid>-display.jpg`, `<uuid>-original.<ext>`.
 Supprimer un élément ou une galerie efface aussi les fichiers. Un fichier non reconnu (même renommé en `.jpg`) est refusé avec un message en français.
 
+## Configurer GPSLogger (position en temps réel)
+
+[GPSLogger](https://github.com/mendhak/gpslogger) (Android, gratuit) envoie chaque position au serveur au fur et à mesure.
+Version vérifiée : v136 (juillet 2026). À télécharger sur GitHub (page « Releases ») ou sur F-Droid.
+Dans l'application : *Logging details* → activer **Log to custom URL**, puis ouvrir ses réglages
+(les libellés exacts peuvent varier légèrement d'une version à l'autre) :
+
+| Champ | Valeur |
+|---|---|
+| **URL** | `https://voyage.sanglierlab.fr/api/track/points` (remplacer par ton vrai sous-domaine) |
+| **HTTP Body** | `{"latitude":%LAT,"longitude":%LON,"time":"%TIME"}` |
+| **HTTP Headers** | `Content-Type: application/json` puis, à la ligne : `X-API-Token: <ton token>` |
+| **HTTP Method** | `POST` |
+| **Basic Authentication** | laisser vide |
+
+Le token est celui de `app.api-token` dans `application.yml`. Il passe dans un en-tête, jamais dans l'URL.
+
+**Si l'heure est refusée** (message « Date illisible » dans les journaux de GPSLogger), remplacer le corps par
+`{"latitude":%LAT,"longitude":%LON,"timestamp":%TIMESTAMP}` : l'API accepte aussi un horodatage en secondes.
+
+**Réglages conseillés** (à ajuster à l'usage) : autoriser la localisation « tout le temps » pour l'application, la dispenser de
+l'optimisation de batterie, et choisir un intervalle de 60 à 300 secondes avec un filtre de distance (50 m) pour économiser batterie et données.
+
+### Tester sans téléphone
+
+```bash
+BASE=https://voyage.sanglierlab.fr    # ou http://localhost:8080 en développement
+TOKEN='<ton token>'
+
+# Premier envoi : {"status":"created"}
+curl -i -X POST $BASE/api/track/points -H "Content-Type: application/json" -H "X-API-Token: $TOKEN" \
+  -d '{"latitude":48.8583,"longitude":2.2945,"time":"2026-10-04T10:00:00.000Z"}'
+# Même envoi : {"status":"duplicate"} (code 200 aussi : le point existe déjà, rien n'est ajouté)
+# Mauvais token : 401   |   sans « Content-Type: application/json » : 415   |   latitude > 90 : 400
+```
+
+Vérifier en base : `SELECT * FROM track_point ORDER BY id DESC LIMIT 5;` (heures en UTC).
+
+**Au premier essai réel**, vérifier que les coordonnées enregistrées sont correctes (séparateur décimal : un point, pas une virgule)
+et que l'heure du point est bien celle de la prise de position et non celle de l'envoi.
+Hors connexion, GPSLogger peut renvoyer des points en rafale plus tard : l'API utilise l'heure du point et ignore les doublons.
+
 ## Personnaliser le thème
 
 La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.

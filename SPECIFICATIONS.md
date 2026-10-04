@@ -322,9 +322,9 @@ Le numéro de page de chaque galerie est calculé côté serveur (`rang / taille
 
 **API de positions (en-tête `X-API-Token`)**
 
-- `POST /api/track/points` : `latitude`, `longitude` et `recordedAt` (l'heure du point, pas celle de l'envoi). Réponse **200** avec un petit JSON.
+- `POST /api/track/points` : `latitude`, `longitude` et l'heure du point (`time` ISO 8601, ou `timestamp` en secondes ; pas l'heure de l'envoi). Réponse **200** avec `{"status":"created"}` ou `{"status":"duplicate"}`.
 - La source est toujours `DEVICE` ; les points `ADSB` / `AIS` seront insérés par le futur batch interne.
-- Configuration GPSLogger (URL personnalisée, en-tête, corps JSON avec les variables de position et d'heure) : à documenter à la phase 4 après vérification de la documentation de GPSLogger.
+- Configuration de GPSLogger (URL, en-têtes, corps JSON, méthode) : voir `README.md`.
 
 ### 6.5 Frontend : routes et écrans
 
@@ -476,3 +476,12 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Abandon** : une confirmation est demandée si le texte a été modifié ; elle ne l'est pas sinon.
 - **Ordre** : boutons Monter / Descendre sur chaque ligne (photos, vidéos et textes se mélangent librement), inactifs aux extrémités et pendant un déplacement. Le serveur échange l'élément avec son voisin ; l'écran fait de même sans recharger la galerie, et l'élément déplacé reste visible.
 - **Hors périmètre** : glisser-déposer pour réordonner (moins fiable sur mobile), insertion d'un texte à une position précise (on l'ajoute en dernier, puis on le monte).
+
+## 15. Décisions d'implémentation (phase 4a : réception des positions)
+
+- **GPSLogger** (v136, vérifiée dans sa documentation et ses notes de version) : envoi par `POST` JSON vers une URL personnalisée, avec en-têtes et corps libres. Corps retenu : `{"latitude":%LAT,"longitude":%LON,"time":"%TIME"}` ; en secours `"timestamp":%TIMESTAMP`. Les champs inconnus sont ignorés.
+- **Authentification** : en-tête `X-API-Token` comparé en temps constant (empreintes SHA-256) ; refus 401 avec un message en français. Le token ne passe jamais dans l'URL. La route ne crée pas de session et échappe au contrôle CSRF.
+- **Heure** : celle du point (GPSLogger peut renvoyer des points en rafale après une coupure), sinon celle de réception. Une date à plus d'un jour dans le futur (horloge du téléphone fausse) est refusée ; une date sans fuseau horaire aussi (on ne devine pas).
+- **Idempotence** : un point déjà reçu (même source, heure à la milliseconde, coordonnées arrondies à 6 décimales) est ignoré avec un statut 200 « duplicate » ; la contrainte d'unicité de la base tranche en cas d'envois simultanés.
+- **Source** : toujours `DEVICE` pour cette route ; les points `ADSB` et `AIS` seront insérés par le futur batch interne.
+- **Messages d'erreur** : un corps non JSON ou un `Content-Type` manquant donnent un message explicite (utile pour régler GPSLogger).

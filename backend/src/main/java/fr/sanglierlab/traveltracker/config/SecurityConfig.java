@@ -1,5 +1,6 @@
 package fr.sanglierlab.traveltracker.config;
 
+import fr.sanglierlab.traveltracker.auth.ApiTokenFilter;
 import fr.sanglierlab.traveltracker.auth.LoginAttemptService;
 import fr.sanglierlab.traveltracker.auth.LoginRateLimitFilter;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,7 +31,8 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http, LoginAttemptService attempts) throws Exception {
+    SecurityFilterChain securityFilterChain(HttpSecurity http, LoginAttemptService attempts, AppProperties properties)
+            throws Exception {
         http
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/api/public/**").permitAll()
@@ -42,7 +44,9 @@ public class SecurityConfig {
                         // /media est servi par nginx en production ; ici seulement pour le profil dev.
                         .requestMatchers(HttpMethod.GET, "/media/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        // Tout le reste est fermé par défaut (l'API de positions /api/track/** arrive en phase 4).
+                        // Positions envoyées par le téléphone : jeton d'API (en-tête X-API-Token), sans session.
+                        .requestMatchers(HttpMethod.POST, "/api/track/points").hasRole(ApiTokenFilter.ROLE)
+                        // Tout le reste est fermé par défaut.
                         .anyRequest().denyAll())
 
                 // CSRF : cookie XSRF-TOKEN lisible par le JS, renvoyé dans l'en-tête X-XSRF-TOKEN.
@@ -76,7 +80,8 @@ public class SecurityConfig {
                 .headers(headers -> headers.addHeaderWriter(
                         new StaticHeadersWriter("X-Robots-Tag", "noindex, nofollow, noarchive")))
 
-                .addFilterBefore(new LoginRateLimitFilter(attempts), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new LoginRateLimitFilter(attempts), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new ApiTokenFilter(properties.apiToken()), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
