@@ -170,6 +170,15 @@ Vérifier en base : `SELECT * FROM track_point ORDER BY id DESC LIMIT 5;` (heure
 et que l'heure du point est bien celle de la prise de position et non celle de l'envoi.
 Hors connexion, GPSLogger peut renvoyer des points en rafale plus tard : l'API utilise l'heure du point et ignore les doublons.
 
+### Consulter le tracé
+
+```bash
+curl -s $BASE/api/public/track | head -c 600
+```
+
+La réponse contient les lignes à dessiner (`segments`, points `[latitude, longitude]` déjà allégés, coupés quand le téléphone est resté plus de
+`app.track-gap-hours` sans envoyer de position) et la dernière position connue (`last`). L'affichage sur la carte arrive à l'étape 4b-2.
+
 ## Personnaliser le thème
 
 La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.

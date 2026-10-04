@@ -298,7 +298,7 @@ Supprimer une galerie supprime son dossier ; supprimer un média supprime ses fi
 |---|---|
 | `GET /api/public/galleries?page=n` | Une page de galeries avec leurs éléments (markdown déjà rendu en HTML sûr) ; renvoie aussi `pageSize`. |
 | `GET /api/public/map` | Toutes les galeries en version légère (id, titre, lieu, date, coordonnées, miniature de couverture, **numéro de la page** où elles apparaissent), même tri que la liste. |
-| `GET /api/public/track` | Tous les trajets, déjà découpés en segments avec leur source. |
+| `GET /api/public/track` | Lignes à dessiner (source, trajet, heures de début et de fin, points `[latitude, longitude]` simplifiés) et dernière position connue. |
 
 Le numéro de page de chaque galerie est calculé côté serveur (`rang / taille de page + 1`) : le front n'a pas besoin de connaître la taille de page. L'adresse `/galerie/:id` est la seule source de vérité de la sélection : sélectionner une galerie (depuis la carte ou la liste) change l'adresse.
 
@@ -485,3 +485,11 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Idempotence** : un point déjà reçu (même source, heure à la milliseconde, coordonnées arrondies à 6 décimales) est ignoré avec un statut 200 « duplicate » ; la contrainte d'unicité de la base tranche en cas d'envois simultanés.
 - **Source** : toujours `DEVICE` pour cette route ; les points `ADSB` et `AIS` seront insérés par le futur batch interne.
 - **Messages d'erreur** : un corps non JSON ou un `Content-Type` manquant donnent un message explicite (utile pour régler GPSLogger).
+
+## 16. Décisions d'implémentation (phase 4b-1 : tracé côté serveur)
+
+- **Endpoint** : `GET /api/public/track` (public, lecture seule) renvoie `{ segments: [...], last: {...} }`. Chaque segment porte sa `source` (`DEVICE`, `ADSB`, `AIS`), son `tripId` éventuel, ses heures de début et de fin (UTC) et ses points `[latitude, longitude]`. `last` est la dernière position connue, toutes sources confondues (ou `null`).
+- **Découpage** : les points du téléphone forment une ligne, coupée quand deux points consécutifs sont espacés de plus de `app.track-gap-hours` (6 h par défaut ; un écart exactement égal au seuil ne coupe pas). Les points d'un trajet suivi (vol, traversée) forment une seule ligne par trajet, sans coupure. Un point isolé donne une ligne d'un seul point. Les lignes sont triées de la plus ancienne à la plus récente.
+- **Allègement** : tremblement du GPS à l'arrêt supprimé (points à moins de 5 m du précédent), puis algorithme de Douglas-Peucker avec 25 m de tolérance. Si le total dépasse 20 000 points, la tolérance double jusqu'à rentrer dans le budget ; en dernier recours, points régulièrement espacés (extrémités conservées). Mesure : 10 800 points sur 15 jours -> 678 points renvoyés, calcul en 40 à 250 ms.
+- **Ligne de changement de date** : les longitudes d'une ligne sont continues (elles peuvent dépasser ±180) pour qu'un vol transpacifique ne soit pas tracé d'un bord à l'autre de la carte.
+- **Pas de cache** pour l'instant (usage familial) : le tracé est recalculé à chaque appel. À ajouter si besoin.
