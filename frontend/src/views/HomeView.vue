@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import GalleryCard from '../components/GalleryCard.vue'
 import MediaViewer from '../components/MediaViewer.vue'
 import Pagination from '../components/Pagination.vue'
-import { journal, loadMap, loadPage } from '../journal'
+import { journal, loadMap, loadPage, loadTrack } from '../journal'
+import { TRACK_SOURCES } from '../trackStyle'
 
 // Leaflet est chargé à part : la liste s'affiche sans attendre la bibliothèque de cartographie.
 const TravelMap = defineAsyncComponent(() => import('../components/TravelMap.vue'))
@@ -29,6 +30,26 @@ const viewerItemId = computed(() => {
 
 // La carte est rechargée à chaque visite de l'écran (de nouvelles galeries ont pu être ajoutées).
 const mapReady = loadMap()
+
+// Tracé en quasi temps réel : rechargé toutes les minutes tant que l'onglet est visible (et dès qu'il le redevient).
+const TRACK_REFRESH_MS = 60_000
+loadTrack()
+const trackTimer = setInterval(() => {
+  if (document.visibilityState === 'visible') loadTrack()
+}, TRACK_REFRESH_MS)
+function onVisibilityChange() {
+  if (document.visibilityState === 'visible') loadTrack()
+}
+document.addEventListener('visibilitychange', onVisibilityChange)
+onBeforeUnmount(() => {
+  clearInterval(trackTimer)
+  document.removeEventListener('visibilitychange', onVisibilityChange)
+})
+
+// Légende : seulement les sources présentes dans le tracé.
+const trackSources = computed(() => [
+  ...new Set(journal.track.segments.map((segment) => segment.source).filter((source) => TRACK_SOURCES[source])),
+])
 
 // ---------------------------------------------------------------------------
 // Liste : chargement de la bonne page, sélection, défilement
@@ -187,7 +208,30 @@ watch([settled, viewerItemId, viewer], () => {
 <template>
   <div class="home" :class="{ 'home--map-expanded': mapExpanded }">
     <section class="home__map" aria-label="Carte du voyage">
-      <TravelMap :galleries="journal.galleries" :selected-id="selectedId" @select="(id) => selectGallery(id, true)" />
+      <TravelMap
+        :galleries="journal.galleries"
+        :selected-id="selectedId"
+        :track="journal.track"
+        :galleries-loaded="journal.mapLoaded"
+        @select="(id) => selectGallery(id, true)"
+      />
+      <ul v-if="trackSources.length > 0" class="map-legend" aria-label="Légende des trajets">
+        <li v-for="source in trackSources" :key="source" :style="{ color: `var(${TRACK_SOURCES[source].cssVar})` }">
+          <svg viewBox="0 0 28 6" aria-hidden="true">
+            <line
+              x1="3"
+              y1="3"
+              x2="25"
+              y2="3"
+              stroke="currentColor"
+              :stroke-width="TRACK_SOURCES[source].weight"
+              stroke-linecap="round"
+              :stroke-dasharray="TRACK_SOURCES[source].dash ?? undefined"
+            />
+          </svg>
+          <span>{{ TRACK_SOURCES[source].label }}</span>
+        </li>
+      </ul>
       <!-- Visible sur mobile seulement : la carte passe en plein écran, ou revient à sa taille normale -->
       <button
         class="map-toggle"

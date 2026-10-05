@@ -177,7 +177,8 @@ curl -s $BASE/api/public/track | head -c 600
 ```
 
 La réponse contient les lignes à dessiner (`segments`, points `[latitude, longitude]` déjà allégés, coupés quand le téléphone est resté plus de
-`app.track-gap-hours` sans envoyer de position) et la dernière position connue (`last`). L'affichage sur la carte arrive à l'étape 4b-2.
+`app.track-gap-hours` sans envoyer de position) et la dernière position connue (`last`). La carte publique l'affiche : trait plein pour le téléphone,
+pointillés pour un avion, tirets espacés pour un bateau (couleurs `--track-*` du thème), avec une légende et la dernière position en gros point.
 
 ## Personnaliser le thème
 

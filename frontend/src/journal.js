@@ -8,7 +8,9 @@ export const journal = reactive({
   loading: false,
   error: false,
   galleries: [], // toutes les galeries (marqueurs), avec le numéro de page de chacune
+  mapLoaded: false, // vrai une fois la réponse reçue (ou en échec) : la carte sait alors si elle a des galeries
   mapError: false,
+  track: { segments: [], last: null }, // tracé de la route : lignes par source + dernière position connue
 })
 
 let lastRequest = 0
@@ -34,5 +36,16 @@ export async function loadMap() {
     journal.mapError = false
   } catch {
     journal.mapError = true
+  } finally {
+    journal.mapLoaded = true
+  }
+}
+
+/** Le tracé est un complément : en cas d'échec on garde simplement l'affichage précédent. */
+export async function loadTrack() {
+  try {
+    journal.track = await api('/api/public/track')
+  } catch {
+    /* réessayé automatiquement au prochain rafraîchissement */
   }
 }

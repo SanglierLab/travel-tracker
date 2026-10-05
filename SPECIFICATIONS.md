@@ -493,3 +493,12 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Allègement** : tremblement du GPS à l'arrêt supprimé (points à moins de 5 m du précédent), puis algorithme de Douglas-Peucker avec 25 m de tolérance. Si le total dépasse 20 000 points, la tolérance double jusqu'à rentrer dans le budget ; en dernier recours, points régulièrement espacés (extrémités conservées). Mesure : 10 800 points sur 15 jours -> 678 points renvoyés, calcul en 40 à 250 ms.
 - **Ligne de changement de date** : les longitudes d'une ligne sont continues (elles peuvent dépasser ±180) pour qu'un vol transpacifique ne soit pas tracé d'un bord à l'autre de la carte.
 - **Pas de cache** pour l'instant (usage familial) : le tracé est recalculé à chaque appel. À ajouter si besoin.
+
+## 17. Décisions d'implémentation (phase 4b-2 : tracé sur la carte)
+
+- **Style par source** (`frontend/src/trackStyle.js`) : téléphone en **trait plein**, avion en **pointillés** ronds, bateau en **tirets espacés**. Les couleurs viennent des variables `--track-device`, `--track-adsb`, `--track-ais` du thème, lues au moment du dessin : un autre thème les change sans toucher au code. Les styles de trait, eux, sont fixes, pour que les sources se distinguent même sans la couleur.
+- **Éléments** : une ligne par segment, avec une infobulle (source et période, dans le fuseau du visiteur) ; un point isolé (premier point après une longue pause) est une petite pastille ; la **dernière position connue** est un gros point à bordure blanche, avec « Dernière position connue · il y a 12 min ».
+- **Légende** en bas à gauche de la carte, limitée aux sources réellement présentes.
+- **Temps réel** : le tracé est rechargé toutes les minutes tant que l'onglet est visible, et dès qu'il le redevient. En cas d'échec du chargement, l'affichage précédent reste en place et le prochain rafraîchissement réessaie.
+- **Cadrage initial** : la carte se cadre une seule fois, quand les galeries sont connues (même s'il n'y en a pas), sur l'ensemble des galeries et du tracé ; les rafraîchissements suivants ne bougent plus la carte.
+- **Les marqueurs de galeries restent au-dessus du tracé** et gardent leur comportement (sélection, infobulle).
