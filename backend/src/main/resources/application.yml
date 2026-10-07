@@ -1,6 +1,15 @@
 # Valeurs par défaut embarquées dans le JAR (aucun secret ici).
 # Tout est surchargé par le fichier externe  ./config/application.yml  (monté dans /app/config en production).
 
+logging:
+  level:
+    root: INFO
+    fr.sanglierlab: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
 spring:
   application:
     name: travel-tracker
@@ -12,10 +21,6 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: none          # le schéma est géré uniquement par Flyway
-    properties:
-      hibernate:
-        jdbc:
-          time_zone: UTC
   flyway:
     enabled: true
   servlet:
@@ -56,7 +61,7 @@ app:
       password-hash: '$2a$12$q6QMNBPF2YcB3mTWIpAtBebFgpxYftiF1FrRfBcK7nOtMXQl2DZGu'
 
   # Token de l'API de positions (GPSLogger). 24 caractères minimum, aléatoire.
-  api-token: 'REMPLACER_PAR_UNE_LONGUE_CHAINE_ALEATOIRE'
+  api-token: 'TEST'
 
   media-dir: /data/media          # ne pas changer : correspond au volume Docker
   max-photo-size: 30MB
