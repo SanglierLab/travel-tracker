@@ -1,0 +1,132 @@
+/* =====================================================================
+   map-japan.css — Habillage des tuiles de carte (Leaflet / OSM)
+   À charger APRÈS leaflet.css et après ton style.css.
+   Aucun JS requis : tout passe par des filtres CSS sur le tile pane.
+   ===================================================================== */
+
+:root {
+  /* Réglages centralisés — ajuste ces 5 valeurs pour calibrer le rendu */
+  --map-saturate: 0.55;   /* désaturation : la photo doit primer sur la carte */
+  --map-contrast: 0.92;   /* contraste légèrement mou, façon papier imprimé */
+  --map-brightness: 1.06; /* éclaircit pour tendre vers le washi */
+  --map-sepia: 0.28;      /* vire les gris vers l'ocre */
+  --map-hue: -6deg;       /* bascule les verts/bleus OSM vers le chaud */
+  --map-blend: #efe7d8;   /* teinte de papier posée par-dessus */
+  --map-blend-alpha: 0.30;
+}
+
+/* ------------------------------------------------------------------ */
+/* 1. Le filtre « washi » : uniquement sur le pane des tuiles.          */
+/*    On n'applique JAMAIS le filtre à .leaflet-container, sinon les    */
+/*    marqueurs, tracés et contrôles seraient teintés eux aussi.        */
+/* ------------------------------------------------------------------ */
+.map-washi .leaflet-tile-pane {
+  filter:
+    saturate(var(--map-saturate))
+    contrast(var(--map-contrast))
+    brightness(var(--map-brightness))
+    sepia(var(--map-sepia))
+    hue-rotate(var(--map-hue));
+}
+
+/* 2. Voile de papier par-dessus les tuiles, sous les marqueurs.
+      Le pane "overlay" de Leaflet est au-dessus des tuiles (z-index 400)
+      et sous les marqueurs (z-index 600) : on s'insère entre les deux. */
+.map-washi .leaflet-tile-pane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--map-blend);
+  opacity: var(--map-blend-alpha);
+  mix-blend-mode: multiply;
+}
+
+/* 3. Grain de papier washi (0 image, 0 requête réseau) */
+.map-washi::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 350;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(169, 117, 47, 0.10) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 72% 68%, rgba(31, 78, 107, 0.09) 0 1px, transparent 1.6px);
+  background-size: 17px 17px, 23px 23px;
+}
+
+/* 4. Vignettage discret : recentre le regard, évoque le bord d'estampe */
+.map-washi .leaflet-pane--vignette,
+.map-washi::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 351;
+  pointer-events: none;
+  box-shadow: inset 0 0 90px -20px rgba(92, 86, 76, 0.45);
+}
+
+/* ------------------------------------------------------------------ */
+/* Variante « sumi-e » : carte à l'encre, quasi monochrome             */
+/* ------------------------------------------------------------------ */
+.map-sumie .leaflet-tile-pane {
+  filter: grayscale(1) contrast(1.15) brightness(1.08);
+}
+.map-sumie .leaflet-tile-pane::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #e8e2d4;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+}
+
+/* ------------------------------------------------------------------ */
+/* Variante « momiji » : automne, érables — pour une carte d'octobre   */
+/* ------------------------------------------------------------------ */
+.map-momiji .leaflet-tile-pane {
+  filter: saturate(0.7) sepia(0.45) hue-rotate(-18deg) brightness(1.04) contrast(0.95);
+}
+
+/* ------------------------------------------------------------------ */
+/* Mode sombre : nuit d'Osaka. L'inversion + hue-rotate(180deg) garde   */
+/* les teintes cohérentes au lieu de produire un négatif criard.        */
+/* ------------------------------------------------------------------ */
+@media (prefers-color-scheme: dark) {
+  .map-washi .leaflet-tile-pane,
+  .map-sumie .leaflet-tile-pane,
+  .map-momiji .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) saturate(0.6) brightness(0.88) contrast(1.05);
+  }
+  .map-washi .leaflet-tile-pane::after,
+  .map-sumie .leaflet-tile-pane::after {
+    background: #1f4e6b;
+    opacity: 0.22;
+    mix-blend-mode: screen;
+  }
+  .map-washi::before { opacity: 0.25; }
+  .map-washi::after { box-shadow: inset 0 0 110px -10px rgba(0, 0, 0, 0.75); }
+}
+
+/* ------------------------------------------------------------------ */
+/* Tracés du voyage : laques japonaises, pas des néons de GPS          */
+/* ------------------------------------------------------------------ */
+.track { stroke-linecap: round; stroke-linejoin: round; }
+.track--device { stroke: var(--track-device); stroke-width: 4; }
+.track--adsb   { stroke: var(--track-adsb);   stroke-width: 3; stroke-dasharray: 10 7; }
+.track--ais    { stroke: var(--track-ais);    stroke-width: 3; stroke-dasharray: 2 8; }
+
+/* Halo clair sous le tracé : lisible sur fond clair comme sur fond sombre */
+.track-halo { stroke: var(--color-surface); stroke-width: 8; stroke-opacity: 0.8; fill: none; }
+
+/* ------------------------------------------------------------------ */
+/* Performance : les filtres CSS sont coûteux au pan/zoom.              */
+/* On les coupe pendant l'animation de zoom (classe posée par Leaflet). */
+/* ------------------------------------------------------------------ */
+.leaflet-zoom-anim .leaflet-tile-pane { filter: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .map-washi::after, .map-washi::before { transition: none; }
+}
