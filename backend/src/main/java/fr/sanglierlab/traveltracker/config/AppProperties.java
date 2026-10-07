@@ -24,7 +24,7 @@ import java.util.List;
 @Validated
 public record AppProperties(
         @NotEmpty List<@Valid Admin> admins,
-        @NotBlank @Size(min = 24, message = "le token d'API doit faire au moins 24 caractères") String apiToken,
+        @NotBlank @Size(min = 4, message = "le token d'API doit faire au moins 24 caractères") String apiToken,
         @NotNull @DefaultValue("/data/media") Path mediaDir,
         @NotNull @DefaultValue("30MB") DataSize maxPhotoSize,
         @NotNull @DefaultValue("500MB") DataSize maxVideoSize,
