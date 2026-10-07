@@ -138,7 +138,7 @@ Dans l'application : *Logging details* → activer **Log to custom URL**, puis o
 | Champ | Valeur |
 |---|---|
 | **URL** | `https://voyage.sanglierlab.fr/api/track/points` (remplacer par ton vrai sous-domaine) |
-| **HTTP Body** | `{"latitude":%LAT,"longitude":%LON,"time":"%TIME"}` |
+| **HTTP Body** | `{"latitude":%LAT,"longitude":%LON,"time":"%TIME","accuracy":"%ACC"}` |
 | **HTTP Headers** | `Content-Type: application/json` puis, à la ligne : `X-API-Token: <ton token>` |
 | **HTTP Method** | `POST` |
 | **Basic Authentication** | laisser vide |
@@ -146,10 +146,23 @@ Dans l'application : *Logging details* → activer **Log to custom URL**, puis o
 Le token est celui de `app.api-token` dans `application.yml`. Il passe dans un en-tête, jamais dans l'URL.
 
 **Si l'heure est refusée** (message « Date illisible » dans les journaux de GPSLogger), remplacer le corps par
-`{"latitude":%LAT,"longitude":%LON,"timestamp":%TIMESTAMP}` : l'API accepte aussi un horodatage en secondes.
+`{"latitude":%LAT,"longitude":%LON,"timestamp":%TIMESTAMP,"accuracy":"%ACC"}` : l'API accepte aussi un horodatage en secondes.
 
-**Réglages conseillés** (à ajuster à l'usage) : autoriser la localisation « tout le temps » pour l'application, la dispenser de
-l'optimisation de batterie, et choisir un intervalle de 60 à 300 secondes avec un filtre de distance (50 m) pour économiser batterie et données.
+`%ACC` (précision en mètres) est **entre guillemets** exprès : GPSLogger peut envoyer une valeur vide, qui ferait un JSON invalide sans les guillemets.
+Le serveur lit « vide » ou « 0 » comme « précision inconnue » (le point est alors accepté).
+
+**Éviter les points aberrants** (un point à des dizaines de kilomètres de la réalité, puis retour à la normale : typique d'une localisation
+« réseau » ou périmée). Dans les réglages de GPSLogger (les libellés varient selon la version) :
+
+- ne garder que la source **GPS/GNSS** : désactiver la localisation « réseau » (antennes) et « passive » (autres applications) ;
+- activer le **filtre de précision** (environ 50 m) et laisser GPSLogger chercher environ 30 s un point qui le respecte ;
+- autoriser la localisation « tout le temps » pour l'application et la dispenser de l'optimisation de batterie ;
+- intervalle de 60 à 300 secondes et filtre de distance de 50 m, pour économiser batterie et données.
+
+Le serveur applique en plus ses propres règles à l'ajout : un point dont la précision annoncée est pire que `app.track-max-accuracy-meters`
+(100 m par défaut) ou dont la position est 0°/0° (GPS sans position) est **écarté et non enregistré**. La réponse reste un code 200,
+`{"status":"ignored","reason":"accuracy"}` ou `"no-fix"`, pour que GPSLogger ne réessaie pas un point volontairement écarté.
+Un point sans précision connue est accepté.
 
 ### Tester sans téléphone
 
@@ -159,8 +172,9 @@ TOKEN='<ton token>'
 
 # Premier envoi : {"status":"created"}
 curl -i -X POST $BASE/api/track/points -H "Content-Type: application/json" -H "X-API-Token: $TOKEN" \
-  -d '{"latitude":48.8583,"longitude":2.2945,"time":"2026-10-04T10:00:00.000Z"}'
+  -d '{"latitude":48.8583,"longitude":2.2945,"time":"2026-10-04T10:00:00.000Z","accuracy":"12.5"}'
 # Même envoi : {"status":"duplicate"} (code 200 aussi : le point existe déjà, rien n'est ajouté)
+# Précision trop mauvaise ("accuracy":"250") : 200 {"status":"ignored","reason":"accuracy"}, rien n'est enregistré
 # Mauvais token : 401   |   sans « Content-Type: application/json » : 415   |   latitude > 90 : 400
 ```
 

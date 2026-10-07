@@ -7,9 +7,13 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
- * Corps envoyé par GPSLogger : {@code {"latitude":%LAT,"longitude":%LON,"time":"%TIME"}}.
+ * Corps envoyé par GPSLogger :
+ * {@code {"latitude":%LAT,"longitude":%LON,"time":"%TIME","accuracy":"%ACC"}}.
  * Les champs inconnus sont ignorés. Si {@code time} manque ou vaut « », {@code timestamp} (%TIMESTAMP) est utilisé,
  * sinon l'heure de réception.
+ * <p>
+ * {@code accuracy} est volontairement un texte : GPSLogger peut envoyer une valeur vide, qui ferait un JSON invalide
+ * si elle n'était pas entre guillemets. Voir {@link TrackAccuracy}.
  */
 public record TrackPointRequest(
         @NotNull(message = "La latitude est obligatoire.")
@@ -24,5 +28,7 @@ public record TrackPointRequest(
 
         String time,
 
-        Long timestamp) {
+        Long timestamp,
+
+        String accuracy) {
 }

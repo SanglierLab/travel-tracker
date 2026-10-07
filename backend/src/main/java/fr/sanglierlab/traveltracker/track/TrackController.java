@@ -29,7 +29,8 @@ public class TrackController {
             throw ApiException.badRequest(e.getMessage());
         }
         // La source est toujours « téléphone » ici : les points ADS-B et AIS seront insérés par le futur batch interne.
-        TrackPointService.Result result = points.ingest(TrackSource.DEVICE, request.latitude(), request.longitude(), recordedAt);
-        return new TrackPointResponse(result == TrackPointService.Result.CREATED ? "created" : "duplicate");
+        TrackPointService.Result result = points.ingest(TrackSource.DEVICE, request.latitude(), request.longitude(),
+                TrackAccuracy.parse(request.accuracy()), recordedAt);
+        return new TrackPointResponse(result.status(), result.reason());
     }
 }

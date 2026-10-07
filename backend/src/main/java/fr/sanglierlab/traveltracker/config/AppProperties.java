@@ -30,6 +30,7 @@ public record AppProperties(
         @NotNull @DefaultValue("500MB") DataSize maxVideoSize,
         @Min(1) @Max(100) @DefaultValue("10") int pageSize,
         @Min(1) @DefaultValue("6") int trackGapHours,
+        @Min(1) @Max(100000) @DefaultValue("100") int trackMaxAccuracyMeters,
         @Min(1) @DefaultValue("5") int maxLoginFailures,
         @NotNull @DefaultValue("15m") Duration loginLockDuration,
         @NotBlank @DefaultValue("ffmpeg") String ffmpegPath) {

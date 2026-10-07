@@ -20,6 +20,7 @@ app:
   max-video-size: 500MB
   page-size: 10                   # galeries par page
   track-gap-hours: 6              # coupure du tracé device au-delà de cet écart
+  track-max-accuracy-meters: 100  # points du téléphone plus imprécis que cela : ignorés à l'ajout
   max-login-failures: 5           # échecs avant blocage de l'IP
   login-lock-duration: 15m
   ffmpeg-path: ffmpeg

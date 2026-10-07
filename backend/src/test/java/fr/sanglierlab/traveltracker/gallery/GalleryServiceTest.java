@@ -40,7 +40,7 @@ class GalleryServiceTest {
         when(items.findCovers()).thenReturn(List.of());
 
         AppProperties properties = new AppProperties(List.of(), "x".repeat(24), Path.of("."),
-                DataSize.ofMegabytes(30), DataSize.ofMegabytes(500), 2, 6, 5, Duration.ofMinutes(15), "ffmpeg");
+                DataSize.ofMegabytes(30), DataSize.ofMegabytes(500), 2, 6, 100, 5, Duration.ofMinutes(15), "ffmpeg");
         GalleryService service = new GalleryService(galleries, items,
                 new ItemMapper(new MarkdownService()), mock(StorageService.class), properties);
 

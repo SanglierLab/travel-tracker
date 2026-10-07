@@ -33,6 +33,10 @@ public class TrackPoint {
     @Column(nullable = false, precision = 9, scale = 6)
     private BigDecimal longitude;
 
+    /** Précision annoncée par le téléphone, en mètres ; null si inconnue. */
+    @Column(precision = 7, scale = 1)
+    private BigDecimal accuracyMeters;
+
     /** Heure du point (celle de l'appareil), précision à la milliseconde. */
     @Column(nullable = false)
     private LocalDateTime recordedAt;
@@ -47,10 +51,12 @@ public class TrackPoint {
     protected TrackPoint() {
     }
 
-    public TrackPoint(TrackSource source, BigDecimal latitude, BigDecimal longitude, LocalDateTime recordedAt) {
+    public TrackPoint(TrackSource source, BigDecimal latitude, BigDecimal longitude, BigDecimal accuracyMeters,
+                      LocalDateTime recordedAt) {
         this.source = source;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.accuracyMeters = accuracyMeters;
         this.recordedAt = recordedAt;
     }
 
@@ -73,6 +79,10 @@ public class TrackPoint {
 
     public BigDecimal getLongitude() {
         return longitude;
+    }
+
+    public BigDecimal getAccuracyMeters() {
+        return accuracyMeters;
     }
 
     public LocalDateTime getRecordedAt() {
