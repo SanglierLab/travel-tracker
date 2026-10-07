@@ -6,30 +6,45 @@
  */
 :root {
   /* Couleurs */
-  --color-bg: #eceff4;
-  --color-surface: #ffffff;
-  --color-text: #1d2433;
-  --color-muted: #5a6478;
-  --color-border: #d5dae3;
-  --color-accent: #26408b;
+  --color-bg: #f6f1e8;
+  --color-surface: #fffdf8;
+  --color-text: #202538;
+  --color-muted: #6d6a67;
+  --color-border: #ded6ca;
+  --color-accent: #243b78;
   --color-accent-contrast: #ffffff;
-  --color-danger: #b3261e;
-  --color-placeholder: #cdd3df;
-  --color-marker: #26408b;
-  --color-marker-selected: #d7432b;
-  --color-overlay: rgba(14, 20, 45, 0.55);
+  --color-danger: #b33a32;
+  --color-placeholder: #ddd6c9;
+  --color-marker: #243b78;
+  --color-marker-selected: #c83f32;
+  --color-overlay: rgba(18, 23, 42, 0.72);
 
   /* Tracés sur la carte, selon la source */
-  --track-device: #d7432b;
-  --track-adsb: #7a4fd1;
-  --track-ais: #1c8c6e;
+  --track-device: #c83f32;
+  --track-adsb: #7561a8;
+  --track-ais: #347c68;
 
   /* Typographie */
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Hiragino Sans", "Yu Gothic", sans-serif;
   --font-title: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif", Georgia, serif;
 
   /* Formes et gabarits */
-  --radius: 4px;
-  --radius-small: 3px;
+  --radius: 10px;
+  --radius-small: 7px;
   --max-width: 72rem;
+}
+
+
+/* ------------------------------------------------------------------
+   Direction artistique Japon — variables additionnelles
+   ------------------------------------------------------------------ */
+:root {
+  --color-vermilion: #c83f32;
+  --color-vermilion-dark: #a9322a;
+  --color-indigo-deep: #18264d;
+  --color-paper: #fffdf8;
+  --color-washi: #f6f1e8;
+  --color-gold: #b58a3b;
+  --shadow-soft: 0 8px 24px rgba(31, 35, 50, 0.08);
+  --shadow-card: 0 14px 34px rgba(31, 35, 50, 0.10);
 }
