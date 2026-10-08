@@ -185,5 +185,5 @@ watch(() => props.selectedId, (id, previous) => applySelection(id, previous))
 </script>
 
 <template>
-  <div ref="element" class="travel-map"></div>
+  <div ref="element" class="travel-map map-washi"></div>
 </template>
