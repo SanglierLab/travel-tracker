@@ -19,9 +19,9 @@ async function onLogout() {
       <RouterLink class="tile" to="/admin/galeries">
         <span class="tile__icon" aria-hidden="true">🖼️</span>Galeries
       </RouterLink>
-      <div class="tile tile--soon" aria-disabled="true">
-        <span class="tile__icon" aria-hidden="true">✈️</span>Trajets<small>Bientôt</small>
-      </div>
+      <RouterLink class="tile" to="/admin/vols">
+        <span class="tile__icon" aria-hidden="true">✈️</span>Vols
+      </RouterLink>
       <div class="tile tile--soon" aria-disabled="true">
         <span class="tile__icon" aria-hidden="true">📍</span>Points<small>Bientôt</small>
       </div>

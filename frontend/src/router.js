@@ -34,6 +34,12 @@ const router = createRouter({
       component: () => import('./views/admin/AdminGalleryFormView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/admin/vols',
+      name: 'admin-flights',
+      component: () => import('./views/admin/AdminFlightsView.vue'),
+      meta: { requiresAuth: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

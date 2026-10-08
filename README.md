@@ -201,6 +201,10 @@ Tant que le suivi est actif, un batch interroge le fournisseur ADS-B toutes les 
 positions en base (source `ADSB`, rattachées au vol) : elles s'affichent en pointillés sur la carte publique. Un seul vol peut être suivi
 à la fois, et le suivi d'un vol actif reprend tout seul après un redémarrage du serveur.
 
+**Dans l'administration** : *Menu → Vols* (ou « Vols » dans la barre de navigation). On y enregistre le numéro de vol et la date (heure UTC facultative),
+puis le bouton **on/off** de chaque vol lance ou arrête le suivi. La liste montre l'état de chaque vol, le nombre de positions enregistrées et l'heure de la
+dernière (elle se met à jour toute seule toutes les 15 secondes tant qu'un suivi est actif). Démarrer un deuxième vol est refusé tant que le premier est suivi.
+
 **État actuel : le fournisseur de données n'est pas encore branché.** Le batch tourne pour de vrai, mais récupère des positions
 *fictives en dur* (une route Paris → Tokyo, un point par cycle, puis l'avion reste à l'arrivée).
 

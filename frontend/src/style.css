@@ -710,3 +710,62 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
 .map-legend li { display: flex; align-items: center; gap: 0.5rem; }
 .map-legend svg { flex: none; width: 28px; height: 6px; }
 .map-legend span { color: var(--color-text); }
+
+/* ------------------------------------------------------------------ */
+/* Vols suivis : liste et bouton on / off                               */
+/* ------------------------------------------------------------------ */
+
+.admin__content form.card + .flights, .flights__error { margin-top: 1rem; }
+.flights { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
+.flight--active { border-color: var(--track-adsb); box-shadow: 0 0 0 1px var(--track-adsb); }
+.flight__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.flight__id { display: flex; flex-direction: column; min-width: 0; }
+.flight__number { font-family: var(--font-title); font-size: 1.4rem; letter-spacing: 0.03em; }
+.flight__points { margin: 0.4rem 0 0.25rem; font-size: 0.95rem; }
+.flight__actions { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.25rem; }
+
+.badge {
+  flex: none;
+  padding: 0.1rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.badge--active { border-color: var(--track-adsb); color: var(--track-adsb); font-weight: 600; }
+
+/* Interrupteur : grande cible tactile, aucune animation */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.switch__track {
+  position: relative;
+  flex: none;
+  width: 3.4rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--color-muted);
+}
+.switch__knob {
+  position: absolute;
+  top: 0.2rem;
+  left: 0.2rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: #fff;
+}
+.switch[aria-checked="true"] .switch__track { background: var(--color-accent); }
+.switch[aria-checked="true"] .switch__knob { left: 1.6rem; }
+.switch:disabled { opacity: 0.5; cursor: default; }

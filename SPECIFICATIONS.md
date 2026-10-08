@@ -524,3 +524,11 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Intégration du fournisseur** : interface `AdsbProvider.fetchPositions(numéroDeVol)`, implémentée pour l'instant par `PlaceholderAdsbProvider` (route Paris → Tokyo en dur, avec le `TODO(ADS-B)`). Les points sont enregistrés avec la source `ADSB` et l'identifiant du vol : une ligne en pointillés par vol sur la carte, sans coupure ; les doublons sont ignorés.
 - **Hors périmètre** : démarrage et arrêt automatiques (heure de départ, vol arrivé), traversées en bateau (AIS), modification d'un vol (le supprimer et le recréer).
 - **Étape 5b** : le formulaire d'administration (« Vols ») qui utilise cette API.
+
+## 20. Décisions d'implémentation (phase 5b : formulaire des vols)
+
+- **Page** `/admin/vols` (menu d'administration : tuile « Vols » ; barre de navigation : entrée « Vols »), avec un formulaire d'ajout (numéro de vol, date proposée au jour d'aujourd'hui, heure UTC facultative) et la liste des vols.
+- **Bouton on/off** : un vrai interrupteur accessible (`role="switch"`, cible de 48 px, sans animation) par vol, avec son état en toutes lettres (« Activé » / « Désactivé »). Pendant une action, les boutons sont bloqués pour éviter un double clic. Quand le serveur refuse (un autre vol est déjà suivi), son message est affiché tel quel et l'état réel du serveur est réaffiché.
+- **Liste** : numéro de vol, date de départ (avec l'heure et « UTC » seulement si elle a été saisie), état (« Prévu », « Suivi en cours », « Suivi arrêté »), nombre de positions enregistrées et ancienneté de la dernière. Le vol suivi est mis en évidence aux couleurs de la source ADS-B de la carte.
+- **Rafraîchissement automatique** toutes les 15 s, uniquement tant qu'un suivi est actif et que la page est ouverte ; un échec silencieux conserve l'affichage.
+- **Suppression** : bloquée à l'écran pour le vol suivi ; sinon, confirmation qui annonce le nombre de positions supprimées avec le vol et précise que c'est définitif.
