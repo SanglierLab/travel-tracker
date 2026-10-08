@@ -137,4 +137,17 @@ class TrackPointServiceTest {
     void accepteUnLegerDecalageDHorloge() {
         assertThat(ingest("1", "2", null, NOW.plusSeconds(120))).isEqualTo(Result.CREATED);
     }
+
+    @Test
+    void unPointDeVolEstRattacheAuTrajetEtUnPointDuTelephoneNe_l_estPas() {
+        service.ingest(TrackSource.ADSB, 5L, new BigDecimal("49.0097"), new BigDecimal("2.5479"), null, TEN_AM);
+        service.ingest(TrackSource.DEVICE, new BigDecimal("35.6852"), new BigDecimal("139.7528"), null, TEN_AM);
+
+        ArgumentCaptor<TrackPoint> saved = ArgumentCaptor.forClass(TrackPoint.class);
+        verify(repository, org.mockito.Mockito.times(2)).saveAndFlush(saved.capture());
+        assertThat(saved.getAllValues().get(0).getSource()).isEqualTo(TrackSource.ADSB);
+        assertThat(saved.getAllValues().get(0).getTripId()).isEqualTo(5L);
+        assertThat(saved.getAllValues().get(1).getSource()).isEqualTo(TrackSource.DEVICE);
+        assertThat(saved.getAllValues().get(1).getTripId()).isNull();
+    }
 }

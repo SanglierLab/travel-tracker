@@ -24,6 +24,7 @@ app:
   max-login-failures: 5           # échecs avant blocage de l'IP
   login-lock-duration: 15m
   ffmpeg-path: ffmpeg
+  # adsb-poll-interval: 30s       # (facultatif) fréquence de récupération des positions du vol suivi
 
 # Développement local uniquement (HTTP, sans HTTPS) : décommenter.
 # server:

@@ -60,6 +60,13 @@ public class TrackPoint {
         this.recordedAt = recordedAt;
     }
 
+    /** Point rattaché à un trajet suivi (vol ADS-B, traversée AIS). */
+    public TrackPoint(TrackSource source, Long tripId, BigDecimal latitude, BigDecimal longitude,
+                      BigDecimal accuracyMeters, LocalDateTime recordedAt) {
+        this(source, latitude, longitude, accuracyMeters, recordedAt);
+        this.tripId = tripId;
+    }
+
     @PrePersist
     void onCreate() {
         createdAt = LocalDateTime.now(ZoneOffset.UTC);

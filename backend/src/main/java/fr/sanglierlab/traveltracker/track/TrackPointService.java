@@ -74,6 +74,12 @@ public class TrackPointService {
      */
     public Result ingest(TrackSource source, BigDecimal latitude, BigDecimal longitude, BigDecimal accuracyMeters,
                          Instant recordedAt) {
+        return ingest(source, null, latitude, longitude, accuracyMeters, recordedAt);
+    }
+
+    /** Idem, pour un point rattaché à un trajet suivi (vol ADS-B) : {@code tripId} est alors celui du vol. */
+    public Result ingest(TrackSource source, Long tripId, BigDecimal latitude, BigDecimal longitude,
+                         BigDecimal accuracyMeters, Instant recordedAt) {
         if (recordedAt.isAfter(clock.instant().plus(MAX_FUTURE))) {
             throw ApiException.badRequest("La date du point est dans le futur : vérifiez l'heure du téléphone.");
         }
@@ -97,7 +103,7 @@ public class TrackPointService {
             return Result.DUPLICATE;
         }
         try {
-            points.saveAndFlush(new TrackPoint(source, lat, lon, accuracy, at));
+            points.saveAndFlush(new TrackPoint(source, tripId, lat, lon, accuracy, at));
         } catch (DataIntegrityViolationException e) {
             // Deux envois identiques arrivés en même temps : la contrainte d'unicité a tranché.
             return Result.DUPLICATE;

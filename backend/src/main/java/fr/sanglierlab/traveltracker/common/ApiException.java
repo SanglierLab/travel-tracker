@@ -28,6 +28,10 @@ public class ApiException extends RuntimeException {
         return new ApiException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, message);
     }
 
+    public static ApiException conflict(String message) {
+        return new ApiException(HttpStatus.CONFLICT, message);
+    }
+
     public static ApiException payloadTooLarge(String message) {
         return new ApiException(HttpStatus.valueOf(413), message);
     }

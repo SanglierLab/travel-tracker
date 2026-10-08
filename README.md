@@ -194,6 +194,42 @@ La réponse contient les lignes à dessiner (`segments`, points `[latitude, long
 `app.track-gap-hours` sans envoyer de position) et la dernière position connue (`last`). La carte publique l'affiche : trait plein pour le téléphone,
 pointillés pour un avion, tirets espacés pour un bateau (couleurs `--track-*` du thème), avec une légende et la dernière position en gros point.
 
+## Suivi d'un vol (ADS-B)
+
+Chaque vol se déclare dans l'administration (numéro de vol et date), puis son suivi se lance et s'arrête **à la main** (bouton on/off).
+Tant que le suivi est actif, un batch interroge le fournisseur ADS-B toutes les 30 secondes (`app.adsb-poll-interval`) et enregistre les
+positions en base (source `ADSB`, rattachées au vol) : elles s'affichent en pointillés sur la carte publique. Un seul vol peut être suivi
+à la fois, et le suivi d'un vol actif reprend tout seul après un redémarrage du serveur.
+
+**État actuel : le fournisseur de données n'est pas encore branché.** Le batch tourne pour de vrai, mais récupère des positions
+*fictives en dur* (une route Paris → Tokyo, un point par cycle, puis l'avion reste à l'arrivée).
+
+### Brancher le fournisseur ADS-B
+
+Un seul endroit : `backend/src/main/java/fr/sanglierlab/traveltracker/flight/PlaceholderAdsbProvider.java`, méthode `fetchPositions(String flightNumber)`,
+repérée par un `TODO(ADS-B)`.
+
+- `flightNumber` est le **numéro de vol du vol actif** (par exemple `AFR1234`, en majuscules, sans espaces) : c'est la variable à passer à l'API.
+- Renvoyer une liste de `AdsbPosition(latitude, longitude, heure UTC)`. Les positions déjà enregistrées sont ignorées sans erreur.
+- Un échec (réseau, fournisseur indisponible) peut simplement lever une exception : il est journalisé et le cycle suivant réessaie.
+- Si tu crées une nouvelle classe à la place, retire `@Component` de `PlaceholderAdsbProvider` pour qu'il n'y ait qu'un seul fournisseur.
+
+### Tester avec curl (session et CSRF comme dans « Tester l'API »)
+
+```bash
+# Enregistrer un vol (l'heure UTC est facultative) ; la réponse contient l'identifiant du vol
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" \
+  -d '{"identifier":"AFR1234","date":"2026-10-12","time":"10:30"}' $BASE/api/admin/flights
+
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/flights/1/start   # on
+curl -s -b $JAR $BASE/api/admin/flights                                             # état, nombre de positions, dernière position
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/flights/1/stop    # off
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X DELETE $BASE/api/admin/flights/1       # supprime le vol ET ses positions
+```
+
+Les journaux du serveur montrent chaque cycle (« ADS-B AFR1234 : 1 position(s) reçue(s), 1 enregistrée(s) »), et
+`SELECT * FROM track_point WHERE source = 'ADSB';` montre les points. Pour nettoyer les points fictifs d'un essai : supprimer le vol.
+
 ## Personnaliser le thème
 
 La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.
