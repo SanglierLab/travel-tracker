@@ -12,7 +12,9 @@ WORKDIR /backend
 COPY backend/pom.xml .
 RUN mvn dependency:go-offline -B
 COPY backend/src ./src
-RUN mvn clean package -DskipTests -B
+RUN mvn clean package -DskipTests -B \
+    && echo "=== CONTENU DE /backend/target ===" \
+    && ls -lah /backend/target
 
 # --- Étape 3 : Image de runtime complète ---
 FROM eclipse-temurin:25-jre-jammy AS runtime
@@ -25,13 +27,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && rm -rf /var/lib/apt/lists/*
 
 # Créer user/group non-root
-RUN groupadd --system app && useradd --system --gid app --create-home app
+RUN groupadd --system app && useradd --system --gid app --create-home --home-dir /home/app  app
 
 ENV SPRING_PROFILES_ACTIVE=prod
 ENV TZ=Europe/Paris
 
 WORKDIR /app
-COPY --from=backend-builder /backend/target/traveltracker-*.jar app.jar
+COPY --from=backend-builder /backend/target/travel-tracker.jar /app/app.jar
+RUN chown app:app /app/app.jar && chmod 644 /app/app.jar
 
 # Copier les fichiers statiques Vue.js dans nginx
 RUN rm -rf /usr/share/nginx/html/*
@@ -42,6 +45,10 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 
 # Ajouter script d'entrée
 COPY docker/docker-entrypoint.sh /app/docker-entrypoint.sh
+
+RUN sed -i 's/\r$//' /app/docker-entrypoint.sh \
+    && chmod +x /app/docker-entrypoint.sh
+
 RUN chmod +x /app/docker-entrypoint.sh
 
 # Volume pour les médias montés sur NAS
@@ -49,6 +56,18 @@ VOLUME ["/data"]
 
 # Permissions
 RUN chown -R app:app /app /usr/share/nginx/html /var/lib/nginx
+
+RUN mkdir -p \
+        /var/log/nginx \
+        /var/cache/nginx \
+        /run/nginx \
+    && touch \
+        /var/log/nginx/access.log \
+        /var/log/nginx/error.log \
+    && chown -R app:app \
+        /var/log/nginx \
+        /var/cache/nginx \
+        /run/nginx
 
 USER app
 EXPOSE 18081 8080
