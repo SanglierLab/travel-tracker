@@ -1,5 +1,6 @@
 package fr.sanglierlab.traveltracker.flight;
 
+import fr.sanglierlab.traveltracker.flight.adsb.FlightPositionService;
 import fr.sanglierlab.traveltracker.track.TrackPointService;
 import fr.sanglierlab.traveltracker.track.TrackSource;
 import fr.sanglierlab.traveltracker.track.TrackedTrip;
@@ -17,8 +18,10 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 
 /**
@@ -40,7 +43,7 @@ public class AdsbBatch {
 
     private final TrackedTripRepository trips;
     private final TrackPointService points;
-    private final AdsbProvider provider;
+    private final FlightPositionService flightPositionService;
     private final TaskScheduler scheduler;
     private final Duration interval;
 
@@ -48,11 +51,11 @@ public class AdsbBatch {
     private Long runningTripId;
 
     @Autowired
-    public AdsbBatch(TrackedTripRepository trips, TrackPointService points, AdsbProvider provider,
-                     TaskScheduler scheduler, @Value("${app.adsb-poll-interval:30s}") Duration interval) {
+    public AdsbBatch(TrackedTripRepository trips, TrackPointService points, FlightPositionService flightPositionService,
+                     TaskScheduler scheduler, @Value("${app.adsb-poll-interval:60s}") Duration interval) {
         this.trips = trips;
         this.points = points;
-        this.provider = provider;
+        this.flightPositionService = flightPositionService;
         this.scheduler = scheduler;
         this.interval = interval;
     }
@@ -99,17 +102,21 @@ public class AdsbBatch {
         String flightNumber = trip.getIdentifier();
 
         try {
-            List<AdsbPosition> positions = provider.fetchPositions(flightNumber);
-            int saved = 0;
-            for (AdsbPosition position : positions) {
+            Optional<AdsbPosition> position = flightPositionService.findPosition(flightNumber);
+
+            if(position.isPresent()){
                 TrackPointService.Result result = points.ingest(TrackSource.ADSB, tripId,
-                        BigDecimal.valueOf(position.latitude()), BigDecimal.valueOf(position.longitude()),
-                        null, position.recordedAt());
+                        BigDecimal.valueOf(position.get().latitude()),
+                        BigDecimal.valueOf(position.get().longitude()),
+                        null,
+                        (position.get().recordedAt() != null) ? position.get().recordedAt() : Instant.now() );
                 if (result == TrackPointService.Result.CREATED) {
-                    saved++;
+                    log.info("ADS-B {} : position enregistrée", flightNumber);
                 }
+            } else{
+                log.info("ADS-B {} : pas de position reçue, nouvelle tentative au prochain cycle", flightNumber);
             }
-            log.info("ADS-B {} : {} position(s) reçue(s), {} enregistrée(s)", flightNumber, positions.size(), saved);
+
         } catch (RuntimeException e) {
             log.warn("ADS-B {} : échec de la récupération, nouvelle tentative au prochain cycle", flightNumber, e);
         }

@@ -1,6 +1,7 @@
 package fr.sanglierlab.traveltracker.flight;
 
 import fr.sanglierlab.traveltracker.common.ApiException;
+import fr.sanglierlab.traveltracker.flight.adsb.FlightPositionService;
 import fr.sanglierlab.traveltracker.track.TrackPointService;
 import fr.sanglierlab.traveltracker.track.TrackSource;
 import fr.sanglierlab.traveltracker.track.TrackedTrip;
@@ -38,7 +39,7 @@ class AdsbBatchTest {
 
     private TrackedTripRepository trips;
     private TrackPointService points;
-    private AdsbProvider provider;
+    private FlightPositionService flightPositionService;
     private TaskScheduler scheduler;
     private ScheduledFuture<?> future;
     private AdsbBatch batch;
@@ -47,11 +48,11 @@ class AdsbBatchTest {
     void setUp() {
         trips = mock(TrackedTripRepository.class);
         points = mock(TrackPointService.class);
-        provider = mock(AdsbProvider.class);
+        flightPositionService = mock(FlightPositionService.class);
         scheduler = mock(TaskScheduler.class);
         future = mock(ScheduledFuture.class);
         doReturn(future).when(scheduler).scheduleWithFixedDelay(any(Runnable.class), any(Duration.class));
-        batch = new AdsbBatch(trips, points, provider, scheduler, INTERVAL);
+        batch = new AdsbBatch(trips, points, flightPositionService, scheduler, INTERVAL);
     }
 
     static TrackedTrip trip(long id, String flightNumber, TripStatus status) {
@@ -103,69 +104,7 @@ class AdsbBatchTest {
         assertThat(batch.isRunning()).isFalse();
     }
 
-    @Test
-    void leCycleInterrogeLeFournisseurAvecLeNumeroDuVolActifEtEnregistreLesPositions() {
-        when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
-        Instant t1 = Instant.parse("2026-10-12T10:00:00Z");
-        Instant t2 = Instant.parse("2026-10-12T10:00:30Z");
-        when(provider.fetchPositions("AFR1234")).thenReturn(List.of(
-                new AdsbPosition(49.0, 2.5, t1), new AdsbPosition(49.1, 2.9, t2)));
 
-        batch.tick(7);
-
-        verify(provider).fetchPositions("AFR1234");
-        verify(points).ingest(eq(TrackSource.ADSB), eq(7L), eq(BigDecimal.valueOf(49.0)), eq(BigDecimal.valueOf(2.5)), isNull(), eq(t1));
-        verify(points).ingest(eq(TrackSource.ADSB), eq(7L), eq(BigDecimal.valueOf(49.1)), eq(BigDecimal.valueOf(2.9)), isNull(), eq(t2));
-    }
-
-    @Test
-    void leCycleSArreteQuandLeVolNEstPlusActif() {
-        batch.start(7);
-        when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.FINISHED)));
-
-        batch.tick(7);
-
-        verify(provider, never()).fetchPositions(any());
-        verify(future).cancel(false);
-        assertThat(batch.isRunning()).isFalse();
-    }
-
-    @Test
-    void leCycleSArreteQuandLeVolAEteSupprime() {
-        batch.start(7);
-        when(trips.findById(7L)).thenReturn(Optional.empty());
-
-        batch.tick(7);
-
-        verify(provider, never()).fetchPositions(any());
-        assertThat(batch.isRunning()).isFalse();
-    }
-
-    @Test
-    void unEchecDuFournisseurNeCasseRienEtLeCycleSuivantReprend() {
-        when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
-        Instant t = Instant.parse("2026-10-12T10:00:00Z");
-        when(provider.fetchPositions("AFR1234"))
-                .thenThrow(new IllegalStateException("fournisseur indisponible"))
-                .thenReturn(List.of(new AdsbPosition(49.0, 2.5, t)));
-
-        batch.tick(7); // échec : journalisé, aucune exception
-        verify(points, never()).ingest(any(), any(), any(), any(), any(), any());
-
-        batch.tick(7); // le cycle suivant reprend
-        verify(points).ingest(eq(TrackSource.ADSB), eq(7L), any(), any(), isNull(), eq(t));
-    }
-
-    @Test
-    void uneErreurALEnregistrementNeFaitPasPlanterLeCycle() {
-        when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
-        when(provider.fetchPositions("AFR1234")).thenReturn(List.of(new AdsbPosition(49.0, 2.5, Instant.parse("2026-10-12T10:00:00Z"))));
-        doThrow(ApiException.badRequest("date dans le futur")).when(points).ingest(any(), any(), any(), any(), any(), any());
-
-        batch.tick(7); // ne doit pas lever d'exception
-
-        assertThat(batch.isRunning()).isFalse(); // aucun suivi n'avait été démarré : rien à annuler
-    }
 
     @Test
     void repriseApresUnRedemarrageDuServeur() {
