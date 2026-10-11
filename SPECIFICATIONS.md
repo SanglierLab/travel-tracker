@@ -532,3 +532,24 @@ Les phases 2 à 5 sont livrées en petites étapes, chacune testable seule :
 - **Liste** : numéro de vol, date de départ (avec l'heure et « UTC » seulement si elle a été saisie), état (« Prévu », « Suivi en cours », « Suivi arrêté »), nombre de positions enregistrées et ancienneté de la dernière. Le vol suivi est mis en évidence aux couleurs de la source ADS-B de la carte.
 - **Rafraîchissement automatique** toutes les 15 s, uniquement tant qu'un suivi est actif et que la page est ouverte ; un échec silencieux conserve l'affichage.
 - **Suppression** : bloquée à l'écran pour le vol suivi ; sinon, confirmation qui annonce le nombre de positions supprimées avec le vol et précise que c'est définitif.
+
+## 21. Étapes du voyage (phase 6)
+
+### Fonctionnement validé
+
+Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (une position, pas de GPX) ou un **trajet** en train, avion ou bateau (position de début, position de fin, GPX facultatif). Elle a un nom, une date de début et une date de fin (des jours), et une place dans un ordre manuel.
+
+- **Carte** : toutes les étapes sont affichées, y compris à venir (un peu plus pâles). Un marqueur de forme différente de l'épingle des albums (badge arrondi) ; un picto par type (lieu fixe, train, avion, bateau) ; un trajet est marqué au milieu de son tracé. Les albums gardent leur épingle, avec un appareil photo, qui sert aussi dans l'en-tête de leurs cartes du fil.
+- **Tracé** : étapes reliées dans l'ordre manuel par un tracé fléché, épais, de couleur propre au thème (`--itinerary`), sous la trace GPS fine. Un trajet suit son GPX, sinon une droite (un arc de grand cercle pour un avion) ; un lien en pointillés plus fins relie deux étapes consécutives distantes de plus d'un kilomètre.
+- **Fil des photos** : les étapes déjà commencées s'insèrent comme intercalaires selon leur **date de début**, sous les albums du même jour, avec le picto de leur type ; la pagination compte albums et étapes ensemble. **Les étapes futures forment un bloc repliable** (bouton « voir la suite du voyage »), en tête du fil puisque celui-ci va du plus récent au plus ancien, pour ne pas repousser les dernières photos publiées ; ce bloc n'entre pas dans la pagination.
+- **Administration** : une page « Étapes » (liste, ajout, suppression, monter/descendre, « trier par date », positionnement sur carte, envoi du GPX).
+- **Interaction** : un clic sur un marqueur d'étape ou sur son intercalaire la met en évidence des deux côtés ; adresse `/etape/:id` comme pour les galeries.
+- **Découpage** : 6a backend, 6b administration, 6c carte, 6d fil des photos.
+
+### Décisions d'implémentation (phase 6a : backend)
+
+- **Table `stage`** (migration `V3`) : nom, type (`PLACE`, `TRAIN`, `PLANE`, `BOAT`), dates de début et de fin (la fin ne précède pas le début ; un séjour d'une nuit a la même date), position de début, position de fin (nulle pour un lieu fixe), tracé GPX allégé, ordre manuel. Contraintes de cohérence (coordonnées, dates, début/fin de position toutes deux présentes ou absentes) également en base.
+- **Règles** : une position de début est toujours obligatoire ; un trajet exige aussi une position de fin ; pour un lieu fixe, une position de fin envoyée est ignorée. Passer un trajet en lieu fixe efface sa fin et son tracé.
+- **Ordre** : une nouvelle étape va en fin de liste ; monter/descendre échange avec la voisine et **renumérote tout** (l'ordre se répare de lui-même) ; « trier par date » trie par date de début puis de fin, en conservant l'ordre actuel à dates égales.
+- **GPX** : `POST /api/admin/stages/{id}/gpx` (champ `file`, 10 Mo maximum, trajets seulement). Lecture en flux, sans bibliothèque, DTD et entités externes désactivées (un fichier piégé est refusé proprement). Points de piste (`trkpt`, toutes pistes et segments à la suite), sinon d'une route (`rtept`) ; les waypoints isolés sont ignorés ; points invalides ignorés. Le tracé est allégé (points à moins de 5 m supprimés, puis Douglas-Peucker à 50 m, tolérance relevée si besoin, 1 500 points au plus) et stocké sous forme compacte dans la colonne `path_data`. Longitudes continues à la ligne de changement de date. `useEndpoints=true` reprend les extrémités du tracé comme positions de début et de fin. Mesure : un GPX de 10 Mo (89 000 points) est lu en 0,4 à 1 s et réduit à 943 points.
+- **API** : administration (`/api/admin/stages` : liste sans tracés, détail avec tracé, création, modification, suppression, `move`, `sort-by-date`, GPX envoi/retrait) ; public `GET /api/public/itinerary` (toutes les étapes dans l'ordre manuel, avec leur tracé).

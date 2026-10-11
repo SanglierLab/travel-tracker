@@ -234,6 +234,36 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X DELETE $BASE/api/admin/flights/1    
 Les journaux du serveur montrent chaque cycle (« ADS-B AFR1234 : 1 position(s) reçue(s), 1 enregistrée(s) »), et
 `SELECT * FROM track_point WHERE source = 'ADSB';` montre les points. Pour nettoyer les points fictifs d'un essai : supprimer le vol.
 
+## Étapes du voyage (API)
+
+Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau
+(Tokyo → Shimoda, le 5 mars). Elles s'affichent sur la carte, même dans le futur, et dans le fil des photos. Les écrans arrivent aux étapes 6b à 6d ;
+pour l'instant tout se teste avec `curl` (session et CSRF comme dans « Tester l'API »).
+
+```bash
+# Un lieu fixe : une seule position (début), pas de GPX. Types : PLACE, TRAIN, PLANE, BOAT
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" $BASE/api/admin/stages \
+  -d '{"name":"Tokyo","kind":"PLACE","startDate":"2026-03-01","endDate":"2026-03-05","startLatitude":35.6762,"startLongitude":139.6503}'
+
+# Un trajet : position de début ET de fin
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" $BASE/api/admin/stages \
+  -d '{"name":"Train Tokyo → Shimoda","kind":"TRAIN","startDate":"2026-03-05","endDate":"2026-03-05","startLatitude":35.6812,"startLongitude":139.7671,"endLatitude":34.6667,"endLongitude":138.9453}'
+
+# Tracé GPX d'un trajet (10 Mo maximum). useEndpoints=true reprend les extrémités du GPX comme positions de début et de fin
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -F file=@trajet.gpx "$BASE/api/admin/stages/2/gpx?useEndpoints=true"
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X DELETE $BASE/api/admin/stages/2/gpx      # retire le tracé
+
+# Ordre (celui du tracé fléché) : monter / descendre, ou tout recaler sur les dates
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST "$BASE/api/admin/stages/2/move?direction=UP"
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/stages/sort-by-date
+
+# Lecture publique : toutes les étapes dans l'ordre, avec leur tracé GPX allégé
+curl -s $BASE/api/public/itinerary
+```
+
+La migration `V3__stage.sql` crée la table au prochain démarrage du serveur.
+Le GPX est lu sur le serveur (sans dépendance, protégé contre les fichiers XML piégés) puis **allégé** (environ 1 500 points au plus) : seul ce tracé léger est conservé, pas le fichier d'origine.
+
 ## Personnaliser le thème
 
 La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.
