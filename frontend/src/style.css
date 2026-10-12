@@ -769,3 +769,65 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
 .switch[aria-checked="true"] .switch__track { background: var(--color-accent); }
 .switch[aria-checked="true"] .switch__knob { left: 1.6rem; }
 .switch:disabled { opacity: 0.5; cursor: default; }
+
+/* ------------------------------------------------------------------ */
+/* Étapes du voyage : liste et formulaire                               */
+/* ------------------------------------------------------------------ */
+
+.stage-icon { width: 1.5rem; height: 1.5rem; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.stages { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: 0.5rem; }
+.stage-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+.stage-row__icon {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-small);
+  background: var(--color-bg);
+  color: var(--color-accent);
+}
+.stage-row__text { display: flex; flex-direction: column; flex: 1 1 8rem; min-width: 0; overflow-wrap: anywhere; }
+.stage-row__actions { display: flex; gap: 0.35rem; margin-left: auto; }
+@media (max-width: 29.99rem) {
+  .stage-row__actions { width: 100%; justify-content: flex-end; }
+}
+.stages__warning {
+  margin: 1rem 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+}
+a.btn--icon { text-decoration: none; }
+
+/* Choix du type d'étape */
+.kinds { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; }
+@media (min-width: 40rem) {
+  .kinds { grid-template-columns: repeat(4, 1fr); }
+}
+.kinds__option {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 56px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.kinds__option[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }

@@ -40,6 +40,24 @@ const router = createRouter({
       component: () => import('./views/admin/AdminFlightsView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/admin/etapes',
+      name: 'admin-stages',
+      component: () => import('./views/admin/AdminStagesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin/etapes/nouvelle',
+      name: 'admin-stage-new',
+      component: () => import('./views/admin/AdminStageFormView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/admin/etapes/:id(\\d+)',
+      name: 'admin-stage',
+      component: () => import('./views/admin/AdminStageFormView.vue'),
+      meta: { requiresAuth: true },
+    },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],
 })

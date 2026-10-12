@@ -32,3 +32,16 @@ export function timeAgo(iso, now = Date.now()) {
   if (hours < 24) return `il y a ${hours} h`
   return `le ${formatDateTime(iso)}`
 }
+
+const rangeFormat = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/** « 2026-03-01 », « 2026-03-05 » -> « 1–5 mars 2026 » ; un seul jour -> « 5 mars 2026 ». */
+export function formatDateRange(startIso, endIso) {
+  const toDate = (iso) => {
+    const [year, month, day] = iso.split('-').map(Number)
+    return new Date(year, month - 1, day)
+  }
+  const start = toDate(startIso)
+  const end = toDate(endIso)
+  return startIso === endIso ? rangeFormat.format(start) : rangeFormat.formatRange(start, end)
+}
