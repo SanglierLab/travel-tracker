@@ -7,6 +7,7 @@ import { L, createMap, pinIcon, prefersReducedMotion } from '../leafletSupport'
 const props = defineProps({
   modelValue: { type: Object, default: null },
   center: { type: Array, default: null }, // [lat, lon] où centrer la carte tant qu'aucun point n'est posé
+  path: { type: Array, default: null }, // tracé à montrer en repère : [[lat, lon], ...] (ex. GPX d'un trajet)
 })
 const emit = defineEmits(['update:modelValue'])
 
@@ -17,6 +18,7 @@ const message = ref('')
 // Objets Leaflet gardés hors de la réactivité de Vue.
 let map = null
 let marker = null
+let pathLayer = null
 let observer = null
 
 const round6 = (n) => Math.round(n * 1e6) / 1e6
@@ -40,6 +42,18 @@ function showMarker(position, pan) {
     marker.setLatLng(latlng)
   }
   if (pan) map.setView(latlng, Math.max(map.getZoom(), 13), { animate: !prefersReducedMotion() })
+}
+
+/** Dessine le tracé (couleur de l'itinéraire du thème) et cadre la carte dessus, marqueur compris. */
+function drawPath() {
+  pathLayer?.remove()
+  pathLayer = null
+  if (!map || !props.path || props.path.length < 2) return
+  const color = getComputedStyle(document.documentElement).getPropertyValue('--itinerary').trim() || '#c2185b'
+  pathLayer = L.polyline(props.path, { color, weight: 5, opacity: 0.9, interactive: false }).addTo(map)
+  const bounds = pathLayer.getBounds()
+  if (marker) bounds.extend(marker.getLatLng())
+  map.fitBounds(bounds, { padding: [30, 30], animate: false })
 }
 
 function locate() {
@@ -82,6 +96,8 @@ onMounted(() => {
     map.setView([20, 0], 2)
   }
 
+  drawPath()
+
   map.on('click', (event) => {
     showMarker({ lat: event.latlng.lat, lon: event.latlng.lng }, false)
     commit(event.latlng)
@@ -92,6 +108,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  pathLayer = null
   observer?.disconnect()
   map?.remove()
   map = null
@@ -119,6 +136,9 @@ watch(
     if (map && center && !props.modelValue) map.setView(center, 6)
   },
 )
+
+// Nouveau tracé (envoi, remplacement ou retrait d'un GPX) : on le redessine et on cadre dessus.
+watch(() => props.path, drawPath)
 </script>
 
 <template>

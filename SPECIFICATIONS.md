@@ -563,3 +563,11 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Changement de type** : passer un trajet en lieu fixe affiche, avant l'enregistrement, que sa position d'arrivée (et son tracé GPX) seront supprimés.
 - **Pictos partagés** : `frontend/src/stageKinds.js` et le composant `StageIcon` définissent un picto par type ; la carte (6c) et le fil des photos (6d) les réutiliseront pour que chaque type ait partout le même.
 - **À suivre (6b-2)** : envoi, aperçu et retrait du tracé GPX d'un trajet, depuis ce formulaire.
+
+### Décisions d'implémentation (phase 6b-2 : tracé GPX dans le formulaire)
+
+- **Section « Tracé GPX (facultatif) »** dans le formulaire d'un trajet déjà enregistré : choix du fichier (`.gpx`), progression réelle (« Envoi 50 % », puis « Lecture du fichier sur le serveur… » pendant que le serveur le lit et l'allège), remplacement par un nouveau fichier, retrait avec confirmation (le fichier d'origine n'est pas conservé : il faudra le renvoyer pour retrouver le tracé).
+- **Reprise des extrémités** : case « Reprendre les extrémités du tracé comme positions de départ et d'arrivée », **décochée par défaut** (les positions étant obligatoires dès la création, les écraser doit être un choix délibéré). Cochée, les deux cartes et le formulaire suivent aussitôt les extrémités du GPX.
+- **Quand la section n'apparaît pas** : à la création (il faut d'abord enregistrer l'étape), pour un lieu fixe, et pour un lieu fixe qu'on est en train de transformer en trajet sans l'avoir enregistré (un message le dit : le serveur refuserait le GPX). Elle disparaît aussi quand on passe un trajet en lieu fixe, avec l'avertissement de suppression du tracé.
+- **Erreurs** : le message du serveur est affiché tel quel (fichier illisible, trop volumineux, ne contenant aucun tracé) ; une coupure réseau donne un message explicite ; le tracé précédent reste en place.
+- **Aperçu** : les deux cartes de positionnement dessinent le tracé dans la couleur `--itinerary` du thème (variable ajoutée aux deux fichiers de thème, qui restent complets), cadrées sur le tracé et les marqueurs, et se mettent à jour à l'envoi, au remplacement et au retrait.

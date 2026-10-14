@@ -237,8 +237,13 @@ Les journaux du serveur montrent chaque cycle (« ADS-B AFR1234 : 1 position(s) 
 ## Étapes du voyage (API)
 
 Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau
-(Tokyo → Shimoda, le 5 mars). Elles s'affichent sur la carte, même dans le futur, et dans le fil des photos. Les écrans arrivent aux étapes 6b à 6d ;
-pour l'instant tout se teste avec `curl` (session et CSRF comme dans « Tester l'API »).
+(Tokyo → Shimoda, le 5 mars). Elles s'affichent sur la carte, même dans le futur, et dans le fil des photos (étapes 6c et 6d à venir).
+
+**Dans l'administration** : *Menu → Étapes*. On y ajoute, supprime, réordonne (monter/descendre, « Trier par date ») et positionne les étapes sur la carte.
+Pour un trajet, le formulaire permet d'envoyer un fichier **GPX** : il est allégé à l'envoi et son tracé s'affiche sur les cartes de positionnement ;
+la case « Reprendre les extrémités du tracé comme positions » place le départ et l'arrivée toute seule.
+
+Les commandes `curl` ci-dessous permettent aussi de tout tester directement (session et CSRF comme dans « Tester l'API »).
 
 ```bash
 # Un lieu fixe : une seule position (début), pas de GPX. Types : PLACE, TRAIN, PLANE, BOAT

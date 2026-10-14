@@ -1,50 +1,37 @@
 /*
- * Exemple de thème : « Japon » (indigo et vermillon, coins plus nets, titres en police à empattements japonaise).
- * Pour l'utiliser : copier ce fichier vers  <TT_BASE_DIR>/theme/theme.css  et décommenter la ligne du volume
- * « theme.css » dans docker/docker-compose.yml (voir README.md). Aucune reconstruction d'image n'est nécessaire.
- * Le fichier est COMPLET : il définit toutes les variables de frontend/public/theme.css.
+ * Thème : uniquement des variables. Fichier COMPLET : pour changer l'ambiance selon la destination,
+ * copier ce fichier dans le volume Docker (voir docker-compose.yml) et modifier les valeurs.
+ * La mise en page (style.css) n'est jamais touchée.
  */
 :root {
   /* Couleurs */
-  --color-bg: #f6f1e8;
-  --color-surface: #fffdf8;
-  --color-text: #202538;
-  --color-muted: #6d6a67;
-  --color-border: #ded6ca;
-  --color-accent: #243b78;
+  --color-bg: #eef1ef;
+  --color-surface: #ffffff;
+  --color-text: #17262d;
+  --color-muted: #566872;
+  --color-border: #d3dcd9;
+  --color-accent: #0b6b73;
   --color-accent-contrast: #ffffff;
-  --color-danger: #b33a32;
-  --color-placeholder: #ddd6c9;
-  --color-marker: #243b78;
-  --color-marker-selected: #c83f32;
-  --color-overlay: rgba(18, 23, 42, 0.72);
+  --color-danger: #b3261e;
+  --color-placeholder: #cfd8d5;   /* fond des miniatures en attente et de la carte avant chargement */
+  --color-marker: #0b6b73;            /* marqueur de galerie sur la carte */
+  --color-marker-selected: #d9480f;   /* marqueur de la galerie sélectionnée */
+  --color-overlay: rgba(10, 25, 30, 0.55);   /* pastille de lecture sur les vidéos */
+
+  /* Tracé des étapes du voyage (itinéraire : plus épais et plus marqué que la trace GPS) */
+  --itinerary: #c2185b;
 
   /* Tracés sur la carte, selon la source */
-  --track-device: #c83f32;
-  --track-adsb: #7561a8;
-  --track-ais: #347c68;
+  --track-device: #e0561b;
+  --track-adsb: #6a3fc4;
+  --track-ais: #1f8a4c;
 
-  /* Typographie */
+  /* Typographie (polices système : rien à télécharger, japonais inclus) */
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Hiragino Sans", "Yu Gothic", sans-serif;
-  --font-title: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif", Georgia, serif;
+  --font-title: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Noto Serif", "Hiragino Mincho ProN", "Yu Mincho", serif;
 
   /* Formes et gabarits */
   --radius: 10px;
-  --radius-small: 7px;
+  --radius-small: 6px;
   --max-width: 72rem;
-}
-
-
-/* ------------------------------------------------------------------
-   Direction artistique Japon — variables additionnelles
-   ------------------------------------------------------------------ */
-:root {
-  --color-vermilion: #c83f32;
-  --color-vermilion-dark: #a9322a;
-  --color-indigo-deep: #18264d;
-  --color-paper: #fffdf8;
-  --color-washi: #f6f1e8;
-  --color-gold: #b58a3b;
-  --shadow-soft: 0 8px 24px rgba(31, 35, 50, 0.08);
-  --shadow-card: 0 14px 34px rgba(31, 35, 50, 0.10);
 }

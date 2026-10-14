@@ -19,6 +19,9 @@
   --color-marker-selected: #d7432b;
   --color-overlay: rgba(14, 20, 45, 0.55);
 
+  /* Tracé des étapes du voyage */
+  --itinerary: #b71c1c;
+
   /* Tracés sur la carte, selon la source */
   --track-device: #d7432b;
   --track-adsb: #7a4fd1;

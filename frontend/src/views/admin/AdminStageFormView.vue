@@ -5,7 +5,7 @@ import AdminLayout from '../../components/AdminLayout.vue'
 import ConfirmDialog from '../../components/ConfirmDialog.vue'
 import LocationPicker from '../../components/LocationPicker.vue'
 import StageIcon from '../../components/StageIcon.vue'
-import { api, ApiError } from '../../api'
+import { api, ApiError, uploadFile } from '../../api'
 import { KIND_ORDER, STAGE_KINDS, isTrip } from '../../stageKinds'
 
 const route = useRoute()
@@ -146,6 +146,56 @@ async function remove() {
   }
 }
 
+// --- Tracé GPX (trajets) ---------------------------------------------------------
+
+const gpx = reactive({ useEndpoints: false, uploading: false, progress: 0, error: '', notice: '' })
+const confirmRemoveGpx = ref(false)
+const removingGpx = ref(false)
+
+// L'envoi n'est possible que pour un trajet déjà ENREGISTRÉ comme trajet (le serveur refuse un GPX pour un lieu fixe).
+const canUseGpx = computed(() => id.value !== null && stage.value && isTrip(stage.value.kind) && trip.value)
+const mustSaveAsTrip = computed(() => id.value !== null && stage.value && !isTrip(stage.value.kind) && trip.value)
+
+async function onGpxPicked(event) {
+  const file = event.target.files[0]
+  event.target.value = '' // permet de re-choisir le même fichier
+  if (!file) return
+  gpx.error = ''
+  gpx.notice = ''
+  gpx.uploading = true
+  gpx.progress = 0
+  try {
+    const updated = await uploadFile(`/api/admin/stages/${id.value}/gpx?useEndpoints=${gpx.useEndpoints}`, file, {
+      onProgress: (fraction) => (gpx.progress = fraction),
+    })
+    stage.value = updated
+    if (gpx.useEndpoints) {
+      // Le serveur a repris les extrémités du tracé : les cartes suivent.
+      form.start = { lat: Number(updated.startLatitude), lon: Number(updated.startLongitude) }
+      form.end = { lat: Number(updated.endLatitude), lon: Number(updated.endLongitude) }
+    }
+    gpx.notice = `Tracé GPX enregistré (${updated.pathPoints} points).`
+  } catch (e) {
+    gpx.error = messageOf(e, "L'envoi du tracé a échoué. Vérifiez votre connexion et réessayez.")
+  } finally {
+    gpx.uploading = false
+  }
+}
+
+async function removeGpx() {
+  removingGpx.value = true
+  gpx.error = ''
+  gpx.notice = ''
+  try {
+    stage.value = await api(`/api/admin/stages/${id.value}/gpx`, { method: 'DELETE' })
+  } catch (e) {
+    gpx.error = messageOf(e, 'Le retrait du tracé a échoué.')
+  } finally {
+    removingGpx.value = false
+    confirmRemoveGpx.value = false
+  }
+}
+
 // Passer un trajet en lieu fixe efface sa position d'arrivée et son tracé : on le dit avant d'enregistrer.
 const losesTripData = computed(() => id.value !== null && stage.value && isTrip(stage.value.kind) && !trip.value)
 </script>
@@ -192,14 +242,47 @@ const losesTripData = computed(() => id.value !== null && stage.value && isTrip(
 
         <div class="field">
           <span>{{ trip ? 'Position de départ' : 'Position sur la carte' }}</span>
-          <LocationPicker v-model="form.start" :center="center" />
+          <LocationPicker v-model="form.start" :center="center" :path="stage?.path" />
         </div>
         <div v-if="trip" class="field">
           <span>Position d'arrivée</span>
-          <LocationPicker v-model="form.end" :center="endCenter" />
+          <LocationPicker v-model="form.end" :center="endCenter" :path="stage?.path" />
         </div>
 
         <p v-if="stage?.hasPath && trip" class="muted">Un tracé GPX de {{ stage.pathPoints }} points est enregistré pour ce trajet.</p>
+        <div v-if="canUseGpx" class="field gpx">
+          <span>Tracé GPX (facultatif)</span>
+          <p class="muted gpx__hint">
+            Le trajet suit ce tracé sur la carte du site ; sans lui, une ligne droite relie le départ et l'arrivée. Le fichier est allégé à l'envoi.
+          </p>
+          <label class="btn btn--ghost btn--block" :aria-disabled="gpx.uploading">
+            {{ stage.hasPath ? 'Remplacer le tracé GPX' : 'Choisir un fichier GPX' }}
+            <input
+              class="visually-hidden"
+              type="file"
+              accept=".gpx,application/gpx+xml,application/xml,text/xml"
+              :disabled="gpx.uploading"
+              @change="onGpxPicked"
+            />
+          </label>
+          <label class="gpx__option">
+            <input v-model="gpx.useEndpoints" type="checkbox" :disabled="gpx.uploading" />
+            <span>Reprendre les extrémités du tracé comme positions de départ et d'arrivée</span>
+          </label>
+          <template v-if="gpx.uploading">
+            <progress max="100" :value="Math.round(gpx.progress * 100)" aria-label="Envoi du tracé GPX"></progress>
+            <p class="muted" role="status">
+              {{ gpx.progress >= 1 ? 'Lecture du fichier sur le serveur…' : `Envoi ${Math.round(gpx.progress * 100)} %` }}
+            </p>
+          </template>
+          <p v-if="gpx.error" class="error" role="alert">{{ gpx.error }}</p>
+          <p v-if="gpx.notice" class="success" role="status">{{ gpx.notice }}</p>
+          <button v-if="stage.hasPath" class="btn btn--ghost btn--small btn--danger-text" type="button" :disabled="gpx.uploading" @click="confirmRemoveGpx = true">
+            Retirer le tracé GPX
+          </button>
+        </div>
+        <p v-else-if="mustSaveAsTrip" class="muted">Enregistrez d'abord cette étape comme trajet pour pouvoir lui associer un tracé GPX.</p>
+
         <p v-if="losesTripData" class="stages__warning" role="status">
           En passant cette étape en lieu fixe, sa position d'arrivée{{ stage.hasPath ? ' et son tracé GPX seront supprimés' : ' sera supprimée' }} à l'enregistrement.
         </p>
@@ -216,6 +299,17 @@ const losesTripData = computed(() => id.value !== null && stage.value && isTrip(
         <button class="btn btn--ghost btn--danger-text" type="button" @click="confirmDelete = true">Supprimer l'étape</button>
       </section>
     </template>
+
+    <ConfirmDialog
+      v-if="confirmRemoveGpx"
+      title="Retirer le tracé GPX ?"
+      confirm-label="Retirer"
+      :busy="removingGpx"
+      @confirm="removeGpx"
+      @cancel="confirmRemoveGpx = false"
+    >
+      <p>Le tracé enregistré pour ce trajet sera supprimé : une ligne droite reliera le départ et l'arrivée. Il faudra renvoyer le fichier pour le retrouver.</p>
+    </ConfirmDialog>
 
     <ConfirmDialog
       v-if="confirmDelete"

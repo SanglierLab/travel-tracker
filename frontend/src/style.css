@@ -831,3 +831,9 @@ a.btn--icon { text-decoration: none; }
   cursor: pointer;
 }
 .kinds__option[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; }
+
+/* Tracé GPX d'un trajet */
+.gpx__hint { margin: 0.25rem 0 0.5rem; font-size: 0.95rem; }
+.gpx__option { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.75rem 0; font-weight: 400; }
+.gpx__option input { flex: none; width: 1.3rem; height: 1.3rem; margin-top: 0.15rem; accent-color: var(--color-accent); }
+.gpx .btn--small { margin-top: 0.5rem; }
