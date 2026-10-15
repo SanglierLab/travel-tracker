@@ -288,6 +288,12 @@ a { color: var(--color-accent); }
 .pin .pin__camera { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linejoin: round; }
 .pin--selected .pin__camera { fill: none; }
 
+/* Pointes de flèche de l'itinéraire */
+.route-arrow { background: none; border: 0; pointer-events: none; }
+.route-arrow svg { display: block; width: 100%; height: 100%; }
+.route-arrow path { fill: var(--itinerary); stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.route-arrow--future { opacity: 0.55; }
+
 /* Marqueurs d'étape : badge arrondi (distinct de l'épingle des albums) ; estompé tant que l'étape est à venir */
 .stage-pin { background: none; border: 0; }
 .stage-pin svg {
@@ -302,6 +308,7 @@ a { color: var(--color-accent); }
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 .stage-pin path { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.stage-pin--selected svg { background: var(--color-marker-selected); padding: 8px; }
 .stage-pin--future { opacity: 0.55; }
 .stage-pin--future svg { border-style: dashed; }
 .pin--selected path { fill: var(--color-marker-selected); }

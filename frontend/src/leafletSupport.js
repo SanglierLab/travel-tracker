@@ -50,13 +50,24 @@ export function pinIcon(selected) {
  * Marqueur d'étape : un badge arrondi (et non une épingle) avec le picto de son type.
  * Une étape à venir est estompée (classe stage-pin--future).
  */
-export function stageIcon(kind, { future = false } = {}) {
+export function stageIcon(kind, { future = false, selected = false } = {}) {
   const icon = STAGE_KINDS[kind]?.icon ?? STAGE_KINDS.PLACE.icon
   return L.divIcon({
-    className: `stage-pin${future ? ' stage-pin--future' : ''}`,
+    className: `stage-pin${future ? ' stage-pin--future' : ''}${selected ? ' stage-pin--selected' : ''}`,
     html: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icon}" /></svg>`,
-    iconSize: [34, 34],
-    iconAnchor: [17, 17],
-    tooltipAnchor: [0, -17],
+    iconSize: selected ? [42, 42] : [34, 34],
+    iconAnchor: selected ? [21, 21] : [17, 17],
+    tooltipAnchor: [0, selected ? -21 : -17],
+  })
+}
+
+/** Pointe de flèche posée sur la ligne d'itinéraire, tournée de `angle` degrés (0 = vers l'est, sens horaire). */
+export function arrowIcon(angle, { small = false, future = false } = {}) {
+  const size = small ? 14 : 20
+  return L.divIcon({
+    className: `route-arrow${small ? ' route-arrow--small' : ''}${future ? ' route-arrow--future' : ''}`,
+    html: `<svg viewBox="0 0 20 20" aria-hidden="true" style="transform: rotate(${angle.toFixed(1)}deg)"><path d="M3 3l15 7-15 7 4-7z" /></svg>`,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
   })
 }

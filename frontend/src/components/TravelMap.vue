@@ -1,10 +1,10 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { L, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
+import { L, arrowIcon, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
 import { STAGE_KINDS } from '../stageKinds'
-import { isFuture, stageAnchor } from '../stageGeo'
+import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine } from '../stageGeo'
 import { formatDate, formatDateTime, timeAgo } from '../format'
-import { TRACK_SOURCES, trackColor } from '../trackStyle'
+import { TRACK_SOURCES, itineraryColor, trackColor } from '../trackStyle'
 
 const props = defineProps({
   galleries: { type: Array, default: () => [] },
@@ -14,10 +14,12 @@ const props = defineProps({
   track: { type: Object, default: () => ({ segments: [], last: null }) },
   // Étapes du voyage (GET /api/public/itinerary), toutes affichées ; celles à venir sont estompées.
   stages: { type: Array, default: () => [] },
+  // Étape sélectionnée (adresse /etape/:id).
+  selectedStageId: { type: Number, default: null },
   // La carte ne se cadre qu'une fois la liste des galeries connue (même vide).
   galleriesLoaded: { type: Boolean, default: true },
 })
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'select-stage'])
 
 const element = ref(null)
 
@@ -26,6 +28,9 @@ let map = null
 let layer = null
 let trackLayer = null
 let stageLayer = null
+let routeLayer = null
+const stageEntries = new Map() // id d'étape -> { stage, marker, line, arrow, future }
+let arrows = [] // pointes de flèche à réorienter quand le zoom change : { marker, from, to, small, future }
 let observer = null
 let fitted = false
 const markers = new Map() // id de galerie -> { marker, gallery }
@@ -99,27 +104,89 @@ function fitInitial() {
   map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 10, animate: false })
 }
 
-// Étapes : un badge par étape (au milieu du trajet pour un trajet), sous les épingles des albums.
+// Étapes : une ligne d'itinéraire (sous le tracé GPS), des liaisons pointillées et un badge par étape (au milieu du trajet pour un trajet).
 function drawStages() {
   if (!map) return
   stageLayer.clearLayers()
+  routeLayer.clearLayers()
+  stageEntries.clear()
+  arrows = []
+  const color = itineraryColor()
+
+  // Liaisons entre étapes consécutives éloignées de plus d'1 km (pointillés fins).
+  for (const link of itineraryLinks(props.stages)) {
+    const future = isFuture(link.next)
+    L.polyline(link.line, { color, weight: 3, opacity: future ? 0.3 : 0.7, dashArray: '2 8', lineCap: 'round', interactive: false }).addTo(routeLayer)
+    addArrow(link.line, 0.5, { small: true, future })
+  }
+
   for (const stage of props.stages) {
     const future = isFuture(stage)
     const label = STAGE_KINDS[stage.kind]?.label ?? 'Étape'
-    const marker = L.marker(stageAnchor(stage), {
-      icon: stageIcon(stage.kind, { future }),
-      keyboard: true,
-      title: '',
-      zIndexOffset: -500,
-    })
-    marker.bindTooltip(() => stageTooltip(stage, label, future), { direction: 'top', opacity: 1, className: 'pin-tip' })
-    marker.addTo(stageLayer)
-    const markerElement = marker.getElement()
-    if (markerElement) {
-      markerElement.setAttribute('role', 'img')
-      markerElement.setAttribute('aria-label', `${label} : ${stage.name}${future ? ' (à venir)' : ''}`)
+    const entry = { stage, future, line: null, arrow: null, marker: null }
+
+    const points = stageLine(stage)
+    if (points) {
+      entry.line = L.polyline(points, { color, weight: 7, opacity: future ? 0.3 : 0.6, lineCap: 'round', lineJoin: 'round', smoothFactor: 1.5 })
+      entry.line.on('click', () => emit('select-stage', stage.id))
+      entry.line.addTo(routeLayer)
+      entry.arrow = addArrow(points, 0.7, { future })
     }
+
+    entry.marker = L.marker(stageAnchor(stage), { icon: stageIcon(stage.kind, { future }), keyboard: true, title: '', zIndexOffset: -500 })
+    entry.marker.on('click', () => emit('select-stage', stage.id))
+    entry.marker.addTo(stageLayer)
+    stageEntries.set(stage.id, entry)
+    styleStage(entry, stage.id === props.selectedStageId, label)
   }
+  // Les lignes d'itinéraire (redessinées après coup) doivent rester SOUS le tracé GPS.
+  trackLayer.eachLayer((layer) => layer.bringToFront?.())
+}
+
+// Pointe de flèche à la fraction f de la ligne, orientée dans le sens du voyage.
+function addArrow(points, f, { small = false, future = false } = {}) {
+  const { point, from, to } = pointAlong(points, f)
+  const marker = L.marker(point, { icon: arrowIcon(0, { small, future }), interactive: false, keyboard: false, zIndexOffset: -1000 })
+  marker.addTo(routeLayer)
+  const arrow = { marker, from, to, small, future }
+  arrows.push(arrow)
+  orientArrow(arrow)
+  return arrow
+}
+
+// L'angle dépend de la projection : on le recalcule à chaque changement de zoom.
+function orientArrow(arrow) {
+  const a = map.latLngToLayerPoint(arrow.from)
+  const b = map.latLngToLayerPoint(arrow.to)
+  const angle = a.equals(b) ? 0 : (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI
+  arrow.marker.setIcon(arrowIcon(angle, { small: arrow.small, future: arrow.future }))
+}
+
+function styleStage(entry, selected, label = STAGE_KINDS[entry.stage.kind]?.label ?? 'Étape') {
+  const { stage, future } = entry
+  entry.marker.setIcon(stageIcon(stage.kind, { future, selected }))
+  entry.marker.setZIndexOffset(selected ? 900 : -500)
+  entry.marker.unbindTooltip()
+  entry.marker.bindTooltip(() => stageTooltip(stage, label, future), { direction: 'top', opacity: 1, className: 'pin-tip', permanent: selected })
+  if (selected) entry.marker.openTooltip()
+  entry.line?.setStyle({ weight: selected ? 10 : 7, opacity: selected ? 0.95 : future ? 0.3 : 0.6 })
+  const markerElement = entry.marker.getElement()
+  if (markerElement) {
+    markerElement.setAttribute('role', 'button')
+    markerElement.setAttribute('aria-label', `${label} : ${stage.name}${future ? ' (à venir)' : ''}`)
+  }
+}
+
+function applyStageSelection(id, previousId) {
+  if (!map) return
+  const previous = previousId != null ? stageEntries.get(previousId) : null
+  if (previous) styleStage(previous, false)
+  const current = id != null ? stageEntries.get(id) : null
+  if (!current) return
+  styleStage(current, true)
+  const animate = !prefersReducedMotion()
+  if (current.line) map.fitBounds(current.line.getBounds(), { padding: [60, 60], maxZoom: 9, animate })
+  else map.setView(current.marker.getLatLng(), Math.max(map.getZoom(), 6), { animate })
 }
 
 function stageTooltip(stage, label, future) {
@@ -203,6 +270,8 @@ function applySelection(id, previousId) {
 onMounted(() => {
   map = createMap(element.value, { worldCopyJump: true })
   map.setView([20, 0], 2)
+  // Ordre d'empilement : itinéraire, puis tracé GPS (au-dessus), puis marqueurs.
+  routeLayer = L.layerGroup().addTo(map)
   trackLayer = L.layerGroup().addTo(map)
   stageLayer = L.layerGroup().addTo(map)
   layer = L.layerGroup().addTo(map)
@@ -211,8 +280,10 @@ onMounted(() => {
   observer = new ResizeObserver(() => map.invalidateSize())
   observer.observe(element.value)
 
+  map.on('zoomend', () => arrows.forEach(orientArrow))
   render()
   drawStages()
+  applyStageSelection(props.selectedStageId, null)
   drawTrack()
 })
 
@@ -225,7 +296,15 @@ onBeforeUnmount(() => {
 
 watch(() => props.galleries, render)
 watch(() => props.track, drawTrack)
-watch(() => props.stages, () => { drawStages(); fitInitial() })
+watch(
+  () => props.stages,
+  () => {
+    drawStages()
+    fitInitial()
+    applyStageSelection(props.selectedStageId, null)
+  },
+)
+watch(() => props.selectedStageId, (id, previous) => applyStageSelection(id, previous))
 watch(() => props.galleriesLoaded, fitInitial)
 watch(() => props.selectedId, (id, previous) => applySelection(id, previous))
 </script>

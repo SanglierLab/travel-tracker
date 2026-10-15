@@ -22,6 +22,8 @@ const listElement = ref(null)
 //   /galerie/12       -> galerie 12 sélectionnée, sur la page où elle se trouve
 //   ...?media=345     -> visionneuse ouverte sur le média 345 (le bouton « retour » la ferme)
 const selectedId = computed(() => (route.name === 'gallery' ? Number(route.params.id) : null))
+//   /etape/3          -> étape 3 sélectionnée sur la carte (la liste reste où elle est)
+const selectedStageId = computed(() => (route.name === 'stage' ? Number(route.params.id) : null))
 const queryPage = computed(() => {
   const n = parseInt(route.query.page, 10)
   return Number.isInteger(n) && n > 0 ? n : 1
@@ -33,7 +35,7 @@ const viewerItemId = computed(() => {
 
 // La carte est rechargée à chaque visite de l'écran (de nouvelles galeries ont pu être ajoutées).
 const mapReady = loadMap()
-loadItinerary()
+const itineraryReady = loadItinerary()
 
 // Tracé en quasi temps réel : rechargé toutes les minutes tant que l'onglet est visible (et dès qu'il le redevient).
 const TRACK_REFRESH_MS = 60_000
@@ -57,6 +59,7 @@ const trackSources = computed(() => [
 
 // Légende : types d'étape présents, et mention « à venir » s'il y a des étapes futures.
 const stageKindsShown = computed(() => KIND_ORDER.filter((kind) => journal.itinerary.some((stage) => stage.kind === kind)))
+const hasRoute = computed(() => journal.itinerary.length > 1 || journal.itinerary.some((stage) => stage.kind !== 'PLACE'))
 const hasFutureStage = computed(() => journal.itinerary.some((stage) => isFuture(stage)))
 const hasLegend = computed(() => trackSources.value.length > 0 || stageKindsShown.value.length > 0 || journal.galleries.length > 0)
 
@@ -74,6 +77,15 @@ async function sync(force = false) {
   const initial = first
   first = false
   settled.value = false
+
+  // Sélectionner une étape ne touche pas à la liste (déjà affichée) ; arrivée directe : première page.
+  if (selectedStageId.value !== null && journal.data) {
+    await itineraryReady
+    if (current !== run) return
+    if (!journal.itinerary.some((stage) => stage.id === selectedStageId.value)) router.replace({ name: 'home' }) // étape inconnue ou supprimée
+    settled.value = true
+    return
+  }
 
   let target = queryPage.value
   if (selectedId.value !== null) {
@@ -108,6 +120,10 @@ async function sync(force = false) {
   }
   suppressScroll = false
   settled.value = true
+  if (selectedStageId.value !== null) {
+    await itineraryReady
+    if (current === run && !journal.itinerary.some((stage) => stage.id === selectedStageId.value)) router.replace({ name: 'home' })
+  }
 }
 
 // La visionneuse (?media=) ne doit pas relancer le chargement : on ne surveille que la page et la galerie.
@@ -123,6 +139,14 @@ function scrollToGallery(id, smooth) {
   if (!list || !card) return
   const top = card.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - 12
   list.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' })
+}
+
+// Sélection d'une étape depuis la carte : carte agrandie réduite sur mobile, sinon rien d'autre à faire.
+function selectStage(id) {
+  if (id === selectedStageId.value) return
+  const location = { name: 'stage', params: { id } }
+  if (selectedStageId.value !== null) router.replace(location) // d'une étape à l'autre : pas d'entrée d'historique en plus
+  else router.push(location)
 }
 
 // Sélection depuis la carte (scrollToCard = true) ou depuis un en-tête de galerie (false : elle est déjà à l'écran).
@@ -153,10 +177,13 @@ const mapExpanded = ref(false)
 
 const BASE_TITLE = 'Journal de voyage'
 const selectedGallery = computed(() => journal.galleries.find((g) => g.id === selectedId.value))
+const selectedStage = computed(() => journal.itinerary.find((stage) => stage.id === selectedStageId.value))
 watch(
-  selectedGallery,
-  (gallery) => {
-    document.title = gallery ? `${gallery.title} · ${gallery.placeName} — ${BASE_TITLE}` : BASE_TITLE
+  [selectedGallery, selectedStage],
+  ([gallery, stage]) => {
+    if (gallery) document.title = `${gallery.title} · ${gallery.placeName} — ${BASE_TITLE}`
+    else if (stage) document.title = `${stage.name} — ${BASE_TITLE}`
+    else document.title = BASE_TITLE
   },
   { immediate: true },
 )
@@ -222,6 +249,8 @@ watch([settled, viewerItemId, viewer], () => {
         :selected-id="selectedId"
         :track="journal.track"
         :stages="journal.itinerary"
+        :selected-stage-id="selectedStageId"
+        @select-stage="selectStage"
         :galleries-loaded="journal.mapLoaded && journal.itineraryLoaded"
         @select="(id) => selectGallery(id, true)"
       />
@@ -229,6 +258,10 @@ watch([settled, viewerItemId, viewer], () => {
         <li v-if="journal.galleries.length > 0">
           <svg class="map-legend__camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v11H4zM12 9.5a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4z" /></svg>
           <span>Album photo</span>
+        </li>
+        <li v-if="hasRoute" :style="{ color: 'var(--itinerary)' }">
+          <svg viewBox="0 0 28 6" aria-hidden="true"><line x1="3" y1="3" x2="25" y2="3" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity="0.6" /></svg>
+          <span>Itinéraire</span>
         </li>
         <li v-for="kind in stageKindsShown" :key="kind">
           <StageIcon :kind="kind" class="map-legend__badge" />

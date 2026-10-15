@@ -11,3 +11,8 @@ export function trackColor(source) {
   const { cssVar, fallback } = TRACK_SOURCES[source]
   return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || fallback
 }
+
+/** Couleur de la ligne d'itinéraire (variable --itinerary du thème). */
+export function itineraryColor() {
+  return getComputedStyle(document.documentElement).getPropertyValue('--itinerary').trim() || '#c2185b'
+}

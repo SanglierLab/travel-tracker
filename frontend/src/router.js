@@ -8,6 +8,8 @@ const router = createRouter({
     { path: '/', name: 'home', component: HomeView },
     // Même écran : la galerie ciblée est sélectionnée, sa page ouverte, la carte centrée dessus.
     { path: '/galerie/:id(\\d+)', name: 'gallery', component: HomeView },
+    // Même écran : l'étape ciblée est sélectionnée et mise en valeur sur la carte.
+    { path: '/etape/:id(\\d+)', name: 'stage', component: HomeView },
     { path: '/connexion', name: 'login', component: () => import('./views/LoginView.vue') },
     // Tout ce qui est admin est chargé à la demande : un visiteur ne télécharge jamais ce code.
     {
