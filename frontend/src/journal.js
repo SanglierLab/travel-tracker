@@ -1,16 +1,18 @@
 import { reactive } from 'vue'
 import { api } from './api'
+import { todayIso } from './stageGeo'
 
 // État partagé de l'écran principal : la liste (page courante) et la carte (toutes les galeries).
 // La galerie sélectionnée n'est PAS ici : elle est dans l'adresse (/galerie/:id), seule source de vérité.
 export const journal = reactive({
-  data: null, // dernière page reçue : { content, page, pageSize, totalElements, totalPages }
+  data: null, // dernière page du fil : { content: [{ type: 'GALLERY', gallery } | { type: 'STAGE', stage }], page, pageSize, totalElements, totalPages }
   loading: false,
   error: false,
   galleries: [], // toutes les galeries (marqueurs), avec le numéro de page de chacune
   mapLoaded: false, // vrai une fois la réponse reçue (ou en échec) : la carte sait alors si elle a des galeries
   mapError: false,
   track: { segments: [], last: null }, // tracé de la route : lignes par source + dernière position connue
+  today: todayIso(), // date du jour du serveur (remplace celle du navigateur dès qu'elle est connue) : une étape est « à venir » tant que son début la dépasse
   itineraryError: false,
   itineraryLoaded: false, // vrai une fois la réponse reçue (ou en échec) : sert au cadrage initial de la carte
   itinerary: [], // étapes du voyage dans l'ordre choisi par l'admin (lieux fixes et trajets), passées et à venir
@@ -23,7 +25,7 @@ export async function loadPage(page) {
   journal.loading = true
   journal.error = false
   try {
-    const data = await api(`/api/public/galleries?page=${page}`)
+    const data = await api(`/api/public/feed?page=${page}`)
     if (request === lastRequest) journal.data = data
   } catch {
     if (request === lastRequest) journal.error = true
@@ -53,10 +55,18 @@ export async function loadTrack() {
   }
 }
 
-/** L'itinéraire est un complément, comme le tracé : en cas d'échec on garde l'affichage précédent. */
+/**
+ * L'itinéraire est un complément, comme le tracé : en cas d'échec on garde l'affichage précédent.
+ * Chaque étape reçoit sa page dans le fil (`page`, null si elle est à venir ou si la position est inconnue).
+ */
 export async function loadItinerary() {
   try {
-    journal.itinerary = await api('/api/public/itinerary')
+    const [stages, positions] = await Promise.all([
+      api('/api/public/itinerary'),
+      api('/api/public/feed/positions').catch(() => null),
+    ])
+    if (positions?.today) journal.today = positions.today
+    journal.itinerary = stages.map((stage) => ({ ...stage, page: positions?.stages?.[stage.id] ?? null }))
     journal.itineraryError = false
   } catch {
     journal.itineraryError = true /* réessayé à la prochaine visite de l'écran */

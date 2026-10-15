@@ -73,17 +73,28 @@ public class GalleryService {
         int pageSize = properties.pageSize();
         int index = Math.max(page, 1) - 1;
         Page<Gallery> result = galleries.findAll(PageRequest.of(index, pageSize, ORDER));
+        List<GalleryDetail> content = publicDetails(result.getContent().stream().map(Gallery::getId).toList());
+        return new PageResponse<>(content, index + 1, pageSize, result.getTotalElements(), result.getTotalPages());
+    }
 
-        List<Long> ids = result.getContent().stream().map(Gallery::getId).toList();
-        Map<Long, List<ItemDto>> itemsByGallery = ids.isEmpty() ? Map.of()
-                : items.findByGalleryIdInOrderByGalleryIdAscSortOrderAsc(ids).stream()
+    /** Galeries avec leur contenu, dans l'ordre des identifiants demandés (les identifiants inconnus sont ignorés). */
+    @Transactional(readOnly = true)
+    public List<GalleryDetail> publicDetails(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, List<ItemDto>> itemsByGallery = items.findByGalleryIdInOrderByGalleryIdAscSortOrderAsc(ids).stream()
                 .collect(Collectors.groupingBy(GalleryItem::getGalleryId, LinkedHashMap::new,
                         Collectors.mapping(mapper::toDto, Collectors.toList())));
-
-        List<GalleryDetail> content = result.getContent().stream()
-                .map(g -> detailWithDtos(g, itemsByGallery.getOrDefault(g.getId(), List.of())))
-                .toList();
-        return new PageResponse<>(content, index + 1, pageSize, result.getTotalElements(), result.getTotalPages());
+        Map<Long, Gallery> byId = galleries.findAllById(ids).stream().collect(Collectors.toMap(Gallery::getId, g -> g));
+        List<GalleryDetail> result = new ArrayList<>(ids.size());
+        for (long id : ids) {
+            Gallery g = byId.get(id);
+            if (g != null) {
+                result.add(detailWithDtos(g, itemsByGallery.getOrDefault(id, List.of())));
+            }
+        }
+        return result;
     }
 
     /** Toutes les galeries, dans l'ordre d'affichage : marqueurs de la carte et liste d'administration. */

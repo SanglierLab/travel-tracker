@@ -2,7 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { L, arrowIcon, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
 import { STAGE_KINDS } from '../stageKinds'
-import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine } from '../stageGeo'
+import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine, todayIso } from '../stageGeo'
 import { formatDate, formatDateTime, timeAgo } from '../format'
 import { TRACK_SOURCES, itineraryColor, trackColor } from '../trackStyle'
 
@@ -14,6 +14,8 @@ const props = defineProps({
   track: { type: Object, default: () => ({ segments: [], last: null }) },
   // Étapes du voyage (GET /api/public/itinerary), toutes affichées ; celles à venir sont estompées.
   stages: { type: Array, default: () => [] },
+  // Date du jour (AAAA-MM-JJ) : une étape est à venir tant que son début la dépasse.
+  today: { type: String, default: () => todayIso() },
   // Étape sélectionnée (adresse /etape/:id).
   selectedStageId: { type: Number, default: null },
   // La carte ne se cadre qu'une fois la liste des galeries connue (même vide).
@@ -115,13 +117,13 @@ function drawStages() {
 
   // Liaisons entre étapes consécutives éloignées de plus d'1 km (pointillés fins).
   for (const link of itineraryLinks(props.stages)) {
-    const future = isFuture(link.next)
+    const future = isFuture(link.next, props.today)
     L.polyline(link.line, { color, weight: 3, opacity: future ? 0.3 : 0.7, dashArray: '2 8', lineCap: 'round', interactive: false }).addTo(routeLayer)
     addArrow(link.line, 0.5, { small: true, future })
   }
 
   for (const stage of props.stages) {
-    const future = isFuture(stage)
+    const future = isFuture(stage, props.today)
     const label = STAGE_KINDS[stage.kind]?.label ?? 'Étape'
     const entry = { stage, future, line: null, arrow: null, marker: null }
 
@@ -304,6 +306,7 @@ watch(
     applyStageSelection(props.selectedStageId, null)
   },
 )
+watch(() => props.today, () => { drawStages(); applyStageSelection(props.selectedStageId, null) })
 watch(() => props.selectedStageId, (id, previous) => applyStageSelection(id, previous))
 watch(() => props.galleriesLoaded, fitInitial)
 watch(() => props.selectedId, (id, previous) => applySelection(id, previous))

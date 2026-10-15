@@ -15,4 +15,9 @@ public record GallerySummary(
         String coverUrl,
         /** Numéro (à partir de 1) de la page de la partie publique où cette galerie apparaît. */
         int page) {
+
+    /** Même galerie, avec le numéro de page donné (la pagination du fil mélange albums et étapes). */
+    public GallerySummary withPage(int newPage) {
+        return new GallerySummary(id, title, placeName, galleryDate, latitude, longitude, coverUrl, newPage);
+    }
 }

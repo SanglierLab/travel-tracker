@@ -121,7 +121,8 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST "$BASE/api/admin/items/3/move?d
 curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X DELETE $BASE/api/admin/items/3
 
 # 5. Lecture publique (sans cookie)
-curl -s $BASE/api/public/galleries?page=1
+curl -s $BASE/api/public/feed?page=1          # le fil : albums et étapes commencées mélangés
+curl -s $BASE/api/public/feed/positions       # date du jour du serveur + page de chaque étape
 curl -s $BASE/api/public/map
 ```
 
@@ -244,7 +245,13 @@ Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er 
 **Itinéraire (6c-2)** : une ligne épaisse fléchée, aux couleurs du thème (`--itinerary`), relie les étapes dans l'ordre choisi par l'admin. Elle suit le fichier GPX
 s'il y en a un, sinon une droite (un arc de grand cercle pour un avion). Une liaison pointillée fine relie deux étapes consécutives distantes de plus d'1 km.
 La ligne passe sous le tracé GPS. Cliquer sur une étape (badge ou ligne) la sélectionne : adresse `/etape/:id`, carte cadrée dessus, badge agrandi.
-Restent à faire : le fil des photos (6d).
+
+
+**Fil des photos (6d)** : les étapes déjà commencées s'intercalent entre les albums, par date de début (sous les albums du même jour) ; une étape est une pastille
+arrondie avec le picto de son type. Albums et étapes sont paginés ensemble (10 par page). Les étapes à venir ne sont pas dans le fil : un bloc repliable
+« Voir la suite du voyage » les liste en haut de la première page. Cliquer une étape du fil la met en valeur dans le fil et sur la carte (et inversement) ;
+l'en-tête d'un album porte le même appareil photo que son épingle. « À venir » se décide avec la **date du jour du serveur** (fuseau de la machine :
+pensez à `TZ=Europe/Paris` dans le conteneur) ; le navigateur reprend cette date pour que carte et fil soient toujours d'accord.
 
 **Dans l'administration** : *Menu → Étapes*. On y ajoute, supprime, réordonne (monter/descendre, « Trier par date ») et positionne les étapes sur la carte.
 Pour un trajet, le formulaire permet d'envoyer un fichier **GPX** : il est allégé à l'envoi et son tracé s'affiche sur les cartes de positionnement ;

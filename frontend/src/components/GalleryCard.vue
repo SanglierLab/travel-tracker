@@ -39,6 +39,7 @@ function label(item) {
 
     <header class="gallery__head" @click="$emit('select', gallery.id)">
       <p class="gallery__meta">
+        <svg class="gallery__camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v11H4zM12 9.5a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4z" /></svg>
         <time :datetime="gallery.galleryDate">{{ formatDate(gallery.galleryDate) }}</time>
         · {{ gallery.placeName }}
       </p>

@@ -2,6 +2,7 @@
 import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import GalleryCard from '../components/GalleryCard.vue'
+import StageInterstitial from '../components/StageInterstitial.vue'
 import MediaViewer from '../components/MediaViewer.vue'
 import Pagination from '../components/Pagination.vue'
 import { journal, loadItinerary, loadMap, loadPage, loadTrack } from '../journal'
@@ -57,10 +58,19 @@ const trackSources = computed(() => [
   ...new Set(journal.track.segments.map((segment) => segment.source).filter((source) => TRACK_SOURCES[source])),
 ])
 
+// Le fil mélange albums et étapes commencées ; les étapes à venir sont à part, dans un bloc repliable.
+const entries = computed(() => journal.data?.content ?? [])
+const futureStages = computed(() =>
+  journal.itinerary
+    .filter((stage) => isFuture(stage, journal.today))
+    .sort((a, b) => (a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0)), // tri stable : à date égale, l'ordre de l'itinéraire
+)
+const upcomingOpen = ref(false)
+
 // Légende : types d'étape présents, et mention « à venir » s'il y a des étapes futures.
 const stageKindsShown = computed(() => KIND_ORDER.filter((kind) => journal.itinerary.some((stage) => stage.kind === kind)))
 const hasRoute = computed(() => journal.itinerary.length > 1 || journal.itinerary.some((stage) => stage.kind !== 'PLACE'))
-const hasFutureStage = computed(() => journal.itinerary.some((stage) => isFuture(stage)))
+const hasFutureStage = computed(() => futureStages.value.length > 0)
 const hasLegend = computed(() => trackSources.value.length > 0 || stageKindsShown.value.length > 0 || journal.galleries.length > 0)
 
 // ---------------------------------------------------------------------------
@@ -78,15 +88,6 @@ async function sync(force = false) {
   first = false
   settled.value = false
 
-  // Sélectionner une étape ne touche pas à la liste (déjà affichée) ; arrivée directe : première page.
-  if (selectedStageId.value !== null && journal.data) {
-    await itineraryReady
-    if (current !== run) return
-    if (!journal.itinerary.some((stage) => stage.id === selectedStageId.value)) router.replace({ name: 'home' }) // étape inconnue ou supprimée
-    settled.value = true
-    return
-  }
-
   let target = queryPage.value
   if (selectedId.value !== null) {
     await mapReady
@@ -97,6 +98,15 @@ async function sync(force = false) {
       return
     }
     target = gallery.page
+  } else if (selectedStageId.value !== null) {
+    await itineraryReady
+    if (current !== run) return
+    const stage = journal.itinerary.find((s) => s.id === selectedStageId.value)
+    if (!stage) {
+      router.replace({ name: 'home' }) // étape inconnue ou supprimée
+      return
+    }
+    target = stage.page ?? 1 // une étape à venir n'est pas dans le fil : le bloc « suite du voyage » est en haut de la première page
   }
 
   const pageChanged = initial || force || !journal.data || journal.data.page !== target
@@ -104,7 +114,7 @@ async function sync(force = false) {
     await loadPage(target)
     if (current !== run) return
     const total = journal.data?.totalPages ?? 0
-    if (selectedId.value === null && total > 0 && target > total) {
+    if (selectedId.value === null && selectedStageId.value === null && total > 0 && target > total) {
       // Page demandée au-delà de la dernière : on revient sur la dernière.
       router.replace({ name: 'home', query: total > 1 ? { page: total } : {} })
       return
@@ -114,16 +124,17 @@ async function sync(force = false) {
   await nextTick()
   if (current !== run) return
   if (selectedId.value !== null) {
-    if (!suppressScroll) scrollToGallery(selectedId.value, !pageChanged)
+    if (!suppressScroll) scrollToElement(`galerie-${selectedId.value}`, !pageChanged)
+  } else if (selectedStageId.value !== null) {
+    if (isFuture(selectedStage.value, journal.today)) upcomingOpen.value = true
+    await nextTick()
+    if (current !== run) return
+    if (!suppressScroll) scrollToElement(`etape-${selectedStageId.value}`, !pageChanged)
   } else if (pageChanged) {
     listElement.value?.scrollTo({ top: 0 })
   }
   suppressScroll = false
   settled.value = true
-  if (selectedStageId.value !== null) {
-    await itineraryReady
-    if (current === run && !journal.itinerary.some((stage) => stage.id === selectedStageId.value)) router.replace({ name: 'home' })
-  }
 }
 
 // La visionneuse (?media=) ne doit pas relancer le chargement : on ne surveille que la page et la galerie.
@@ -133,19 +144,30 @@ watch(
   { immediate: true },
 )
 
-function scrollToGallery(id, smooth) {
+function scrollToElement(elementId, smooth) {
   const list = listElement.value
-  const card = document.getElementById(`galerie-${id}`)
+  const card = document.getElementById(elementId)
   if (!list || !card) return
   const top = card.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop - 12
   list.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' })
 }
 
-// Sélection d'une étape depuis la carte : carte agrandie réduite sur mobile, sinon rien d'autre à faire.
-function selectStage(id) {
-  if (id === selectedStageId.value) return
+// Sélection d'une étape depuis la carte (scrollToCard = true) ou depuis le fil (false : elle est déjà à l'écran).
+async function selectStage(id, scrollToCard) {
+  const stage = journal.itinerary.find((s) => s.id === id)
+  if (!stage) return
+  if (scrollToCard && mapExpanded.value) {
+    mapExpanded.value = false
+    await nextTick()
+  }
+  if (id === selectedStageId.value) {
+    if (scrollToCard) scrollToElement(`etape-${id}`, true)
+    return
+  }
+  suppressScroll = !scrollToCard
   const location = { name: 'stage', params: { id } }
-  if (selectedStageId.value !== null) router.replace(location) // d'une étape à l'autre : pas d'entrée d'historique en plus
+  // Même logique que pour les galeries : changer de page ajoute une entrée d'historique, sinon on remplace.
+  if (stage.page === journal.data?.page || (stage.page == null && journal.data?.page === 1)) router.replace(location)
   else router.push(location)
 }
 
@@ -159,7 +181,7 @@ async function selectGallery(id, scrollToCard) {
     await nextTick()
   }
   if (id === selectedId.value) {
-    if (scrollToCard) scrollToGallery(id, true)
+    if (scrollToCard) scrollToElement(`galerie-${id}`, true)
     return
   }
   suppressScroll = !scrollToCard
@@ -199,7 +221,8 @@ onBeforeUnmount(() => {
 const viewer = computed(() => {
   const id = viewerItemId.value
   if (id === null || !journal.data) return null
-  for (const gallery of journal.data.content) {
+  for (const { gallery } of entries.value) {
+    if (!gallery) continue
     const media = gallery.items.filter((item) => item.type !== 'TEXT')
     const index = media.findIndex((item) => item.id === id)
     if (index >= 0) return { gallery, media, index }
@@ -250,7 +273,8 @@ watch([settled, viewerItemId, viewer], () => {
         :track="journal.track"
         :stages="journal.itinerary"
         :selected-stage-id="selectedStageId"
-        @select-stage="selectStage"
+        @select-stage="(id) => selectStage(id, true)"
+        :today="journal.today"
         :galleries-loaded="journal.mapLoaded && journal.itineraryLoaded"
         @select="(id) => selectGallery(id, true)"
       />
@@ -310,18 +334,50 @@ watch([settled, viewerItemId, viewer], () => {
         <button class="btn btn--ghost btn--small" type="button" @click="sync(true)">Réessayer</button>
       </p>
       <p v-else-if="!journal.data" class="muted">Chargement…</p>
-      <p v-else-if="journal.data.content.length === 0" class="muted">Aucune galerie pour le moment.</p>
+      <p v-else-if="entries.length === 0 && futureStages.length === 0" class="muted">Rien à voir pour le moment.</p>
 
       <template v-else>
+        <section v-if="futureStages.length > 0 && journal.data.page === 1" class="upcoming">
+          <button
+            class="upcoming__toggle"
+            type="button"
+            aria-controls="suite-du-voyage"
+            :aria-expanded="upcomingOpen"
+            @click="upcomingOpen = !upcomingOpen"
+          >
+            <svg class="upcoming__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+            <span>{{ upcomingOpen ? 'Masquer la suite du voyage' : 'Voir la suite du voyage' }}</span>
+            <span class="upcoming__count">{{ futureStages.length }} {{ futureStages.length > 1 ? 'étapes' : 'étape' }}</span>
+          </button>
+          <div v-if="upcomingOpen" id="suite-du-voyage" class="upcoming__list">
+            <StageInterstitial
+              v-for="stage in futureStages"
+              :key="stage.id"
+              :stage="stage"
+              :selected="stage.id === selectedStageId"
+              :timeline="false"
+              future
+              @select="(id) => selectStage(id, false)"
+            />
+          </div>
+        </section>
+
         <div class="timeline">
-          <GalleryCard
-            v-for="gallery in journal.data.content"
-            :key="gallery.id"
-            :gallery="gallery"
-            :selected="gallery.id === selectedId"
-            @select="(id) => selectGallery(id, false)"
-            @open="open"
-          />
+          <template v-for="entry in entries" :key="entry.type + (entry.gallery?.id ?? entry.stage?.id)">
+            <GalleryCard
+              v-if="entry.type === 'GALLERY'"
+              :gallery="entry.gallery"
+              :selected="entry.gallery.id === selectedId"
+              @select="(id) => selectGallery(id, false)"
+              @open="open"
+            />
+            <StageInterstitial
+              v-else
+              :stage="entry.stage"
+              :selected="entry.stage.id === selectedStageId"
+              @select="(id) => selectStage(id, false)"
+            />
+          </template>
         </div>
         <Pagination :page="journal.data.page" :total-pages="journal.data.totalPages" />
       </template>
