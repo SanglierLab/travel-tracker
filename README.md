@@ -243,7 +243,7 @@ Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er 
 **Sur la carte publique (6c-1)** : chaque étape est un badge arrondi avec le picto de son type (lieu, train, avion, bateau), placé au milieu du trajet pour un trajet ; une étape dont la date de début n'est pas atteinte est estompée (« à venir »). Les albums gardent leur épingle, avec un appareil photo au centre. La légende liste ces éléments. 
 
 **Itinéraire (6c-2)** : une ligne épaisse fléchée, aux couleurs du thème (`--itinerary`), relie les étapes dans l'ordre choisi par l'admin. Elle suit le fichier GPX
-s'il y en a un, sinon une droite (un arc de grand cercle pour un avion). Une liaison pointillée fine relie deux étapes consécutives distantes de plus d'1 km.
+s'il y en a un ; sinon c'est un **arc de cercle** entre le départ et l'arrivée (porté par le grand cercle pour un avion), toujours courbé sur la droite du sens de marche : un aller et son retour se courbent de part et d'autre et ne se superposent pas. Une liaison pointillée fine relie deux étapes consécutives distantes de plus d'1 km.
 La ligne passe sous le tracé GPS. Cliquer sur une étape (badge ou ligne) la sélectionne : adresse `/etape/:id`, carte cadrée dessus, badge agrandi.
 
 

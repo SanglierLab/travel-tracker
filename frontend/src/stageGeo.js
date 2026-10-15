@@ -114,16 +114,42 @@ export function greatCircle(a, b, count = 48) {
   return unwrapLongitudes(points)
 }
 
+// Droite départ → arrivée en `count` + 1 points (longitudes rendues continues).
+function straightLine(start, end, count) {
+  const [a, b] = unwrapLongitudes([start, end])
+  return Array.from({ length: count + 1 }, (_, n) => [a[0] + ((b[0] - a[0]) * n) / count, a[1] + ((b[1] - a[1]) * n) / count])
+}
+
+/** Courbure des trajets sans GPX : le sommet de l'arc s'écarte de la corde de cette fraction de sa longueur. */
+export const ARC_BULGE = 0.15
+
 /**
- * Ligne d'itinéraire d'une étape : null pour un lieu fixe ; le tracé GPX s'il y en a un ; sinon, pour un avion, l'arc de grand cercle ;
- * sinon la droite départ → arrivée.
+ * Arc entre deux positions : la ligne de base (grand cercle pour un avion, droite sinon) est écartée de la corde,
+ * toujours sur la DROITE du sens de marche. Un aller et son retour se courbent donc de part et d'autre : ils ne se superposent pas.
+ */
+export function arcBetween(start, end, { greatCircleBase = false, count = 48 } = {}) {
+  const base = greatCircleBase ? greatCircle(start, end, count) : straightLine(start, end, count)
+  const last = base[base.length - 1]
+  const k = Math.max(0.2, Math.cos(toRad((start[0] + last[0]) / 2))) // les degrés de longitude sont plus courts loin de l'équateur
+  const cx = (last[1] - base[0][1]) * k
+  const cy = last[0] - base[0][0]
+  const chord = Math.hypot(cx, cy)
+  if (chord < 1e-9) return [start, end]
+  const [rightX, rightY] = [cy / chord, -cx / chord]
+  return base.map(([lat, lon], i) => {
+    const offset = ARC_BULGE * chord * Math.sin(Math.PI * (i / (base.length - 1)))
+    return [lat + offset * rightY, lon + (offset * rightX) / k]
+  })
+}
+
+/**
+ * Ligne d'itinéraire d'une étape : null pour un lieu fixe ; le tracé GPX s'il y en a un ; sinon un arc de cercle
+ * entre le départ et l'arrivée (porté par le grand cercle pour un avion).
  */
 export function stageLine(stage) {
   if (stage.kind === 'PLACE' || stage.endLatitude == null || stage.endLongitude == null) return null
   if (stage.path?.length >= 2) return unwrapLongitudes(stage.path)
-  const start = [stage.startLatitude, stage.startLongitude]
-  const end = [stage.endLatitude, stage.endLongitude]
-  return stage.kind === 'PLANE' ? greatCircle(start, end) : unwrapLongitudes([start, end])
+  return arcBetween([stage.startLatitude, stage.startLongitude], [stage.endLatitude, stage.endLongitude], { greatCircleBase: stage.kind === 'PLANE' })
 }
 
 /** Position du marqueur d'une étape : le lieu lui-même, ou le milieu de sa ligne pour un trajet. */
