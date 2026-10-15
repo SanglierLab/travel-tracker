@@ -1,5 +1,8 @@
 package fr.sanglierlab.traveltracker.media;
 
+import com.drew.imaging.ImageMetadataReader;
+import com.drew.metadata.Metadata;
+import com.drew.metadata.exif.ExifSubIFDDirectory;
 import fr.sanglierlab.traveltracker.common.ApiException;
 import fr.sanglierlab.traveltracker.config.AppProperties;
 import fr.sanglierlab.traveltracker.gallery.GalleryItem;
@@ -44,10 +47,11 @@ public class MediaService {
     private final ThumbnailService thumbnails;
     private final FfmpegService ffmpeg;
     private final AppProperties properties;
+    private final ExifExtractor exifExtractor;
 
     public MediaService(GalleryRepository galleries, GalleryItemService items, ItemMapper mapper,
                         StorageService storage, ThumbnailService thumbnails, FfmpegService ffmpeg,
-                        AppProperties properties) {
+                        AppProperties properties, ExifExtractor exifExtractor) {
         this.galleries = galleries;
         this.items = items;
         this.mapper = mapper;
@@ -55,6 +59,7 @@ public class MediaService {
         this.thumbnails = thumbnails;
         this.ffmpeg = ffmpeg;
         this.properties = properties;
+        this.exifExtractor = exifExtractor;
     }
 
     public ItemDto upload(long galleryId, MultipartFile file) throws IOException {
@@ -82,6 +87,12 @@ public class MediaService {
             Dimensions dimensions = format.type() == ItemType.VIDEO
                     ? processVideo(galleryId, fileKey, original)
                     : processPhoto(galleryId, fileKey, original, format);
+
+
+            PhotoExif exif = format.type() == ItemType.VIDEO
+                    ? PhotoExif.EMPTY
+                    : exifExtractor.extract(original);
+
 
             GalleryItem saved = items.addMedia(galleryId, format.type(), fileKey,
                     cleanFilename(file.getOriginalFilename(), format), format.extension(), file.getSize(),
