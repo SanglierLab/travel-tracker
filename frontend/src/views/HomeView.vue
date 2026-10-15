@@ -346,7 +346,6 @@ watch([settled, viewerItemId, viewer], () => {
           <button
             class="upcoming__toggle"
             type="button"
-            aria-controls="suite-du-voyage"
             :aria-expanded="upcomingOpen"
             @click="upcomingOpen = !upcomingOpen"
           >
@@ -354,22 +353,21 @@ watch([settled, viewerItemId, viewer], () => {
             <span>{{ upcomingOpen ? 'Masquer la suite du voyage' : 'Voir la suite du voyage' }}</span>
             <span class="upcoming__count">{{ farStages.length }} {{ farStages.length > 1 ? 'étapes' : 'étape' }}</span>
           </button>
-          <div v-if="upcomingOpen" id="suite-du-voyage" class="upcoming__list">
-            <StageInterstitial
-              v-for="stage in farStages"
-              :key="stage.id"
-              :stage="stage"
-              :selected="stage.id === selectedStageId"
-              :timeline="false"
-              future
-              @select="(id) => selectStage(id, false)"
-            />
-          </div>
         </section>
 
         <div class="timeline">
-          <!-- Étapes imminentes : en tête du fil, estompées -->
+          <!-- Étapes à venir, de la plus lointaine à la plus proche : d'abord celles du bloc déplié, puis les imminentes (toujours visibles) -->
           <template v-if="journal.data.page === 1">
+            <template v-if="upcomingOpen">
+              <StageInterstitial
+                v-for="stage in farStages"
+                :key="`far-${stage.id}`"
+                :stage="stage"
+                :selected="stage.id === selectedStageId"
+                future
+                @select="(id) => selectStage(id, false)"
+              />
+            </template>
             <StageInterstitial
               v-for="stage in imminentStages"
               :key="`imminent-${stage.id}`"

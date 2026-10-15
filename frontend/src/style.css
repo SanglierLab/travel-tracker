@@ -155,18 +155,26 @@ a { color: var(--color-accent); }
 }
 
 /* Timeline verticale : un nœud par galerie, relié par une ligne continue */
+/* Fil de suivi : une ligne verticale passe SOUS les cartes (albums et étapes ont ainsi la même largeur) et ne se voit que dans les
+   espaces entre elles. Pointillée = étape à venir. Les cartes doivent rester opaques, sinon la ligne apparaîtrait à travers. */
 .timeline {
   position: relative;
-  padding-left: 1.75rem;
+  isolation: isolate; /* garde la ligne (z-index négatif) derrière les cartes mais devant le fond de la page */
 }
-.timeline::before {
+.timeline > article::before {
   content: "";
   position: absolute;
-  left: 0.5rem;
-  top: 0.5rem;
-  bottom: 0;
+  z-index: -1;
+  top: 0;
+  bottom: -1.25rem; /* jusqu'à la carte suivante */
+  left: calc(1.65rem - 1px);
   width: 2px;
-  background: var(--color-border);
+  background: var(--color-accent);
+  opacity: 0.45;
+}
+.timeline > article:last-child::before { display: none; }
+.timeline > .stage-card--future::before {
+  background: repeating-linear-gradient(to bottom, var(--color-accent) 0 6px, transparent 6px 12px);
 }
 
 .gallery {
@@ -182,19 +190,6 @@ a { color: var(--color-accent); }
   border-color: var(--color-accent);
   box-shadow: 0 0 0 2px var(--color-accent);
 }
-
-.gallery__node {
-  position: absolute;
-  left: calc(-1.75rem + 1px);
-  top: 1.15rem;
-  width: 1.1rem;
-  height: 1.1rem;
-  box-sizing: border-box;
-  border: 3px solid var(--color-accent);
-  border-radius: 50%;
-  background: var(--color-surface);
-}
-.gallery--selected .gallery__node { background: var(--color-accent); }
 
 .gallery__head { cursor: pointer; margin-bottom: 0.75rem; }
 .gallery__meta { margin: 0 0 0.15rem; font-size: 0.9rem; color: var(--color-muted); }
@@ -216,7 +211,9 @@ a { color: var(--color-accent); }
 .stage-card .gallery__head { margin-bottom: 0; }
 .stage-card .gallery__head:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: var(--radius-small); }
 .gallery__meta .stage-card__icon { width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke: var(--itinerary); stroke-width: 2; }
-.stage-card--future { opacity: 0.7; }
+.stage-card--future { border-style: dashed; background: var(--color-bg); } /* opaque (pas d'opacity) : la ligne du fil reste dessous */
+.stage-card--future .gallery__title, .stage-card--future .gallery__meta { color: var(--color-muted); }
+.stage-card--future .gallery__meta time { color: var(--color-muted); }
 
 /* Bloc repliable « suite du voyage » (étapes à venir), en haut du fil */
 .upcoming { margin-bottom: 1.25rem; }
@@ -246,7 +243,6 @@ a { color: var(--color-accent); }
 }
 .upcoming__toggle[aria-expanded="true"] .upcoming__chevron { transform: rotate(90deg); }
 .upcoming__count { margin-left: auto; color: var(--color-muted); font-size: 0.9rem; }
-.upcoming__list { margin-top: 0.75rem; }
 
 /* Texte (markdown rendu côté serveur, déjà assaini) */
 .prose { margin: 0.75rem 0; overflow-wrap: anywhere; }

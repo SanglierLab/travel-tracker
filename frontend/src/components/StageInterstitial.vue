@@ -9,8 +9,6 @@ const props = defineProps({
   selected: { type: Boolean, default: false },
   // Étape à venir : affichée estompée.
   future: { type: Boolean, default: false },
-  // Dans le fil, la carte est posée sur la ligne du temps ; dans le bloc « suite du voyage », non.
-  timeline: { type: Boolean, default: true },
 })
 defineEmits(['select'])
 
@@ -24,7 +22,6 @@ const label = computed(() => STAGE_KINDS[props.stage.kind]?.label ?? 'Étape')
     class="gallery stage-card"
     :class="{ 'gallery--selected': selected, 'stage-card--future': future }"
   >
-    <span v-if="timeline" class="gallery__node" aria-hidden="true"></span>
     <header
       class="gallery__head"
       role="button"
