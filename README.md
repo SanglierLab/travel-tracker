@@ -193,7 +193,7 @@ curl -s $BASE/api/public/track | head -c 600
 
 La réponse contient les lignes à dessiner (`segments`, points `[latitude, longitude]` déjà allégés, coupés quand le téléphone est resté plus de
 `app.track-gap-hours` sans envoyer de position) et la dernière position connue (`last`). La carte publique l'affiche : trait plein pour le téléphone,
-pointillés pour un avion, tirets espacés pour un bateau (couleurs `--track-*` du thème), avec une légende.
+pointillés pour un avion, tirets espacés pour un bateau (couleurs `--track-*` du thème), avec une légende. Les points aberrants du téléphone (un point isolé à des dizaines de kilomètres, puis retour à la normale) sont masqués à l'affichage, sans rien supprimer en base (voir SPECIFICATIONS §18).
 
 La **dernière position** a un marqueur selon sa source : gros point rond pour le téléphone, picto de bateau (AIS) ou d'avion (ADS-B) seul, de la couleur
 du tracé. L'avion est orienté selon son cap, déduit du dernier point du tracé de la même source assez éloigné de la dernière position (pas de cap
