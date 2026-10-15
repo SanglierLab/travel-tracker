@@ -206,18 +206,19 @@ positions en base (source `ADSB`, rattachées au vol) : elles s'affichent en poi
 puis le bouton **on/off** de chaque vol lance ou arrête le suivi. La liste montre l'état de chaque vol, le nombre de positions enregistrées et l'heure de la
 dernière (elle se met à jour toute seule toutes les 15 secondes tant qu'un suivi est actif). Démarrer un deuxième vol est refusé tant que le premier est suivi.
 
-**État actuel : le fournisseur de données n'est pas encore branché.** Le batch tourne pour de vrai, mais récupère des positions
-*fictives en dur* (une route Paris → Tokyo, un point par cycle, puis l'avion reste à l'arrivée).
+**Fournisseur : [adsb.lol](https://api.adsb.lol/docs)** (`GET /v2/callsign/{callsign}`, sans clé), via `flight/adsb/api/AdsbLolClient.java`
+(interface `FlightPositionProvider`).
 
-### Brancher le fournisseur ADS-B
-
-Un seul endroit : `backend/src/main/java/fr/sanglierlab/traveltracker/flight/PlaceholderAdsbProvider.java`, méthode `fetchPositions(String flightNumber)`,
-repérée par un `TODO(ADS-B)`.
-
-- `flightNumber` est le **numéro de vol du vol actif** (par exemple `AFR1234`, en majuscules, sans espaces) : c'est la variable à passer à l'API.
-- Renvoyer une liste de `AdsbPosition(latitude, longitude, heure UTC)`. Les positions déjà enregistrées sont ignorées sans erreur.
-- Un échec (réseau, fournisseur indisponible) peut simplement lever une exception : il est journalisé et le cycle suivant réessaie.
-- Si tu crées une nouvelle classe à la place, retire `@Component` de `PlaceholderAdsbProvider` pour qu'il n'y ait qu'un seul fournisseur.
+- **Saisir l'indicatif ICAO du vol (callsign), pas le numéro commercial** : `AFR186`, pas `AF186`. Les compagnies ont deux codes
+  (Air France : `AF` pour les billets, `AFR` pour la radio) et seul le second est émis par l'avion. Le numéro de vol de la carte d'embarquement
+  ne marchera donc pas tel quel.
+- Aucune position (avion hors de portée des récepteurs : océan, Arctique ; pas encore parti ; déjà posé) n'est **pas** une erreur : le cycle est
+  simplement sauté (`ADS-B AFR186 : aucune position disponible` dans les journaux) et le suivi continue.
+- Seule une position de moins de 10 minutes est retenue. Si plusieurs appareils ont le même indicatif, le plus récemment vu gagne.
+- Une position identique à la précédente n'est pas réenregistrée (un avion posé, ou un fix non renouvelé).
+- Délais réseau : 5 s pour se connecter, 10 s pour lire la réponse. Une erreur (réseau, HTTP 5xx, 429...) est journalisée et le cycle suivant réessaie.
+- L'API renvoie l'heure `now` en millisecondes et `seen_pos` en secondes avant `now` ; l'heure retenue est `now - seen_pos`, arrondie à la seconde.
+- `app.adsb-poll-interval` (30 s par défaut) règle la fréquence ; adsb.lol est un service communautaire gratuit : ne pas descendre sous 10 s.
 
 ### Tester avec curl (session et CSRF comme dans « Tester l'API »)
 

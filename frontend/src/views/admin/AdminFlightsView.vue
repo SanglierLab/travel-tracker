@@ -152,7 +152,7 @@ onMounted(load)
     <form class="card" @submit.prevent="create">
       <h2>Ajouter un vol</h2>
       <label class="field">
-        <span>Numéro de vol</span>
+        <span>Indicatif du vol (callsign ICAO, ex. AFR186 et non AF186)</span>
         <input
           v-model="form.identifier"
           type="text"

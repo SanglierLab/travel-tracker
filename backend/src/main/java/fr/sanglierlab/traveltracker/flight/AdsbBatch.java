@@ -1,5 +1,6 @@
 package fr.sanglierlab.traveltracker.flight;
 
+import fr.sanglierlab.traveltracker.flight.adsb.FlightPositionProvider;
 import fr.sanglierlab.traveltracker.track.TrackPointService;
 import fr.sanglierlab.traveltracker.track.TrackSource;
 import fr.sanglierlab.traveltracker.track.TrackedTrip;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.List;
+import java.util.Optional;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 
@@ -40,15 +41,17 @@ public class AdsbBatch {
 
     private final TrackedTripRepository trips;
     private final TrackPointService points;
-    private final AdsbProvider provider;
+    private final FlightPositionProvider provider;
     private final TaskScheduler scheduler;
     private final Duration interval;
 
     private ScheduledFuture<?> future;
     private Long runningTripId;
+    /** Dernière position enregistrée du suivi en cours : une position identique n'est pas enregistrée une seconde fois. */
+    private volatile AdsbPosition lastPosition;
 
     @Autowired
-    public AdsbBatch(TrackedTripRepository trips, TrackPointService points, AdsbProvider provider,
+    public AdsbBatch(TrackedTripRepository trips, TrackPointService points, FlightPositionProvider provider,
                      TaskScheduler scheduler, @Value("${app.adsb-poll-interval:30s}") Duration interval) {
         this.trips = trips;
         this.points = points;
@@ -61,6 +64,7 @@ public class AdsbBatch {
     public synchronized void start(long tripId) {
         cancel();
         runningTripId = tripId;
+        lastPosition = null;
         future = scheduler.scheduleWithFixedDelay(() -> tick(tripId), interval);
         log.info("ADS-B : suivi démarré pour le trajet {} (un cycle toutes les {})", tripId, interval);
     }
@@ -91,28 +95,32 @@ public class AdsbBatch {
             return;
         }
 
-        // ┌───────────────────────────────────────────────────────────────────────────────────────┐
-        // │ Numéro de vol (indicatif) du vol actif, par exemple « AFR1234 ».                       │
-        // │ L'appel à l'API du fournisseur ADS-B se branche dans AdsbProvider.fetchPositions(...), │
-        // │ qui reçoit cette valeur (voir PlaceholderAdsbProvider : TODO).                         │
-        // └───────────────────────────────────────────────────────────────────────────────────────┘
+        // Indicatif du vol actif, par exemple « AFR1234 » (voir AdsbLolClient pour l'appel à l'API).
         String flightNumber = trip.getIdentifier();
 
         try {
-            List<AdsbPosition> positions = provider.fetchPositions(flightNumber);
-            int saved = 0;
-            for (AdsbPosition position : positions) {
-                TrackPointService.Result result = points.ingest(TrackSource.ADSB, tripId,
-                        BigDecimal.valueOf(position.latitude()), BigDecimal.valueOf(position.longitude()),
-                        null, position.recordedAt());
-                if (result == TrackPointService.Result.CREATED) {
-                    saved++;
-                }
+            Optional<AdsbPosition> position = provider.findPosition(flightNumber);
+            if (position.isEmpty()) {
+                // Normal : avion hors de portée des récepteurs (océan, Arctique...), pas encore parti ou déjà posé.
+                log.info("ADS-B {} : aucune position disponible", flightNumber);
+                return;
             }
-            log.info("ADS-B {} : {} position(s) reçue(s), {} enregistrée(s)", flightNumber, positions.size(), saved);
+            AdsbPosition found = position.get();
+            if (sameCoordinates(found, lastPosition)) {
+                log.debug("ADS-B {} : position inchangée", flightNumber);
+                return;
+            }
+            TrackPointService.Result result = points.ingest(TrackSource.ADSB, tripId,
+                    BigDecimal.valueOf(found.latitude()), BigDecimal.valueOf(found.longitude()), null, found.recordedAt());
+            lastPosition = found;
+            log.info("ADS-B {} : position {}", flightNumber, result == TrackPointService.Result.CREATED ? "enregistrée" : "déjà connue");
         } catch (RuntimeException e) {
             log.warn("ADS-B {} : échec de la récupération, nouvelle tentative au prochain cycle", flightNumber, e);
         }
+    }
+
+    private static boolean sameCoordinates(AdsbPosition a, AdsbPosition b) {
+        return b != null && a.latitude() == b.latitude() && a.longitude() == b.longitude();
     }
 
     private void cancel() {
@@ -121,5 +129,6 @@ public class AdsbBatch {
         }
         future = null;
         runningTripId = null;
+        lastPosition = null;
     }
 }

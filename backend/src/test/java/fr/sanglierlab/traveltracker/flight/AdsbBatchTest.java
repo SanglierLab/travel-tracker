@@ -1,6 +1,7 @@
 package fr.sanglierlab.traveltracker.flight;
 
 import fr.sanglierlab.traveltracker.common.ApiException;
+import fr.sanglierlab.traveltracker.flight.adsb.FlightPositionProvider;
 import fr.sanglierlab.traveltracker.track.TrackPointService;
 import fr.sanglierlab.traveltracker.track.TrackSource;
 import fr.sanglierlab.traveltracker.track.TrackedTrip;
@@ -16,7 +17,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 
@@ -38,7 +38,7 @@ class AdsbBatchTest {
 
     private TrackedTripRepository trips;
     private TrackPointService points;
-    private AdsbProvider provider;
+    private FlightPositionProvider provider;
     private TaskScheduler scheduler;
     private ScheduledFuture<?> future;
     private AdsbBatch batch;
@@ -47,7 +47,7 @@ class AdsbBatchTest {
     void setUp() {
         trips = mock(TrackedTripRepository.class);
         points = mock(TrackPointService.class);
-        provider = mock(AdsbProvider.class);
+        provider = mock(FlightPositionProvider.class);
         scheduler = mock(TaskScheduler.class);
         future = mock(ScheduledFuture.class);
         doReturn(future).when(scheduler).scheduleWithFixedDelay(any(Runnable.class), any(Duration.class));
@@ -104,18 +104,40 @@ class AdsbBatchTest {
     }
 
     @Test
-    void leCycleInterrogeLeFournisseurAvecLeNumeroDuVolActifEtEnregistreLesPositions() {
+    void leCycleInterrogeLeFournisseurAvecLeNumeroDuVolActifEtEnregistreLaPosition() {
         when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
         Instant t1 = Instant.parse("2026-10-12T10:00:00Z");
-        Instant t2 = Instant.parse("2026-10-12T10:00:30Z");
-        when(provider.fetchPositions("AFR1234")).thenReturn(List.of(
-                new AdsbPosition(49.0, 2.5, t1), new AdsbPosition(49.1, 2.9, t2)));
+        when(provider.findPosition("AFR1234")).thenReturn(Optional.of(new AdsbPosition(49.0, 2.5, t1)));
 
         batch.tick(7);
 
-        verify(provider).fetchPositions("AFR1234");
+        verify(provider).findPosition("AFR1234");
         verify(points).ingest(eq(TrackSource.ADSB), eq(7L), eq(BigDecimal.valueOf(49.0)), eq(BigDecimal.valueOf(2.5)), isNull(), eq(t1));
-        verify(points).ingest(eq(TrackSource.ADSB), eq(7L), eq(BigDecimal.valueOf(49.1)), eq(BigDecimal.valueOf(2.9)), isNull(), eq(t2));
+    }
+
+    @Test
+    void aucunePositionDisponibleNEstPasUneErreur() {
+        when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
+        when(provider.findPosition("AFR1234")).thenReturn(Optional.empty()); // par exemple au-dessus de l'Arctique
+
+        batch.tick(7);
+
+        verify(points, never()).ingest(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void unePositionIdentiqueALaPrecedenteNEstPasEnregistreeDeuxFois() {
+        when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
+        when(provider.findPosition("AFR1234"))
+                .thenReturn(Optional.of(new AdsbPosition(49.0, 2.5, Instant.parse("2026-10-12T10:00:00Z"))))
+                .thenReturn(Optional.of(new AdsbPosition(49.0, 2.5, Instant.parse("2026-10-12T10:00:01Z")))) // même fix, heure arrondie autrement
+                .thenReturn(Optional.of(new AdsbPosition(49.1, 2.9, Instant.parse("2026-10-12T10:00:30Z"))));
+
+        batch.tick(7);
+        batch.tick(7);
+        batch.tick(7);
+
+        verify(points, times(2)).ingest(eq(TrackSource.ADSB), eq(7L), any(), any(), isNull(), any());
     }
 
     @Test
@@ -125,7 +147,7 @@ class AdsbBatchTest {
 
         batch.tick(7);
 
-        verify(provider, never()).fetchPositions(any());
+        verify(provider, never()).findPosition(any());
         verify(future).cancel(false);
         assertThat(batch.isRunning()).isFalse();
     }
@@ -137,7 +159,7 @@ class AdsbBatchTest {
 
         batch.tick(7);
 
-        verify(provider, never()).fetchPositions(any());
+        verify(provider, never()).findPosition(any());
         assertThat(batch.isRunning()).isFalse();
     }
 
@@ -145,9 +167,9 @@ class AdsbBatchTest {
     void unEchecDuFournisseurNeCasseRienEtLeCycleSuivantReprend() {
         when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
         Instant t = Instant.parse("2026-10-12T10:00:00Z");
-        when(provider.fetchPositions("AFR1234"))
+        when(provider.findPosition("AFR1234"))
                 .thenThrow(new IllegalStateException("fournisseur indisponible"))
-                .thenReturn(List.of(new AdsbPosition(49.0, 2.5, t)));
+                .thenReturn(Optional.of(new AdsbPosition(49.0, 2.5, t)));
 
         batch.tick(7); // échec : journalisé, aucune exception
         verify(points, never()).ingest(any(), any(), any(), any(), any(), any());
@@ -159,7 +181,7 @@ class AdsbBatchTest {
     @Test
     void uneErreurALEnregistrementNeFaitPasPlanterLeCycle() {
         when(trips.findById(7L)).thenReturn(Optional.of(trip(7, "AFR1234", TripStatus.ACTIVE)));
-        when(provider.fetchPositions("AFR1234")).thenReturn(List.of(new AdsbPosition(49.0, 2.5, Instant.parse("2026-10-12T10:00:00Z"))));
+        when(provider.findPosition("AFR1234")).thenReturn(Optional.of(new AdsbPosition(49.0, 2.5, Instant.parse("2026-10-12T10:00:00Z"))));
         doThrow(ApiException.badRequest("date dans le futur")).when(points).ingest(any(), any(), any(), any(), any(), any());
 
         batch.tick(7); // ne doit pas lever d'exception
