@@ -1,5 +1,6 @@
 package fr.sanglierlab.traveltracker.config;
 
+import fr.sanglierlab.traveltracker.track.TrackSource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -35,7 +36,24 @@ public record AppProperties(
         @NotNull @DefaultValue("15m") Duration loginLockDuration,
         @NotBlank @DefaultValue("ffmpeg") String ffmpegPath,
         /** Une étape à venir qui commence dans ce nombre de jours (ou moins) est montrée en tête du fil, hors du bloc repliable. 0 : aucune. */
-        @Min(0) @Max(365) @DefaultValue("7") int upcomingDays) {
+        @Min(0) @Max(365) @DefaultValue("7") int upcomingDays,
+        /** Au-delà de ce délai sans nouvelle position, le marqueur « dernière position » de la carte passe en style « en retard ». */
+        @NotNull @Valid @DefaultValue LateAfter trackLateAfter) {
+
+    /** Délai sans position avant d'être « en retard », par source (une durée : 10m, 90s...). */
+    public record LateAfter(
+            @NotNull @DefaultValue("10m") Duration device,
+            @NotNull @DefaultValue("5m") Duration adsb,
+            @NotNull @DefaultValue("20m") Duration ais) {
+
+        public Duration of(TrackSource source) {
+            return switch (source) {
+                case DEVICE -> device;
+                case ADSB -> adsb;
+                case AIS -> ais;
+            };
+        }
+    }
 
     /** Compte administrateur : mot de passe haché en bcrypt. */
     public record Admin(@NotBlank String username, @NotBlank String passwordHash) {

@@ -31,6 +31,7 @@
   --track-device: #d7432b;
   --track-adsb: #7a4fd1;
   --track-ais: #1c8c6e;
+  --track-late: #8c8a85;
 
   /* Typographie */
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Hiragino Sans", "Yu Gothic", sans-serif;

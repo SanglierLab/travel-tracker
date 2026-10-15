@@ -336,6 +336,17 @@ a { color: var(--color-accent); }
 .stage-kind--train { --stage-color: var(--stage-train, var(--itinerary)); }
 .stage-kind--plane { --stage-color: var(--stage-plane, var(--itinerary)); }
 .stage-kind--boat { --stage-color: var(--stage-boat, var(--itinerary)); }
+/* Dernière position connue : point rond (téléphone) ou picto seul (avion, bateau), de la couleur du tracé de la source.
+   « En retard » : gris du thème (--track-late), estompé ; le point rond a en plus un contour pointillé. */
+.live-pin { background: none; border: 0; --live-late: var(--track-late, #8a9499); }
+.live-pin__dot { display: block; box-sizing: border-box; width: 100%; height: 100%; border: 3px solid #fff; border-radius: 50%; background: var(--live-color); }
+.live-pin svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.live-pin g { transform-box: fill-box; transform-origin: center; }
+.live-pin__halo { fill: #fff; stroke: #fff; stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+.live-pin__glyph { fill: var(--live-color); stroke: var(--live-color); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.live-pin--late { opacity: 0.8; }
+.live-pin--late .live-pin__dot { background: var(--live-late); border-style: dashed; }
+.live-pin--late .live-pin__glyph { fill: var(--live-late); stroke: var(--live-late); }
 .route-arrow { background: none; border: 0; pointer-events: none; }
 .route-arrow svg { display: block; width: 100%; height: 100%; }
 .route-arrow path { fill: var(--stage-color, var(--itinerary)); stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
@@ -789,6 +800,7 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
 .map-legend .map-legend__badge--future { opacity: 0.55; }
 .map-legend .map-legend__camera { flex: none; width: 18px; height: 18px; padding: 2px; box-sizing: border-box; border-radius: 50%; background: var(--color-marker); }
 .map-legend .map-legend__camera path { fill: none; stroke: #fff; stroke-width: 2.4; stroke-linejoin: round; }
+.map-legend .map-legend__late { flex: none; width: 14px; height: 14px; box-sizing: border-box; margin: 0 7px; border: 2px dashed var(--color-muted); border-radius: 50%; background: var(--track-late, #8a9499); opacity: 0.8; }
 .map-legend svg { flex: none; width: 28px; height: 6px; }
 .map-legend span { color: var(--color-text); }
 

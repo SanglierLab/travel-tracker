@@ -193,7 +193,21 @@ curl -s $BASE/api/public/track | head -c 600
 
 La réponse contient les lignes à dessiner (`segments`, points `[latitude, longitude]` déjà allégés, coupés quand le téléphone est resté plus de
 `app.track-gap-hours` sans envoyer de position) et la dernière position connue (`last`). La carte publique l'affiche : trait plein pour le téléphone,
-pointillés pour un avion, tirets espacés pour un bateau (couleurs `--track-*` du thème), avec une légende et la dernière position en gros point.
+pointillés pour un avion, tirets espacés pour un bateau (couleurs `--track-*` du thème), avec une légende.
+
+La **dernière position** a un marqueur selon sa source : gros point rond pour le téléphone, picto de bateau (AIS) ou d'avion (ADS-B) seul, de la couleur
+du tracé. L'avion est orienté selon son cap, déduit du dernier point du tracé de la même source assez éloigné de la dernière position (pas de cap
+avec un seul point : l'avion pointe alors vers le nord). Quand aucune position n'est arrivée depuis un certain délai, le marqueur passe en style
+« en retard » (gris `--track-late`, estompé, infobulle « En retard ») ; le délai se règle par source dans `application.yml` :
+
+```yaml
+app:
+  track-late-after:
+    device: 10m   # défauts : 10m, 5m, 20m
+    adsb: 5m
+    ais: 20m
+```
+
 
 ## Suivi d'un vol (ADS-B)
 

@@ -1,10 +1,10 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { L, arrowIcon, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
+import { L, arrowIcon, createMap, liveIcon, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
 import { STAGE_KINDS, stageColor } from '../stageKinds'
 import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine, todayIso } from '../stageGeo'
 import { formatDate, formatDateRange, formatDateTime, timeAgo } from '../format'
-import { TRACK_SOURCES, itineraryColor, trackColor } from '../trackStyle'
+import { TRACK_SOURCES, isLate, itineraryColor, lastHeading, trackColor } from '../trackStyle'
 
 const props = defineProps({
   galleries: { type: Array, default: () => [] },
@@ -236,17 +236,35 @@ function drawTrack() {
   // Dernière position connue : la « tête » du petit poucet.
   const last = props.track.last
   if (last && TRACK_SOURCES[last.source]) {
-    L.circleMarker([last.latitude, last.longitude], {
-      radius: 8,
-      color: '#fff',
-      weight: 3,
-      fillColor: trackColor(last.source),
-      fillOpacity: 1,
+    const late = isLate(props.track)
+    const marker = L.marker([last.latitude, last.longitude], {
+      icon: liveIcon(last.source, { heading: lastHeading(props.track), late }),
+      keyboard: false,
+      title: '',
+      zIndexOffset: 300,
     })
-      .bindTooltip(() => `Dernière position connue · ${timeAgo(last.recordedAt)}`, { direction: 'top', className: 'pin-tip' })
-      .addTo(trackLayer)
+    marker.bindTooltip(() => liveTooltip(last, late), { direction: 'top', className: 'pin-tip pin-tip--stage' }).addTo(trackLayer)
+    marker.getElement()?.setAttribute('role', 'img')
+    marker.getElement()?.setAttribute('aria-label', `${TRACK_SOURCES[last.source].label} : dernière position connue${late ? ' (en retard)' : ''}`)
   }
   fitInitial()
+}
+
+// Trois lignes au plus : la source, l'ancienneté, et « en retard » le cas échéant.
+function liveTooltip(last, late) {
+  const body = document.createElement('div')
+  body.className = 'stage-tip'
+  const title = document.createElement('strong')
+  title.textContent = `Dernière position · ${TRACK_SOURCES[last.source].label}`
+  const age = document.createElement('span')
+  age.textContent = timeAgo(last.recordedAt)
+  body.append(title, age)
+  if (late) {
+    const warning = document.createElement('span')
+    warning.textContent = 'En retard : pas de nouvelle position'
+    body.append(warning)
+  }
+  return body
 }
 
 function style(entry, selected) {

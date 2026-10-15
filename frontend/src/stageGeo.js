@@ -94,6 +94,18 @@ export function distanceKm(a, b) {
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)))
 }
 
+/**
+ * Cap de a vers b, en degrés (0 = nord, 90 = est, sens horaire), tel qu'on le voit sur la carte (projection de Mercator :
+ * c'est l'angle à l'écran, pas celui du grand cercle). Les longitudes peuvent différer de plus de 180° (ligne de changement de date).
+ */
+export function headingDegrees(a, b) {
+  let dLon = b[1] - a[1]
+  dLon -= 360 * Math.round(dLon / 360)
+  const mercatorY = (lat) => Math.log(Math.tan(Math.PI / 4 + toRad(Math.max(-85, Math.min(85, lat))) / 2))
+  const degrees = (Math.atan2(toRad(dLon), mercatorY(b[0]) - mercatorY(a[0])) * 180) / Math.PI
+  return (degrees + 360) % 360
+}
+
 /** Arc de grand cercle de a à b (le plus court chemin, comme le suit un avion), en `count` points. */
 export function greatCircle(a, b, count = 48) {
   const [lat1, lon1, lat2, lon2] = [toRad(a[0]), toRad(a[1]), toRad(b[0]), toRad(b[1])]

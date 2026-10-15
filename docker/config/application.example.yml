@@ -25,6 +25,10 @@ app:
   max-login-failures: 5           # échecs avant blocage de l'IP
   login-lock-duration: 15m
   ffmpeg-path: ffmpeg
+  # track-late-after:             # (facultatif) sans nouvelle position depuis ce délai, le marqueur « dernière position » passe en style « en retard »
+  #   device: 10m
+  #   adsb: 5m
+  #   ais: 20m
   # adsb-poll-interval: 30s       # (facultatif) fréquence de récupération des positions du vol suivi
   # ais-poll-interval: 5m         # (facultatif) fréquence de récupération des positions du navire suivi
 

@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.util.EnumMap;
+import java.util.Map;
 
 @Service
 public class TrackQueryService {
@@ -20,6 +22,10 @@ public class TrackQueryService {
     /** Tracé de la partie publique : tous les points, découpés en lignes et allégés. */
     @Transactional(readOnly = true)
     public TrackResponse publicTrack() {
-        return TrackSegmenter.build(points.findAllRows(), Duration.ofHours(properties.trackGapHours()));
+        Map<TrackSource, Long> lateAfter = new EnumMap<>(TrackSource.class);
+        for (TrackSource source : TrackSource.values()) {
+            lateAfter.put(source, properties.trackLateAfter().of(source).toSeconds());
+        }
+        return TrackSegmenter.build(points.findAllRows(), Duration.ofHours(properties.trackGapHours())).withLateAfter(lateAfter);
     }
 }

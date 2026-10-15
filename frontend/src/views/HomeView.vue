@@ -9,7 +9,7 @@ import { journal, loadItinerary, loadMap, loadPage, loadTrack } from '../journal
 import { STAGE_KINDS, KIND_ORDER, isTrip, stageKindClass } from '../stageKinds'
 import { isFuture, isImminent } from '../stageGeo'
 import StageIcon from '../components/StageIcon.vue'
-import { TRACK_SOURCES } from '../trackStyle'
+import { TRACK_SOURCES, isLate } from '../trackStyle'
 
 // Leaflet est chargé à part : la liste s'affiche sans attendre la bibliothèque de cartographie.
 const TravelMap = defineAsyncComponent(() => import('../components/TravelMap.vue'))
@@ -57,6 +57,8 @@ onBeforeUnmount(() => {
 const trackSources = computed(() => [
   ...new Set(journal.track.segments.map((segment) => segment.source).filter((source) => TRACK_SOURCES[source])),
 ])
+
+const lastLate = computed(() => isLate(journal.track))
 
 // Le fil mélange albums et étapes commencées ; les étapes à venir sont à part, dans un bloc repliable.
 const entries = computed(() => journal.data?.content ?? [])
@@ -312,6 +314,10 @@ watch([settled, viewerItemId, viewer], () => {
             />
           </svg>
           <span>{{ TRACK_SOURCES[source].label }}</span>
+        </li>
+        <li v-if="lastLate">
+          <span class="map-legend__late" aria-hidden="true"></span>
+          <span>Position en retard</span>
         </li>
       </ul>
       <!-- Visible sur mobile seulement : la carte passe en plein écran, ou revient à sa taille normale -->

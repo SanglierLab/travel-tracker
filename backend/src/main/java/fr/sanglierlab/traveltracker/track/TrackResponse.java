@@ -2,14 +2,25 @@ package fr.sanglierlab.traveltracker.track;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Tracé affiché sur la carte publique.
  *
  * @param segments lignes à dessiner, de la plus ancienne à la plus récente
  * @param last     dernière position connue (toutes sources confondues), ou null s'il n'y a aucun point
+ * @param lateAfterSeconds par source, délai (en secondes) sans nouvelle position au-delà duquel la dernière position est « en retard »
+ *                 (la page compare à l'heure courante, donc l'état évolue sans nouvel appel)
  */
-public record TrackResponse(List<Segment> segments, LastPosition last) {
+public record TrackResponse(List<Segment> segments, LastPosition last, Map<TrackSource, Long> lateAfterSeconds) {
+
+    public TrackResponse(List<Segment> segments, LastPosition last) {
+        this(segments, last, Map.of());
+    }
+
+    public TrackResponse withLateAfter(Map<TrackSource, Long> lateAfterSeconds) {
+        return new TrackResponse(segments, last, lateAfterSeconds);
+    }
 
     /**
      * Une ligne continue.
