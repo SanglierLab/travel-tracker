@@ -7,12 +7,12 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 @Configuration
 public class SchedulingConfig {
 
-    /** Un seul fil d'exécution suffit : un seul vol est suivi à la fois (voir AdsbBatch). */
+    /** Deux fils : un vol (AdsbBatch) et une croisière (AisBatch) peuvent être suivis en même temps, sans s'attendre l'un l'autre. */
     @Bean
-    ThreadPoolTaskScheduler adsbScheduler() {
+    ThreadPoolTaskScheduler trackingScheduler() {
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
-        scheduler.setPoolSize(1);
-        scheduler.setThreadNamePrefix("adsb-");
+        scheduler.setPoolSize(2);
+        scheduler.setThreadNamePrefix("tracking-");
         scheduler.setRemoveOnCancelPolicy(true);
         return scheduler;
     }

@@ -18,6 +18,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l18-8-6 14-3-6-6-2zM12 13l9-8" /></svg>
         <span>Vols</span>
       </RouterLink>
+      <RouterLink to="/admin/croisieres" class="admin-nav__item" active-class="admin-nav__item--active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11M12 4l6 9h-6M4 16h16l-2 4H6z" /></svg>
+        <span>Croisières</span>
+      </RouterLink>
       <RouterLink to="/" class="admin-nav__item">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" /></svg>
         <span>Site</span>

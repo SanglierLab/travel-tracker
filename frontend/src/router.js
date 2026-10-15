@@ -43,6 +43,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/croisieres',
+      name: 'admin-cruises',
+      component: () => import('./views/admin/AdminCruisesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin/etapes',
       name: 'admin-stages',
       component: () => import('./views/admin/AdminStagesView.vue'),

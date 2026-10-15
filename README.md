@@ -236,6 +236,31 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X DELETE $BASE/api/admin/flights/1    
 Les journaux du serveur montrent chaque cycle (« ADS-B AFR1234 : 1 position(s) reçue(s), 1 enregistrée(s) »), et
 `SELECT * FROM track_point WHERE source = 'ADSB';` montre les points. Pour nettoyer les points fictifs d'un essai : supprimer le vol.
 
+
+## Suivi d'une croisière (AIS)
+
+Le parallèle exact du suivi d'un vol, pour les navires : une croisière se déclare dans l'administration (**MMSI** du navire et date de départ), puis son suivi
+se lance et s'arrête à la main (bouton on/off). Tant que le suivi est actif, un batch interroge le fournisseur AIS toutes les 5 minutes
+(`app.ais-poll-interval`) et enregistre les positions (source `AIS`, rattachées à la croisière) : elles s'affichent en tirets sur la carte publique.
+Une seule croisière peut être suivie à la fois, indépendamment d'un vol (les deux suivis peuvent tourner ensemble), et le suivi reprend tout seul
+après un redémarrage du serveur.
+
+**Dans l'administration** : *Menu → Croisières*. Le MMSI est le numéro à 9 chiffres du navire (visible sur les sites de suivi maritime), par exemple `227123456`.
+
+**État actuel : le fournisseur de données n'est pas encore branché.** Le batch tourne, mais `VesselClient` ne fait encore aucun appel : aucune position n'est
+récupérée et les journaux l'indiquent une fois (`AIS : fournisseur de données pas encore branché`). Pour le brancher, un seul endroit :
+`backend/src/main/java/fr/sanglierlab/traveltracker/cruise/ais/api/VesselClient.java`, méthode `fetch(String mmsi)`, repérée par un `TODO(AIS)` (avec un exemple)
+et la constante `BASE_URL`. Le reste est déjà en place : délais réseau (5 s / 10 s), normalisation du MMSI, choix de la position (MMSI exact, latitude/longitude
+valides, valeurs « non disponible » de l'AIS 91° / 181° écartées, position de moins de 6 h, la plus récente si plusieurs). Il suffit de convertir la réponse du
+fournisseur en `Vessel(mmsi, latitude, longitude, heure UTC)`. Une clé d'API se lit dans `application.yml` (via `AppProperties`), jamais dans le code.
+
+```bash
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" \
+  -d '{"identifier":"227123456","date":"2026-10-20","time":null}' $BASE/api/admin/cruises
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/cruises/1/start   # on ; /stop pour arrêter
+curl -s -b $JAR $BASE/api/admin/cruises                                             # état, nombre de positions, dernière position
+```
+
 ## Étapes du voyage (API)
 
 Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau

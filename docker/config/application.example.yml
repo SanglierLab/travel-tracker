@@ -26,6 +26,7 @@ app:
   login-lock-duration: 15m
   ffmpeg-path: ffmpeg
   # adsb-poll-interval: 30s       # (facultatif) fréquence de récupération des positions du vol suivi
+  # ais-poll-interval: 5m         # (facultatif) fréquence de récupération des positions du navire suivi
 
 # Développement local uniquement (HTTP, sans HTTPS) : décommenter.
 # server:

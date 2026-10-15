@@ -794,6 +794,7 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
 .admin__content form.card + .flights, .flights__error { margin-top: 1rem; }
 .flights { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.75rem; }
 .flight--active { border-color: var(--track-adsb); box-shadow: 0 0 0 1px var(--track-adsb); }
+.flight--ais.flight--active { border-color: var(--track-ais); box-shadow: 0 0 0 1px var(--track-ais); } /* croisière : couleur du tracé AIS */
 .flight__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
 .flight__id { display: flex; flex-direction: column; min-width: 0; }
 .flight__number { font-family: var(--font-title); font-size: 1.4rem; letter-spacing: 0.03em; }
@@ -810,6 +811,7 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
   white-space: nowrap;
 }
 .badge--active { border-color: var(--track-adsb); color: var(--track-adsb); font-weight: 600; }
+.flight--ais .badge--active { border-color: var(--track-ais); color: var(--track-ais); }
 
 /* Interrupteur : grande cible tactile, aucune animation */
 .switch {

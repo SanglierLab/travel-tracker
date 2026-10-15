@@ -4,8 +4,8 @@ package fr.sanglierlab.traveltracker.track;
 public enum TrackSource {
     /** Téléphone du voyageur (GPSLogger). */
     DEVICE,
-    /** Transport aérien (ADS-B), à venir. */
+    /** Transport aérien (ADS-B) : positions des vols suivis. */
     ADSB,
-    /** Transport maritime (AIS), à venir. */
+    /** Transport maritime (AIS) : positions des croisières suivies. */
     AIS
 }

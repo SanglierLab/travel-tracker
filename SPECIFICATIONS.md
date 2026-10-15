@@ -583,3 +583,11 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Sélection** : `/etape/:id` (étape du fil : sa page est chargée et elle est mise en valeur ; étape à venir : première page, bloc ouvert). Un clic sur une étape du fil ne recharge pas la liste. Étape inconnue : retour à l'accueil. Albums et étapes ne sont jamais sélectionnés ensemble (une seule adresse).
 - **Albums** : l'appareil photo de l'épingle figure aussi dans l'en-tête de chaque album du fil.
 - **Fil de suivi** : une ligne verticale passe sous les cartes (albums et étapes, toutes de même largeur) et ne se voit qu'entre elles, (pas de pastille) ; ligne pointillée et carte opaque à bordure pointillée pour les étapes à venir (pas d'opacité : la ligne doit rester dessous) (bloc déplié et étapes imminentes font partie de la même ligne, au-dessus des albums).
+
+
+## 23. Croisières (suivi AIS)
+
+- **Parallèle du suivi d'un vol** : `TrackedTrip` de type `BOAT` (identifiant = MMSI, 9 chiffres), points de source `AIS`. API d'administration `/api/admin/cruises` (liste, création, `start`, `stop`, suppression), mêmes règles que `/api/admin/flights` : une seule croisière active à la fois (indépendante d'un vol actif), suppression refusée tant que le suivi est actif, suppression de la croisière et de ses points.
+- **Batch** : `AisBatch` (un cycle toutes les `app.ais-poll-interval`, 5 minutes par défaut ; reprise après redémarrage ; un cycle en échec n'arrête pas le suivi ; position identique à la précédente non réenregistrée). Le planificateur a deux fils (`trackingScheduler`) : un vol et une croisière se suivent en même temps.
+- **Fournisseur** : interface `VesselPositionProvider.findPosition(mmsi) → Optional<AisPosition>`, implémentée par `VesselClient`. L'appel réel n'est **pas écrit** (`fetch`, `TODO(AIS)`) ; `select` applique déjà les règles : MMSI exact, latitude/longitude présentes et valides (91° / 181° = « non disponible » en AIS), position de moins de 6 h, la plus récente si plusieurs.
+- **Administration** : page *Croisières* (`/admin/croisieres`), copie de la page *Vols* avec le MMSI à la place de l'indicatif ; tracé en tirets sur la carte (déjà prévu pour la source `AIS`).
