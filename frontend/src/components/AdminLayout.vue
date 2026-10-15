@@ -15,7 +15,7 @@
         <span>Étapes</span>
       </RouterLink>
       <RouterLink to="/admin/vols" class="admin-nav__item" active-class="admin-nav__item--active">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13l18-8-6 14-3-6-6-2zM12 13l9-8" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2c.8 0 1.2 1 1.2 2.5V9l8.3 5v2l-8.3-2.2v4.7l2.3 1.8v1.5L12 20.8 8.5 21.8v-1.5l2.3-1.8v-4.7L2.5 16v-2l8.3-5V4.5C10.8 3 11.2 2 12 2z" /></svg>
         <span>Vols</span>
       </RouterLink>
       <RouterLink to="/admin/croisieres" class="admin-nav__item" active-class="admin-nav__item--active">
