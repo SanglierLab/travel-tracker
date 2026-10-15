@@ -210,7 +210,7 @@ a { color: var(--color-accent); }
 /* Étapes dans le fil : la même carte que les albums (classes .gallery) ; seuls le picto du type et l'absence de contenu les distinguent */
 .stage-card .gallery__head { margin-bottom: 0; }
 .stage-card .gallery__head:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: var(--radius-small); }
-.gallery__meta .stage-card__icon { width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke: var(--itinerary); stroke-width: 2; }
+.gallery__meta .stage-card__icon { width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke: var(--stage-color, var(--itinerary)); stroke-width: 2; }
 .stage-card--future { border-style: dashed; background: var(--color-bg); } /* opaque (pas d'opacity) : la ligne du fil reste dessous */
 .stage-card--future .gallery__title, .stage-card--future .gallery__meta { color: var(--color-muted); }
 .stage-card--future .gallery__meta time { color: var(--color-muted); }
@@ -331,9 +331,14 @@ a { color: var(--color-accent); }
 .pin--selected .pin__camera { fill: none; }
 
 /* Pointes de flèche de l'itinéraire */
+/* Couleur propre à chaque type d'étape (variables --stage-* du thème), partagée par le tracé, la flèche, la pastille et les pictos. */
+.stage-kind--place { --stage-color: var(--stage-place, var(--itinerary)); }
+.stage-kind--train { --stage-color: var(--stage-train, var(--itinerary)); }
+.stage-kind--plane { --stage-color: var(--stage-plane, var(--itinerary)); }
+.stage-kind--boat { --stage-color: var(--stage-boat, var(--itinerary)); }
 .route-arrow { background: none; border: 0; pointer-events: none; }
 .route-arrow svg { display: block; width: 100%; height: 100%; }
-.route-arrow path { fill: var(--itinerary); stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
+.route-arrow path { fill: var(--stage-color, var(--itinerary)); stroke: #fff; stroke-width: 1.5; stroke-linejoin: round; }
 .route-arrow--future { opacity: 0.55; }
 
 /* Marqueurs d'étape : badge arrondi (distinct de l'épingle des albums) ; estompé tant que l'étape est à venir */
@@ -346,7 +351,7 @@ a { color: var(--color-accent); }
   padding: 6px;
   border: 2px solid #fff;
   border-radius: 10px;
-  background: var(--itinerary);
+  background: var(--stage-color, var(--itinerary));
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
 }
 .stage-pin path { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -779,7 +784,7 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
   font-size: 0.8rem;
 }
 .map-legend li { display: flex; align-items: center; gap: 0.5rem; }
-.map-legend .map-legend__badge { flex: none; width: 18px; height: 18px; box-sizing: border-box; padding: 2px; border-radius: 5px; background: var(--itinerary); }
+.map-legend .map-legend__badge { flex: none; width: 18px; height: 18px; box-sizing: border-box; padding: 2px; border-radius: 5px; background: var(--stage-color, var(--itinerary)); }
 .map-legend .map-legend__badge path { fill: none; stroke: #fff; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .map-legend .map-legend__badge--future { opacity: 0.55; }
 .map-legend .map-legend__camera { flex: none; width: 18px; height: 18px; padding: 2px; box-sizing: border-box; border-radius: 50%; background: var(--color-marker); }

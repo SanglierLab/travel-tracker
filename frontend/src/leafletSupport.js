@@ -1,7 +1,7 @@
 // Éléments Leaflet communs à la carte publique et au sélecteur de position de l'admin.
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
-import { STAGE_KINDS } from './stageKinds'
+import { STAGE_KINDS, stageKindClass } from './stageKinds'
 
 export { L }
 
@@ -53,7 +53,7 @@ export function pinIcon(selected) {
 export function stageIcon(kind, { future = false, selected = false } = {}) {
   const icon = STAGE_KINDS[kind]?.icon ?? STAGE_KINDS.PLACE.icon
   return L.divIcon({
-    className: `stage-pin${future ? ' stage-pin--future' : ''}${selected ? ' stage-pin--selected' : ''}`,
+    className: `stage-pin ${stageKindClass(kind)}${future ? ' stage-pin--future' : ''}${selected ? ' stage-pin--selected' : ''}`,
     html: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icon}" /></svg>`,
     iconSize: selected ? [42, 42] : [34, 34],
     iconAnchor: selected ? [21, 21] : [17, 17],
@@ -62,10 +62,10 @@ export function stageIcon(kind, { future = false, selected = false } = {}) {
 }
 
 /** Pointe de flèche posée sur la ligne d'itinéraire, tournée de `angle` degrés (0 = vers l'est, sens horaire). */
-export function arrowIcon(angle, { small = false, future = false } = {}) {
+export function arrowIcon(angle, { small = false, future = false, kind = null } = {}) {
   const size = small ? 14 : 20
   return L.divIcon({
-    className: `route-arrow${small ? ' route-arrow--small' : ''}${future ? ' route-arrow--future' : ''}`,
+    className: `route-arrow${kind ? ' ' + stageKindClass(kind) : ''}${small ? ' route-arrow--small' : ''}${future ? ' route-arrow--future' : ''}`,
     html: `<svg viewBox="0 0 20 20" aria-hidden="true" style="transform: rotate(${angle.toFixed(1)}deg)"><path d="M3 3l15 7-15 7 4-7z" /></svg>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],

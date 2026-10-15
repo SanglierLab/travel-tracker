@@ -6,7 +6,7 @@ import StageInterstitial from '../components/StageInterstitial.vue'
 import MediaViewer from '../components/MediaViewer.vue'
 import Pagination from '../components/Pagination.vue'
 import { journal, loadItinerary, loadMap, loadPage, loadTrack } from '../journal'
-import { STAGE_KINDS, KIND_ORDER } from '../stageKinds'
+import { STAGE_KINDS, KIND_ORDER, isTrip, stageKindClass } from '../stageKinds'
 import { isFuture, isImminent } from '../stageGeo'
 import StageIcon from '../components/StageIcon.vue'
 import { TRACK_SOURCES } from '../trackStyle'
@@ -74,7 +74,6 @@ const upcomingOpen = ref(false)
 
 // Légende : types d'étape présents, et mention « à venir » s'il y a des étapes futures.
 const stageKindsShown = computed(() => KIND_ORDER.filter((kind) => journal.itinerary.some((stage) => stage.kind === kind)))
-const hasRoute = computed(() => journal.itinerary.length > 1 || journal.itinerary.some((stage) => stage.kind !== 'PLACE'))
 const hasFutureStage = computed(() => futureStages.value.length > 0)
 const hasLegend = computed(() => trackSources.value.length > 0 || stageKindsShown.value.length > 0 || journal.galleries.length > 0)
 
@@ -288,12 +287,11 @@ watch([settled, viewerItemId, viewer], () => {
           <svg class="map-legend__camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v11H4zM12 9.5a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4z" /></svg>
           <span>Album photo</span>
         </li>
-        <li v-if="hasRoute" :style="{ color: 'var(--itinerary)' }">
-          <svg viewBox="0 0 28 6" aria-hidden="true"><line x1="3" y1="3" x2="25" y2="3" stroke="currentColor" stroke-width="6" stroke-linecap="round" opacity="0.6" /></svg>
-          <span>Itinéraire</span>
-        </li>
-        <li v-for="kind in stageKindsShown" :key="kind">
+        <li v-for="kind in stageKindsShown" :key="kind" :class="stageKindClass(kind)" :style="{ color: 'var(--stage-color)' }">
           <StageIcon :kind="kind" class="map-legend__badge" />
+          <svg v-if="isTrip(kind)" viewBox="0 0 28 6" aria-hidden="true">
+            <line x1="3" y1="3" x2="25" y2="3" stroke="currentColor" :stroke-width="STAGE_KINDS[kind].weight - 1" stroke-linecap="round" opacity="0.7" :stroke-dasharray="STAGE_KINDS[kind].dash ?? undefined" />
+          </svg>
           <span>{{ STAGE_KINDS[kind].label }}</span>
         </li>
         <li v-if="hasFutureStage">

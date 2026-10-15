@@ -1,7 +1,7 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { L, arrowIcon, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
-import { STAGE_KINDS } from '../stageKinds'
+import { STAGE_KINDS, stageColor } from '../stageKinds'
 import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine, todayIso } from '../stageGeo'
 import { formatDate, formatDateRange, formatDateTime, timeAgo } from '../format'
 import { TRACK_SOURCES, itineraryColor, trackColor } from '../trackStyle'
@@ -129,10 +129,11 @@ function drawStages() {
 
     const points = stageLine(stage)
     if (points) {
-      entry.line = L.polyline(points, { color, weight: 7, opacity: future ? 0.3 : 0.6, lineCap: 'round', lineJoin: 'round', smoothFactor: 1.5 })
+      const style = STAGE_KINDS[stage.kind] ?? STAGE_KINDS.PLACE
+      entry.line = L.polyline(points, { color: stageColor(stage.kind), weight: style.weight, dashArray: style.dash,  opacity: future ? 0.3 : 0.6, lineCap: 'round', lineJoin: 'round', smoothFactor: 1.5 })
       entry.line.on('click', () => emit('select-stage', stage.id))
       entry.line.addTo(routeLayer)
-      entry.arrow = addArrow(points, 0.7, { future })
+      entry.arrow = addArrow(points, 0.7, { future, kind: stage.kind })
     }
 
     entry.marker = L.marker(stageAnchor(stage), { icon: stageIcon(stage.kind, { future }), keyboard: true, title: '', zIndexOffset: -500 })
@@ -146,11 +147,11 @@ function drawStages() {
 }
 
 // Pointe de flèche à la fraction f de la ligne, orientée dans le sens du voyage.
-function addArrow(points, f, { small = false, future = false } = {}) {
+function addArrow(points, f, { small = false, future = false, kind = null } = {}) {
   const { point, from, to } = pointAlong(points, f)
-  const marker = L.marker(point, { icon: arrowIcon(0, { small, future }), interactive: false, keyboard: false, zIndexOffset: -1000 })
+  const marker = L.marker(point, { icon: arrowIcon(0, { small, future, kind }), interactive: false, keyboard: false, zIndexOffset: -1000 })
   marker.addTo(routeLayer)
-  const arrow = { marker, from, to, small, future }
+  const arrow = { marker, from, to, small, future, kind }
   arrows.push(arrow)
   orientArrow(arrow)
   return arrow
@@ -161,7 +162,7 @@ function orientArrow(arrow) {
   const a = map.latLngToLayerPoint(arrow.from)
   const b = map.latLngToLayerPoint(arrow.to)
   const angle = a.equals(b) ? 0 : (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI
-  arrow.marker.setIcon(arrowIcon(angle, { small: arrow.small, future: arrow.future }))
+  arrow.marker.setIcon(arrowIcon(angle, { small: arrow.small, future: arrow.future, kind: arrow.kind }))
 }
 
 function styleStage(entry, selected, label = STAGE_KINDS[entry.stage.kind]?.label ?? 'Étape') {
@@ -171,7 +172,7 @@ function styleStage(entry, selected, label = STAGE_KINDS[entry.stage.kind]?.labe
   entry.marker.unbindTooltip()
   entry.marker.bindTooltip(() => stageTooltip(stage, future), { direction: 'top', opacity: 1, className: 'pin-tip pin-tip--stage', permanent: selected })
   if (selected) entry.marker.openTooltip()
-  entry.line?.setStyle({ weight: selected ? 10 : 7, opacity: selected ? 0.95 : future ? 0.3 : 0.6 })
+  entry.line?.setStyle({ weight: selected ? (STAGE_KINDS[stage.kind]?.weight ?? 7) + 3 : (STAGE_KINDS[stage.kind]?.weight ?? 7), opacity: selected ? 0.95 : future ? 0.3 : 0.6 })
   const markerElement = entry.marker.getElement()
   if (markerElement) {
     markerElement.setAttribute('role', 'button')

@@ -8,6 +8,27 @@ export const STAGE_KINDS = {
   BOAT: { label: 'Bateau', icon: 'M12 3v11M12 4l6 9h-6M4 16h16l-2 4H6z' },
 }
 
+// Apparence du tracé (et de la pastille) de chaque type : la couleur vient du thème (--stage-*), le trait est fixe pour
+// qu'on distingue les types même sans couleur. Même principe que TRACK_SOURCES (trackStyle.js).
+const STAGE_LINES = {
+  PLACE: { cssVar: '--stage-place', fallback: '#6d4c41', dash: null, weight: 7 },
+  TRAIN: { cssVar: '--stage-train', fallback: '#c2185b', dash: null, weight: 7 }, // trait plein
+  PLANE: { cssVar: '--stage-plane', fallback: '#1e63c9', dash: '1 13', weight: 7 }, // gros points
+  BOAT: { cssVar: '--stage-boat', fallback: '#0e8f9a', dash: '20 12', weight: 7 }, // longs tirets
+}
+for (const kind of Object.keys(STAGE_LINES)) Object.assign(STAGE_KINDS[kind], STAGE_LINES[kind])
+
+/** Couleur CSS actuelle d'un type d'étape (lue au moment du dessin, donc à jour avec le thème). */
+export function stageColor(kind) {
+  const { cssVar, fallback } = STAGE_KINDS[kind] ?? STAGE_KINDS.PLACE
+  return getComputedStyle(document.documentElement).getPropertyValue(cssVar).trim() || fallback
+}
+
+/** Classe CSS qui définit --stage-color pour ce type (picto, pastille, flèche). */
+export function stageKindClass(kind) {
+  return `stage-kind--${String(kind ?? 'PLACE').toLowerCase()}`
+}
+
 export const KIND_ORDER = ['PLACE', 'TRAIN', 'PLANE', 'BOAT']
 
 /** Un trajet a une position de départ et une d'arrivée ; un lieu fixe une seule position. */

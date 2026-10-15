@@ -19,7 +19,13 @@
   --color-overlay: rgba(10, 25, 30, 0.55);   /* pastille de lecture sur les vidéos */
 
   /* Tracé des étapes du voyage (itinéraire : plus épais et plus marqué que la trace GPS) */
-  --itinerary: #c2185b;
+  --itinerary: #c2185b;   /* liaisons entre étapes, et repli si un type n'a pas sa couleur */
+
+  /* Tracé et pastille de chaque type d'étape (le style de trait, lui, est fixe : plein, points, tirets) */
+  --stage-place: #6d4c41;
+  --stage-train: #c2185b;
+  --stage-plane: #1e63c9;
+  --stage-boat: #0e8f9a;
 
   /* Tracés sur la carte, selon la source */
   --track-device: #e0561b;

@@ -22,6 +22,11 @@
   /* Tracé des étapes du voyage */
   --itinerary: #b71c1c;
 
+  --stage-place: #5d4037;
+  --stage-train: #b71c1c;
+  --stage-plane: #1a4f8b;
+  --stage-boat: #00695c;
+
   /* Tracés sur la carte, selon la source */
   --track-device: #d7432b;
   --track-adsb: #7a4fd1;
