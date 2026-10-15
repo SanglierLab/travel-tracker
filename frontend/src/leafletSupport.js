@@ -1,6 +1,7 @@
 // Éléments Leaflet communs à la carte publique et au sélecteur de position de l'admin.
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { STAGE_KINDS } from './stageKinds'
 
 export { L }
 
@@ -9,6 +10,9 @@ const ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
 
 const PIN_PATH = 'M16 1C7.7 1 1 7.6 1 15.7 1 26.5 16 39 16 39s15-12.5 15-23.3C31 7.6 24.3 1 16 1z'
+
+// Appareil photo (tracé au trait, 24 × 24) placé au centre de l'épingle : c'est ce qui distingue un album d'une étape.
+const CAMERA_PATH = 'M4 7h3l1.5-2h7L17 7h3v11H4zM12 9.5a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4z'
 
 export function prefersReducedMotion() {
   return window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false
@@ -35,9 +39,24 @@ export function pinIcon(selected) {
   const [width, height] = selected ? [40, 50] : [30, 38]
   return L.divIcon({
     className: selected ? 'pin pin--selected' : 'pin',
-    html: `<svg viewBox="0 0 32 40" aria-hidden="true"><path d="${PIN_PATH}" /><circle cx="16" cy="15.5" r="5.5" /></svg>`,
+    html: `<svg viewBox="0 0 32 40" aria-hidden="true"><path d="${PIN_PATH}" /><path class="pin__camera" transform="translate(8.6 8) scale(0.62)" d="${CAMERA_PATH}" /></svg>`,
     iconSize: [width, height],
     iconAnchor: [width / 2, height],
     tooltipAnchor: [0, -height + 4],
+  })
+}
+
+/**
+ * Marqueur d'étape : un badge arrondi (et non une épingle) avec le picto de son type.
+ * Une étape à venir est estompée (classe stage-pin--future).
+ */
+export function stageIcon(kind, { future = false } = {}) {
+  const icon = STAGE_KINDS[kind]?.icon ?? STAGE_KINDS.PLACE.icon
+  return L.divIcon({
+    className: `stage-pin${future ? ' stage-pin--future' : ''}`,
+    html: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icon}" /></svg>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+    tooltipAnchor: [0, -17],
   })
 }

@@ -4,7 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import GalleryCard from '../components/GalleryCard.vue'
 import MediaViewer from '../components/MediaViewer.vue'
 import Pagination from '../components/Pagination.vue'
-import { journal, loadMap, loadPage, loadTrack } from '../journal'
+import { journal, loadItinerary, loadMap, loadPage, loadTrack } from '../journal'
+import { STAGE_KINDS, KIND_ORDER } from '../stageKinds'
+import { isFuture } from '../stageGeo'
+import StageIcon from '../components/StageIcon.vue'
 import { TRACK_SOURCES } from '../trackStyle'
 
 // Leaflet est chargé à part : la liste s'affiche sans attendre la bibliothèque de cartographie.
@@ -30,6 +33,7 @@ const viewerItemId = computed(() => {
 
 // La carte est rechargée à chaque visite de l'écran (de nouvelles galeries ont pu être ajoutées).
 const mapReady = loadMap()
+loadItinerary()
 
 // Tracé en quasi temps réel : rechargé toutes les minutes tant que l'onglet est visible (et dès qu'il le redevient).
 const TRACK_REFRESH_MS = 60_000
@@ -50,6 +54,11 @@ onBeforeUnmount(() => {
 const trackSources = computed(() => [
   ...new Set(journal.track.segments.map((segment) => segment.source).filter((source) => TRACK_SOURCES[source])),
 ])
+
+// Légende : types d'étape présents, et mention « à venir » s'il y a des étapes futures.
+const stageKindsShown = computed(() => KIND_ORDER.filter((kind) => journal.itinerary.some((stage) => stage.kind === kind)))
+const hasFutureStage = computed(() => journal.itinerary.some((stage) => isFuture(stage)))
+const hasLegend = computed(() => trackSources.value.length > 0 || stageKindsShown.value.length > 0 || journal.galleries.length > 0)
 
 // ---------------------------------------------------------------------------
 // Liste : chargement de la bonne page, sélection, défilement
@@ -212,10 +221,23 @@ watch([settled, viewerItemId, viewer], () => {
         :galleries="journal.galleries"
         :selected-id="selectedId"
         :track="journal.track"
-        :galleries-loaded="journal.mapLoaded"
+        :stages="journal.itinerary"
+        :galleries-loaded="journal.mapLoaded && journal.itineraryLoaded"
         @select="(id) => selectGallery(id, true)"
       />
-      <ul v-if="trackSources.length > 0" class="map-legend" aria-label="Légende des trajets">
+      <ul v-if="hasLegend" class="map-legend" aria-label="Légende de la carte">
+        <li v-if="journal.galleries.length > 0">
+          <svg class="map-legend__camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h3l1.5-2h7L17 7h3v11H4zM12 9.5a3.2 3.2 0 100 6.4 3.2 3.2 0 000-6.4z" /></svg>
+          <span>Album photo</span>
+        </li>
+        <li v-for="kind in stageKindsShown" :key="kind">
+          <StageIcon :kind="kind" class="map-legend__badge" />
+          <span>{{ STAGE_KINDS[kind].label }}</span>
+        </li>
+        <li v-if="hasFutureStage">
+          <StageIcon :kind="stageKindsShown[0]" class="map-legend__badge map-legend__badge--future" />
+          <span>Étape à venir</span>
+        </li>
         <li v-for="source in trackSources" :key="source" :style="{ color: `var(${TRACK_SOURCES[source].cssVar})` }">
           <svg viewBox="0 0 28 6" aria-hidden="true">
             <line

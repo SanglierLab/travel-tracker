@@ -11,6 +11,8 @@ export const journal = reactive({
   mapLoaded: false, // vrai une fois la réponse reçue (ou en échec) : la carte sait alors si elle a des galeries
   mapError: false,
   track: { segments: [], last: null }, // tracé de la route : lignes par source + dernière position connue
+  itineraryLoaded: false, // vrai une fois la réponse reçue (ou en échec) : sert au cadrage initial de la carte
+  itinerary: [], // étapes du voyage dans l'ordre choisi par l'admin (lieux fixes et trajets), passées et à venir
 })
 
 let lastRequest = 0
@@ -47,5 +49,16 @@ export async function loadTrack() {
     journal.track = await api('/api/public/track')
   } catch {
     /* réessayé automatiquement au prochain rafraîchissement */
+  }
+}
+
+/** L'itinéraire est un complément, comme le tracé : en cas d'échec on garde l'affichage précédent. */
+export async function loadItinerary() {
+  try {
+    journal.itinerary = await api('/api/public/itinerary')
+  } catch {
+    /* réessayé à la prochaine visite de l'écran */
+  } finally {
+    journal.itineraryLoaded = true
   }
 }

@@ -1,6 +1,8 @@
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { L, createMap, pinIcon, prefersReducedMotion } from '../leafletSupport'
+import { L, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
+import { STAGE_KINDS } from '../stageKinds'
+import { isFuture, stageAnchor } from '../stageGeo'
 import { formatDate, formatDateTime, timeAgo } from '../format'
 import { TRACK_SOURCES, trackColor } from '../trackStyle'
 
@@ -10,6 +12,8 @@ const props = defineProps({
   // Tracé de la route (GET /api/public/track) :
   //   { segments: [{ source, tripId, start, end, points: [[lat, lon], ...] }], last: { source, latitude, longitude, recordedAt } | null }
   track: { type: Object, default: () => ({ segments: [], last: null }) },
+  // Étapes du voyage (GET /api/public/itinerary), toutes affichées ; celles à venir sont estompées.
+  stages: { type: Array, default: () => [] },
   // La carte ne se cadre qu'une fois la liste des galeries connue (même vide).
   galleriesLoaded: { type: Boolean, default: true },
 })
@@ -21,6 +25,7 @@ const element = ref(null)
 let map = null
 let layer = null
 let trackLayer = null
+let stageLayer = null
 let observer = null
 let fitted = false
 const markers = new Map() // id de galerie -> { marker, gallery }
@@ -87,10 +92,48 @@ function render() {
 function fitInitial() {
   if (fitted || !map || !props.galleriesLoaded) return
   const points = props.galleries.map((g) => [g.latitude, g.longitude])
+  for (const stage of props.stages) points.push(stageAnchor(stage))
   for (const segment of props.track.segments) points.push(...segment.points)
   if (points.length === 0) return
   fitted = true
   map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 10, animate: false })
+}
+
+// Étapes : un badge par étape (au milieu du trajet pour un trajet), sous les épingles des albums.
+function drawStages() {
+  if (!map) return
+  stageLayer.clearLayers()
+  for (const stage of props.stages) {
+    const future = isFuture(stage)
+    const label = STAGE_KINDS[stage.kind]?.label ?? 'Étape'
+    const marker = L.marker(stageAnchor(stage), {
+      icon: stageIcon(stage.kind, { future }),
+      keyboard: true,
+      title: '',
+      zIndexOffset: -500,
+    })
+    marker.bindTooltip(() => stageTooltip(stage, label, future), { direction: 'top', opacity: 1, className: 'pin-tip' })
+    marker.addTo(stageLayer)
+    const markerElement = marker.getElement()
+    if (markerElement) {
+      markerElement.setAttribute('role', 'img')
+      markerElement.setAttribute('aria-label', `${label} : ${stage.name}${future ? ' (à venir)' : ''}`)
+    }
+  }
+}
+
+function stageTooltip(stage, label, future) {
+  const text = document.createElement('div')
+  text.className = 'pin-tip__body'
+  const inner = document.createElement('div')
+  const title = document.createElement('strong')
+  title.textContent = stage.name
+  const meta = document.createElement('span')
+  const dates = stage.endDate && stage.endDate !== stage.startDate ? `${formatDate(stage.startDate)} → ${formatDate(stage.endDate)}` : formatDate(stage.startDate)
+  meta.textContent = `${label} · ${dates}${future ? ' · à venir' : ''}`
+  inner.append(title, meta)
+  text.append(inner)
+  return text
 }
 
 // Tracé : un style par source (voir trackStyle.js). Redessiné à chaque rafraîchissement (quelques dizaines de lignes).
@@ -161,6 +204,7 @@ onMounted(() => {
   map = createMap(element.value, { worldCopyJump: true })
   map.setView([20, 0], 2)
   trackLayer = L.layerGroup().addTo(map)
+  stageLayer = L.layerGroup().addTo(map)
   layer = L.layerGroup().addTo(map)
 
   // La carte doit être recalculée quand son conteneur change de taille (fenêtre, rotation du téléphone...).
@@ -168,6 +212,7 @@ onMounted(() => {
   observer.observe(element.value)
 
   render()
+  drawStages()
   drawTrack()
 })
 
@@ -180,10 +225,11 @@ onBeforeUnmount(() => {
 
 watch(() => props.galleries, render)
 watch(() => props.track, drawTrack)
+watch(() => props.stages, () => { drawStages(); fitInitial() })
 watch(() => props.galleriesLoaded, fitInitial)
 watch(() => props.selectedId, (id, previous) => applySelection(id, previous))
 </script>
 
 <template>
-  <div ref="element" class="travel-map map-washi"></div>
+  <div ref="element" class="travel-map"></div>
 </template>

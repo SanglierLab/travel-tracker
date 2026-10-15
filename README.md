@@ -237,7 +237,9 @@ Les journaux du serveur montrent chaque cycle (« ADS-B AFR1234 : 1 position(s) 
 ## Étapes du voyage (API)
 
 Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau
-(Tokyo → Shimoda, le 5 mars). Elles s'affichent sur la carte, même dans le futur, et dans le fil des photos (étapes 6c et 6d à venir).
+(Tokyo → Shimoda, le 5 mars). Elles s'affichent sur la carte, même dans le futur, et dans le fil des photos (étapes 6c-2 et 6d à venir).
+
+**Sur la carte publique (6c-1)** : chaque étape est un badge arrondi avec le picto de son type (lieu, train, avion, bateau), placé au milieu du trajet pour un trajet ; une étape dont la date de début n'est pas atteinte est estompée (« à venir »). Les albums gardent leur épingle, avec un appareil photo au centre. La légende liste ces éléments. Restent à faire : ligne d'itinéraire fléchée et sélection d'une étape (6c-2), fil des photos (6d).
 
 **Dans l'administration** : *Menu → Étapes*. On y ajoute, supprime, réordonne (monter/descendre, « Trier par date ») et positionne les étapes sur la carte.
 Pour un trajet, le formulaire permet d'envoyer un fichier **GPX** : il est allégé à l'envoi et son tracé s'affiche sur les cartes de positionnement ;
