@@ -7,9 +7,9 @@ import StageIcon from './StageIcon.vue'
 const props = defineProps({
   stage: { type: Object, required: true },
   selected: { type: Boolean, default: false },
-  // Étape à venir (bloc « suite du voyage ») : affichée estompée.
+  // Étape à venir : affichée estompée.
   future: { type: Boolean, default: false },
-  // Dans le fil, l'étape est posée sur la ligne du temps ; dans le bloc « suite du voyage », non.
+  // Dans le fil, la carte est posée sur la ligne du temps ; dans le bloc « suite du voyage », non.
   timeline: { type: Boolean, default: true },
 })
 defineEmits(['select'])
@@ -18,20 +18,28 @@ const label = computed(() => STAGE_KINDS[props.stage.kind]?.label ?? 'Étape')
 </script>
 
 <template>
+  <!-- Même carte qu'un album (classes « gallery ») : mêmes marges, bordure, titre, ligne de date et sélection. -->
   <article
     :id="`etape-${stage.id}`"
-    class="stage-item"
-    :class="{ 'stage-item--selected': selected, 'stage-item--future': future }"
+    class="gallery stage-card"
+    :class="{ 'gallery--selected': selected, 'stage-card--future': future }"
   >
-    <span v-if="timeline" class="stage-item__node" aria-hidden="true"></span>
-    <button class="stage-item__body" type="button" :aria-pressed="selected" @click="$emit('select', stage.id)">
-      <StageIcon :kind="stage.kind" class="stage-item__icon" />
-      <span class="stage-item__text">
-        <strong>{{ stage.name }}</strong>
-        <span class="stage-item__meta">
-          {{ label }} · {{ formatDateRange(stage.startDate, stage.endDate) }}<template v-if="future"> · à venir</template>
-        </span>
-      </span>
-    </button>
+    <span v-if="timeline" class="gallery__node" aria-hidden="true"></span>
+    <header
+      class="gallery__head"
+      role="button"
+      tabindex="0"
+      :aria-pressed="selected"
+      @click="$emit('select', stage.id)"
+      @keydown.enter.prevent="$emit('select', stage.id)"
+      @keydown.space.prevent="$emit('select', stage.id)"
+    >
+      <p class="gallery__meta">
+        <StageIcon :kind="stage.kind" class="stage-card__icon" />
+        <time :datetime="stage.startDate">{{ formatDateRange(stage.startDate, stage.endDate) }}</time>
+        · {{ label }}<template v-if="future"> · à venir</template>
+      </p>
+      <h2 class="gallery__title">{{ stage.name }}</h2>
+    </header>
   </article>
 </template>

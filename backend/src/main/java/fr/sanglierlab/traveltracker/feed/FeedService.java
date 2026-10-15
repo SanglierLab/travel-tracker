@@ -28,17 +28,19 @@ public class FeedService {
     private final GalleryService galleries;
     private final StageService stages;
     private final int pageSize;
+    private final int upcomingDays;
     private final Clock clock;
 
     @Autowired
     public FeedService(GalleryService galleries, StageService stages, AppProperties properties) {
-        this(galleries, stages, properties.pageSize(), Clock.systemDefaultZone());
+        this(galleries, stages, properties.pageSize(), properties.upcomingDays(), Clock.systemDefaultZone());
     }
 
-    FeedService(GalleryService galleries, StageService stages, int pageSize, Clock clock) {
+    FeedService(GalleryService galleries, StageService stages, int pageSize, int upcomingDays, Clock clock) {
         this.galleries = galleries;
         this.stages = stages;
         this.pageSize = pageSize;
+        this.upcomingDays = upcomingDays;
         this.clock = clock;
     }
 
@@ -88,7 +90,7 @@ public class FeedService {
     public FeedPositions positions() {
         List<StageResponse> started = startedStages();
         List<FeedOrder.Slot> slots = FeedOrder.order(galleries.summaries(), started);
-        return new FeedPositions(today(), pagesOf(slots, FeedOrder.Type.STAGE));
+        return new FeedPositions(today(), upcomingDays, pagesOf(slots, FeedOrder.Type.STAGE));
     }
 
     // -----------------------------------------------------------------------

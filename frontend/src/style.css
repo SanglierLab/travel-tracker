@@ -212,59 +212,11 @@ a { color: var(--color-accent); }
 .gallery__title { font-size: 1.3rem; margin: 0; overflow-wrap: anywhere; }
 .gallery__empty { margin: 0; font-size: 0.95rem; }
 
-/* Étapes dans le fil : une ligne compacte, de la forme des badges de la carte (arrondie, picto du type) */
-.stage-item {
-  position: relative;
-  margin-bottom: 1.25rem;
-  scroll-margin-top: 0.75rem;
-}
-.stage-item__node {
-  position: absolute;
-  left: calc(-1.75rem + 1px);
-  top: 50%;
-  width: 1.1rem;
-  height: 1.1rem;
-  box-sizing: border-box;
-  margin-top: -0.55rem;
-  border-radius: 4px;
-  background: var(--itinerary);
-}
-.stage-item--selected .stage-item__node { background: var(--color-marker-selected); }
-.stage-item__body {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.6rem 0.9rem;
-  border: 1px dashed var(--itinerary);
-  border-radius: 999px;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.stage-item .stage-item__icon {
-  flex: none;
-  box-sizing: border-box;
-  width: 2rem;
-  height: 2rem;
-  padding: 0.35rem;
-  border-radius: 10px;
-  background: var(--itinerary);
-  stroke: #fff;
-}
-.stage-item__text { display: flex; flex-direction: column; min-width: 0; }
-.stage-item__text strong { overflow-wrap: anywhere; }
-.stage-item__meta { color: var(--color-muted); font-size: 0.9rem; }
-.stage-item--selected .stage-item__body {
-  border-style: solid;
-  border-color: var(--color-marker-selected);
-  box-shadow: 0 0 0 2px var(--color-marker-selected);
-}
-.stage-item--selected .stage-item .stage-item__icon { background: var(--color-marker-selected); }
-.stage-item--future { opacity: 0.7; }
-.stage-item--future .stage-item .stage-item__icon { opacity: 0.8; }
+/* Étapes dans le fil : la même carte que les albums (classes .gallery) ; seuls le picto du type et l'absence de contenu les distinguent */
+.stage-card .gallery__head { margin-bottom: 0; }
+.stage-card .gallery__head:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 4px; border-radius: var(--radius-small); }
+.gallery__meta .stage-card__icon { width: 1.1em; height: 1.1em; margin-right: 0.3em; vertical-align: -0.2em; stroke: var(--itinerary); stroke-width: 2; }
+.stage-card--future { opacity: 0.7; }
 
 /* Bloc repliable « suite du voyage » (étapes à venir), en haut du fil */
 .upcoming { margin-bottom: 1.25rem; }
@@ -294,8 +246,7 @@ a { color: var(--color-accent); }
 }
 .upcoming__toggle[aria-expanded="true"] .upcoming__chevron { transform: rotate(90deg); }
 .upcoming__count { margin-left: auto; color: var(--color-muted); font-size: 0.9rem; }
-.upcoming__list { display: grid; gap: 0.5rem; margin-top: 0.75rem; }
-.upcoming__list .stage-item { margin-bottom: 0; }
+.upcoming__list { margin-top: 0.75rem; }
 
 /* Texte (markdown rendu côté serveur, déjà assaini) */
 .prose { margin: 0.75rem 0; overflow-wrap: anywhere; }

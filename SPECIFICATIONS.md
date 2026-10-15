@@ -297,7 +297,7 @@ Supprimer une galerie supprime son dossier ; supprimer un média supprime ses fi
 | Endpoint | Rôle |
 |---|---|
 | `GET /api/public/feed?page=n` | **Le fil** : une page d'entrées `{ type: GALLERY, gallery }` ou `{ type: STAGE, stage }` (albums + étapes commencées, date décroissante, album avant étape à date égale ; `pageSize` éléments par page, albums et étapes comptés ensemble). |
-| `GET /api/public/feed/positions` | `{ today, stages: { id: page } }` : date du jour du serveur et page de chaque étape commencée dans le fil (les étapes à venir en sont absentes). |
+| `GET /api/public/feed/positions` | `{ today, upcomingDays, stages: { id: page } }` : date du jour du serveur, réglage `upcoming-days` et page de chaque étape commencée dans le fil (les étapes à venir en sont absentes). |
 | `GET /api/public/galleries?page=n` | (ancien, albums seuls) Une page de galeries avec leurs éléments (markdown déjà rendu en HTML sûr) ; renvoie aussi `pageSize`. |
 | `GET /api/public/map` | Toutes les galeries en version légère (id, titre, lieu, date, coordonnées, miniature de couverture, **numéro de la page** où elles apparaissent dans le fil mélangé), même tri que la liste. |
 | `GET /api/public/track` | Lignes à dessiner (source, trajet, heures de début et de fin, points `[latitude, longitude]` simplifiés) et dernière position connue. |
@@ -578,7 +578,7 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 ## 22. Fil des étapes (6d)
 
 - **Fil mélangé** : `FeedService` fusionne les albums et les étapes dont la date de début est ≤ aujourd'hui (date du serveur). Ordre : date décroissante ; à date égale les albums d'abord (ordre habituel), puis les étapes, la plus avancée dans l'itinéraire en premier. La pagination (`pageSize`, 10 par défaut) compte albums et étapes ensemble ; `page` de `/api/public/map` suit le même calcul.
-- **Étapes à venir** : hors fil et hors pagination. Le front les liste dans un bloc repliable « Voir la suite du voyage » en haut de la première page (ordre chronologique) ; la carte les affiche estompées.
+- **Étapes à venir** : hors fil et hors pagination. Le front les liste, de la plus lointaine à la plus proche, dans un bloc repliable « Voir la suite du voyage » en haut de la première page. Exception : une étape qui commence dans `app.upcoming-days` jours ou moins (défaut 7, 0 = aucune ; renvoyé par `/feed/positions`) est affichée, estompée, en tête de la ligne du temps, hors du bloc replié. Les étapes utilisent la même carte que les albums ; la carte les affiche estompées.
 - **Cohérence « à venir »** : le serveur renvoie sa date du jour (`/feed/positions`) ; le front l'utilise pour la carte, le fil et le bloc.
 - **Sélection** : `/etape/:id` (étape du fil : sa page est chargée et elle est mise en valeur ; étape à venir : première page, bloc ouvert). Un clic sur une étape du fil ne recharge pas la liste. Étape inconnue : retour à l'accueil. Albums et étapes ne sont jamais sélectionnés ensemble (une seule adresse).
 - **Albums** : l'appareil photo de l'épingle figure aussi dans l'en-tête de chaque album du fil.

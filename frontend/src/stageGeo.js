@@ -7,6 +7,17 @@ export function todayIso(now = new Date()) {
   return `${now.getFullYear()}-${month}-${day}`
 }
 
+/** « 2026-10-15 » + 7 jours = « 2026-10-22 » (calendrier local, sans passage par un fuseau). */
+export function addDays(iso, days) {
+  const [year, month, day] = iso.split('-').map(Number)
+  return todayIso(new Date(year, month - 1, day + days))
+}
+
+/** Étape à venir qui commence dans `days` jours ou moins : on la montre en tête du fil plutôt que dans le bloc replié. */
+export function isImminent(stage, today, days) {
+  return isFuture(stage, today) && stage.startDate <= addDays(today, days)
+}
+
 /** Une étape est « à venir » tant que sa date de début n'est pas atteinte (comparaison de dates ISO, sans fuseau). */
 export function isFuture(stage, today = todayIso()) {
   return stage.startDate > today

@@ -33,7 +33,9 @@ public record AppProperties(
         @Min(1) @Max(100000) @DefaultValue("100") int trackMaxAccuracyMeters,
         @Min(1) @DefaultValue("5") int maxLoginFailures,
         @NotNull @DefaultValue("15m") Duration loginLockDuration,
-        @NotBlank @DefaultValue("ffmpeg") String ffmpegPath) {
+        @NotBlank @DefaultValue("ffmpeg") String ffmpegPath,
+        /** Une étape à venir qui commence dans ce nombre de jours (ou moins) est montrée en tête du fil, hors du bloc repliable. 0 : aucune. */
+        @Min(0) @Max(365) @DefaultValue("7") int upcomingDays) {
 
     /** Compte administrateur : mot de passe haché en bcrypt. */
     public record Admin(@NotBlank String username, @NotBlank String passwordHash) {

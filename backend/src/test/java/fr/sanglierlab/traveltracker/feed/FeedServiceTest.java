@@ -34,7 +34,7 @@ class FeedServiceTest {
         galleries = mock(GalleryService.class);
         stages = mock(StageService.class);
         // Taille de page 3 ; « aujourd'hui » = 10 mars 2026.
-        feed = new FeedService(galleries, stages, 3, Clock.fixed(Instant.parse("2026-03-10T12:00:00Z"), ZoneOffset.UTC));
+        feed = new FeedService(galleries, stages, 3, 7, Clock.fixed(Instant.parse("2026-03-10T12:00:00Z"), ZoneOffset.UTC));
 
         when(galleries.summaries()).thenReturn(List.of(gallery(2, "2026-03-08"), gallery(1, "2026-03-02")));
         // L'étape 12 est à venir : absente du fil.
@@ -79,6 +79,7 @@ class FeedServiceTest {
                 org.assertj.core.groups.Tuple.tuple(2L, 1), org.assertj.core.groups.Tuple.tuple(1L, 1));
         FeedPositions positions = feed.positions();
         assertThat(positions.today()).isEqualTo(LocalDate.parse("2026-03-10"));
+        assertThat(positions.upcomingDays()).isEqualTo(7);
         assertThat(positions.stages()).containsEntry(11L, 1).containsEntry(10L, 2);
     }
 }

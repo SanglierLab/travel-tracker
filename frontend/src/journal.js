@@ -12,6 +12,7 @@ export const journal = reactive({
   mapLoaded: false, // vrai une fois la réponse reçue (ou en échec) : la carte sait alors si elle a des galeries
   mapError: false,
   track: { segments: [], last: null }, // tracé de la route : lignes par source + dernière position connue
+  upcomingDays: 7, // une étape à venir dans ce nombre de jours (ou moins) est montrée en tête du fil (réglage du serveur)
   today: todayIso(), // date du jour du serveur (remplace celle du navigateur dès qu'elle est connue) : une étape est « à venir » tant que son début la dépasse
   itineraryError: false,
   itineraryLoaded: false, // vrai une fois la réponse reçue (ou en échec) : sert au cadrage initial de la carte
@@ -66,6 +67,7 @@ export async function loadItinerary() {
       api('/api/public/feed/positions').catch(() => null),
     ])
     if (positions?.today) journal.today = positions.today
+    if (Number.isInteger(positions?.upcomingDays)) journal.upcomingDays = positions.upcomingDays
     journal.itinerary = stages.map((stage) => ({ ...stage, page: positions?.stages?.[stage.id] ?? null }))
     journal.itineraryError = false
   } catch {

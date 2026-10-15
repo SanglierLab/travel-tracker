@@ -7,7 +7,7 @@ import MediaViewer from '../components/MediaViewer.vue'
 import Pagination from '../components/Pagination.vue'
 import { journal, loadItinerary, loadMap, loadPage, loadTrack } from '../journal'
 import { STAGE_KINDS, KIND_ORDER } from '../stageKinds'
-import { isFuture } from '../stageGeo'
+import { isFuture, isImminent } from '../stageGeo'
 import StageIcon from '../components/StageIcon.vue'
 import { TRACK_SOURCES } from '../trackStyle'
 
@@ -60,11 +60,16 @@ const trackSources = computed(() => [
 
 // Le fil mélange albums et étapes commencées ; les étapes à venir sont à part, dans un bloc repliable.
 const entries = computed(() => journal.data?.content ?? [])
+// Du plus lointain au plus proche, comme le fil (à date égale, la plus avancée dans l'itinéraire d'abord).
 const futureStages = computed(() =>
   journal.itinerary
     .filter((stage) => isFuture(stage, journal.today))
-    .sort((a, b) => (a.startDate < b.startDate ? -1 : a.startDate > b.startDate ? 1 : 0)), // tri stable : à date égale, l'ordre de l'itinéraire
+    .reverse()
+    .sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0)), // tri stable
 )
+// Les étapes imminentes sont en tête du fil (sur la ligne du temps) ; les autres sont dans le bloc repliable.
+const imminentStages = computed(() => futureStages.value.filter((stage) => isImminent(stage, journal.today, journal.upcomingDays)))
+const farStages = computed(() => futureStages.value.filter((stage) => !imminentStages.value.includes(stage)))
 const upcomingOpen = ref(false)
 
 // Légende : types d'étape présents, et mention « à venir » s'il y a des étapes futures.
@@ -126,7 +131,7 @@ async function sync(force = false) {
   if (selectedId.value !== null) {
     if (!suppressScroll) scrollToElement(`galerie-${selectedId.value}`, !pageChanged)
   } else if (selectedStageId.value !== null) {
-    if (isFuture(selectedStage.value, journal.today)) upcomingOpen.value = true
+    if (farStages.value.some((stage) => stage.id === selectedStageId.value)) upcomingOpen.value = true
     await nextTick()
     if (current !== run) return
     if (!suppressScroll) scrollToElement(`etape-${selectedStageId.value}`, !pageChanged)
@@ -337,7 +342,7 @@ watch([settled, viewerItemId, viewer], () => {
       <p v-else-if="entries.length === 0 && futureStages.length === 0" class="muted">Rien à voir pour le moment.</p>
 
       <template v-else>
-        <section v-if="futureStages.length > 0 && journal.data.page === 1" class="upcoming">
+        <section v-if="farStages.length > 0 && journal.data.page === 1" class="upcoming">
           <button
             class="upcoming__toggle"
             type="button"
@@ -347,11 +352,11 @@ watch([settled, viewerItemId, viewer], () => {
           >
             <svg class="upcoming__chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
             <span>{{ upcomingOpen ? 'Masquer la suite du voyage' : 'Voir la suite du voyage' }}</span>
-            <span class="upcoming__count">{{ futureStages.length }} {{ futureStages.length > 1 ? 'étapes' : 'étape' }}</span>
+            <span class="upcoming__count">{{ farStages.length }} {{ farStages.length > 1 ? 'étapes' : 'étape' }}</span>
           </button>
           <div v-if="upcomingOpen" id="suite-du-voyage" class="upcoming__list">
             <StageInterstitial
-              v-for="stage in futureStages"
+              v-for="stage in farStages"
               :key="stage.id"
               :stage="stage"
               :selected="stage.id === selectedStageId"
@@ -363,6 +368,17 @@ watch([settled, viewerItemId, viewer], () => {
         </section>
 
         <div class="timeline">
+          <!-- Étapes imminentes : en tête du fil, estompées -->
+          <template v-if="journal.data.page === 1">
+            <StageInterstitial
+              v-for="stage in imminentStages"
+              :key="`imminent-${stage.id}`"
+              :stage="stage"
+              :selected="stage.id === selectedStageId"
+              future
+              @select="(id) => selectStage(id, false)"
+            />
+          </template>
           <template v-for="entry in entries" :key="entry.type + (entry.gallery?.id ?? entry.stage?.id)">
             <GalleryCard
               v-if="entry.type === 'GALLERY'"
