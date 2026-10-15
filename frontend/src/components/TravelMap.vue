@@ -3,7 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { L, arrowIcon, createMap, pinIcon, prefersReducedMotion, stageIcon } from '../leafletSupport'
 import { STAGE_KINDS } from '../stageKinds'
 import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine, todayIso } from '../stageGeo'
-import { formatDate, formatDateTime, timeAgo } from '../format'
+import { formatDate, formatDateRange, formatDateTime, timeAgo } from '../format'
 import { TRACK_SOURCES, itineraryColor, trackColor } from '../trackStyle'
 
 const props = defineProps({
@@ -169,7 +169,7 @@ function styleStage(entry, selected, label = STAGE_KINDS[entry.stage.kind]?.labe
   entry.marker.setIcon(stageIcon(stage.kind, { future, selected }))
   entry.marker.setZIndexOffset(selected ? 900 : -500)
   entry.marker.unbindTooltip()
-  entry.marker.bindTooltip(() => stageTooltip(stage, label, future), { direction: 'top', opacity: 1, className: 'pin-tip', permanent: selected })
+  entry.marker.bindTooltip(() => stageTooltip(stage, future), { direction: 'top', opacity: 1, className: 'pin-tip pin-tip--stage', permanent: selected })
   if (selected) entry.marker.openTooltip()
   entry.line?.setStyle({ weight: selected ? 10 : 7, opacity: selected ? 0.95 : future ? 0.3 : 0.6 })
   const markerElement = entry.marker.getElement()
@@ -191,18 +191,16 @@ function applyStageSelection(id, previousId) {
   else map.setView(current.marker.getLatLng(), Math.max(map.getZoom(), 6), { animate })
 }
 
-function stageTooltip(stage, label, future) {
-  const text = document.createElement('div')
-  text.className = 'pin-tip__body'
-  const inner = document.createElement('div')
+// Deux lignes : le nom (lieu ou trajet), puis la date (« · à venir » si l'étape n'a pas commencé).
+function stageTooltip(stage, future) {
+  const body = document.createElement('div')
+  body.className = 'stage-tip'
   const title = document.createElement('strong')
   title.textContent = stage.name
-  const meta = document.createElement('span')
-  const dates = stage.endDate && stage.endDate !== stage.startDate ? `${formatDate(stage.startDate)} → ${formatDate(stage.endDate)}` : formatDate(stage.startDate)
-  meta.textContent = `${label} · ${dates}${future ? ' · à venir' : ''}`
-  inner.append(title, meta)
-  text.append(inner)
-  return text
+  const date = document.createElement('span')
+  date.textContent = `${formatDateRange(stage.startDate, stage.endDate)}${future ? ' · à venir' : ''}`
+  body.append(title, date)
+  return body
 }
 
 // Tracé : un style par source (voir trackStyle.js). Redessiné à chaque rafraîchissement (quelques dizaines de lignes).

@@ -368,6 +368,10 @@ a { color: var(--color-accent); }
   font-family: var(--font-body);
   border-radius: var(--radius-small);
 }
+.leaflet-tooltip.pin-tip--stage { width: max-content; min-width: 11rem; max-width: min(20rem, 80vw); padding: 0.5rem 0.7rem; }
+.stage-tip { display: flex; flex-direction: column; gap: 0.15rem; }
+.stage-tip strong { overflow-wrap: anywhere; }
+.stage-tip span { color: var(--color-muted); font-size: 0.85rem; white-space: nowrap; }
 .pin-tip__body { display: flex; align-items: center; gap: 0.5rem; }
 .pin-tip__body img { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }
 .pin-tip__body div { display: flex; flex-direction: column; min-width: 0; }
