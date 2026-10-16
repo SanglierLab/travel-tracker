@@ -203,6 +203,85 @@ async function selectGallery(id, scrollToCard) {
 
 const mapExpanded = ref(false)
 
+// ---------------------------------------------------------------------------
+// Séparateur carte / liste (grand écran) : on le déplace à la souris, au doigt ou au clavier ; la largeur de la liste est
+// retenue (en part de la fenêtre) dans ce navigateur. Double clic ou Échap : retour à la largeur par défaut.
+// ---------------------------------------------------------------------------
+
+const LIST_SHARE_KEY = 'journal.listShare'
+const LIST_SHARE_MIN = 0.25
+const LIST_SHARE_MAX = 0.75
+const LIST_SHARE_STEP = 0.02
+
+// Bornes : 25 à 75 % de la fenêtre, mais jamais moins de 22 rem pour la liste ni de 20 rem pour la carte.
+function clampShare(value) {
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const width = window.innerWidth || 1
+  const min = Math.max(LIST_SHARE_MIN, (22 * rem) / width)
+  const max = Math.max(min, Math.min(LIST_SHARE_MAX, 1 - (20 * rem) / width))
+  return Math.min(max, Math.max(min, value))
+}
+
+function readShare() {
+  try {
+    const value = Number(localStorage.getItem(LIST_SHARE_KEY))
+    return Number.isFinite(value) && value > 0 ? clampShare(value) : null
+  } catch {
+    return null
+  }
+}
+
+function saveShare(value) {
+  try {
+    if (value === null) localStorage.removeItem(LIST_SHARE_KEY)
+    else localStorage.setItem(LIST_SHARE_KEY, String(value))
+  } catch {
+    // stockage indisponible : le réglage vaut pour cette visite seulement
+  }
+}
+
+const listShare = ref(readShare()) // part de la largeur de la fenêtre prise par la liste ; null = largeur par défaut
+const resizing = ref(false)
+const splitter = ref(null)
+const homeStyle = computed(() => (listShare.value === null ? undefined : { '--list-width': `${(listShare.value * 100).toFixed(2)}vw` }))
+
+function currentShare() {
+  const list = listElement.value
+  return listShare.value ?? (list ? list.getBoundingClientRect().width / window.innerWidth : 0.4)
+}
+
+function startResize(event) {
+  if (event.button !== undefined && event.button !== 0) return
+  resizing.value = true
+  splitter.value?.setPointerCapture?.(event.pointerId)
+}
+
+function moveResize(event) {
+  if (!resizing.value) return
+  listShare.value = clampShare(1 - event.clientX / window.innerWidth)
+}
+
+function endResize() {
+  if (!resizing.value) return
+  resizing.value = false
+  saveShare(listShare.value)
+}
+
+function resetShare() {
+  listShare.value = null
+  saveShare(null)
+}
+
+function keyResize(event) {
+  const share = currentShare()
+  if (event.key === 'ArrowLeft') listShare.value = clampShare(share + LIST_SHARE_STEP)
+  else if (event.key === 'ArrowRight') listShare.value = clampShare(share - LIST_SHARE_STEP)
+  else if (event.key === 'Escape' || event.key === 'Home') resetShare()
+  else return
+  event.preventDefault()
+  if (listShare.value !== null) saveShare(listShare.value)
+}
+
 const BASE_TITLE = 'Journal de voyage'
 const selectedGallery = computed(() => journal.galleries.find((g) => g.id === selectedId.value))
 const selectedStage = computed(() => journal.itinerary.find((stage) => stage.id === selectedStageId.value))
@@ -271,7 +350,7 @@ watch([settled, viewerItemId, viewer], () => {
 </script>
 
 <template>
-  <div class="home" :class="{ 'home--map-expanded': mapExpanded }">
+  <div class="home" :class="{ 'home--map-expanded': mapExpanded, 'home--resizing': resizing }" :style="homeStyle">
     <section class="home__map" aria-label="Carte du voyage">
       <TravelMap
         :galleries="journal.galleries"
@@ -332,6 +411,23 @@ watch([settled, viewerItemId, viewer], () => {
         <svg v-else viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
       </button>
     </section>
+
+    <!-- Grand écran seulement (masqué en CSS en dessous) : séparateur déplaçable entre la carte et la liste -->
+    <div
+      ref="splitter"
+      class="home__splitter"
+      :class="{ 'home__splitter--dragging': resizing }"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label="Largeur de la liste (flèches gauche et droite pour la modifier, Échap pour la rétablir)"
+      tabindex="0"
+      @pointerdown.prevent="startResize"
+      @pointermove="moveResize"
+      @pointerup="endResize"
+      @pointercancel="endResize"
+      @dblclick="resetShare"
+      @keydown="keyResize"
+    ></div>
 
     <main ref="listElement" class="home__list">
       <header class="home__header">

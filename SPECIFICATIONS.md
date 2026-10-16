@@ -661,3 +661,10 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Infobulles concernées** : celles de l'étape et de la galerie **sélectionnées**, qui restent affichées sans jamais se fermer seules. Elles ont un bouton « × » (`aria-label` « Fermer », zone tactile de 30 px) dans l'angle supérieur droit. Les infobulles de survol (éléments non sélectionnés, dernière position) disparaissent déjà quand le pointeur s'en va : pas de bouton.
 - **Effet** : ferme seulement l'infobulle ; l'élément reste sélectionné (carte, fil et adresse inchangés). Un nouveau clic sur son marqueur la rouvre ; changer de sélection en affiche une nouvelle.
 
+## 32. Largeur de la liste et séparateur carte / liste (phase 8d)
+
+- **Grand écran** (≥ 60 rem) : la liste prend par défaut `clamp(30rem, 46vw, 64rem)` (avant : 38 vw, 44 rem au plus) ; la carte prend le reste. Les cartes de la liste ne dépassent pas 60 rem de large (46 rem en dessous de 60 rem). La grille de miniatures s'adapte à la largeur disponible (colonnes d'au moins 7,5 rem).
+- **Séparateur** (`role="separator"`, masqué sous 60 rem) : on le déplace à la souris ou au doigt ; flèches gauche / droite au clavier (2 % par appui) ; double clic, Échap ou Début : retour à la largeur par défaut. Le trait s'accentue au survol, au focus et pendant le déplacement.
+- **Bornes** : la liste occupe 25 à 75 % de la fenêtre, sans jamais descendre sous 22 rem, et la carte garde au moins 20 rem.
+- **Mémoire** : la part de la fenêtre (`journal.listShare`, dans `localStorage`, sans erreur s'il est indisponible) est retenue dans ce navigateur ; elle suit le redimensionnement de la fenêtre. La carte se recalcule seule (observateur de taille). Téléphone et tablette : inchangés.
+

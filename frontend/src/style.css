@@ -144,14 +144,46 @@ a { color: var(--color-accent); }
 .home__header h1 { font-size: 1.6rem; margin-bottom: 1rem; }
 .home__footer { margin-top: 2rem; text-align: center; font-size: 0.9rem; }
 
+/* La largeur de la liste vient de --list-width (posée par la page quand le visiteur a déplacé le séparateur) ; par défaut, elle suit la fenêtre. */
+.home__splitter { display: none; }
+
 @media (min-width: 60rem) {
   .home { flex-direction: row; }
-  .home__map { flex: 1 1 auto; }
+  .home__map { flex: 1 1 0; min-width: 0; }
   .home__list {
-    flex: 0 0 clamp(28rem, 38vw, 44rem);
+    flex: 0 0 var(--list-width, clamp(30rem, 46vw, 64rem));
     padding: 1.5rem 1.5rem 3rem;
-    border-left: 1px solid var(--color-border);
   }
+  .home .home__list > * { max-width: 60rem; }
+  /* Séparateur déplaçable : zone de saisie de 12 px, trait visible au survol, au focus et pendant le déplacement */
+  .home__splitter {
+    display: block;
+    position: relative;
+    flex: none;
+    width: 12px;
+    margin: 0 -5px 0 -6px; /* le trait central de 1 px remplace l'ancienne bordure, sans élargir la mise en page */
+    z-index: 2;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .home__splitter::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 5px;
+    width: 1px;
+    background: var(--color-border);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .home__splitter:hover::before,
+  .home__splitter:focus-visible::before,
+  .home__splitter--dragging::before { background: var(--color-accent); box-shadow: 0 0 0 1px var(--color-accent); }
+  .home__splitter:focus-visible { outline: none; }
+  .home--resizing { cursor: col-resize; user-select: none; }
+  .home--resizing .home__map, .home--resizing .home__list { pointer-events: none; }
+  /* Miniatures : autant de colonnes que la largeur de la liste en permet */
+  .home .media-grid { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); }
 }
 
 /* Timeline verticale : un nœud par galerie, relié par une ligne continue */
