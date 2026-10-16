@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,7 +47,7 @@ class GarminLiveTrackClientTest {
 
     @Test
     void trieLesPointsEtIgnoreLesInvalides() {
-        var update = GarminLiveTrackClient.toUpdate(new GarminLiveTrackClient.ApiResponse(List.of(
+        var update = GarminLiveTrackClient.toUpdate(new GarminLiveTrackClient.ApiResponse(Arrays.asList( // Arrays.asList : List.of refuse l'élément null
                 new GarminLiveTrackClient.ApiPoint("2026-10-15T17:20:10.000Z", new GarminLiveTrackClient.ApiPosition(45.1, 5.2), List.of()),
                 new GarminLiveTrackClient.ApiPoint("2026-10-15T17:20:00.000Z", new GarminLiveTrackClient.ApiPosition(45.0, 5.1), null),
                 new GarminLiveTrackClient.ApiPoint("pas une date", new GarminLiveTrackClient.ApiPosition(45.0, 5.1), List.of()),

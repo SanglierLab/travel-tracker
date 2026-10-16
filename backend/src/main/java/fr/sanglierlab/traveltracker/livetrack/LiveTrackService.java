@@ -73,7 +73,7 @@ public class LiveTrackService {
                     + "(https://gar.mn/… ou https://livetrack.garmin.com/session/…/token/…).");
         }
         try {
-            return resolver.resolve(raw).orElseThrow(() -> ApiException.badRequest(
+            return resolver.resolve(raw.strip()).orElseThrow(() -> ApiException.badRequest(
                     "Ce lien court ne mène pas à une session LiveTrack (lien inconnu ou expiré)."));
         } catch (LiveTrackException e) {
             throw new ApiException(HttpStatus.BAD_GATEWAY, "Impossible de résoudre le lien court : " + e.getMessage() + ". Réessayez, ou collez le lien long.");
