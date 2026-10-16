@@ -384,10 +384,11 @@ a { color: var(--color-accent); }
 .stage-tip { display: flex; flex-direction: column; gap: 0.15rem; }
 .stage-tip strong { overflow-wrap: anywhere; }
 .stage-tip span { color: var(--color-muted); font-size: 0.85rem; white-space: nowrap; }
-.pin-tip__body { display: flex; align-items: center; gap: 0.5rem; }
+.leaflet-tooltip.pin-tip--gallery { max-width: min(22rem, 80vw); }
+.pin-tip__body { display: flex; align-items: center; gap: 0.6rem; }
 .pin-tip__body img { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }
-.pin-tip__body div { display: flex; flex-direction: column; min-width: 0; }
-.pin-tip__body span { color: var(--color-muted); font-size: 0.85rem; }
+.pin-tip__body .stage-tip { min-width: 0; }
+.pin-tip__body .stage-tip span { white-space: normal; overflow-wrap: anywhere; }
 
 /* ------------------------------------------------------------------ */
 /* Visionneuse plein écran (photos et vidéos)                           */

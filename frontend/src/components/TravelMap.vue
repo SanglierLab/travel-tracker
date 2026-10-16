@@ -50,12 +50,16 @@ function tooltipContent(gallery) {
     image.height = 56
     body.append(image)
   }
+  // Même présentation que l'infobulle d'une étape : le titre, puis une ligne par information (date, lieu).
   const text = document.createElement('div')
+  text.className = 'stage-tip'
   const title = document.createElement('strong')
   title.textContent = gallery.title
-  const meta = document.createElement('span')
-  meta.textContent = `${formatDate(gallery.galleryDate)} · ${gallery.placeName}`
-  text.append(title, meta)
+  const date = document.createElement('span')
+  date.textContent = formatDate(gallery.galleryDate)
+  const place = document.createElement('span')
+  place.textContent = gallery.placeName
+  text.append(title, date, place)
   body.append(text)
   return body
 }
@@ -65,7 +69,7 @@ function bindTooltip(entry, permanent) {
   entry.marker.bindTooltip(() => tooltipContent(entry.gallery), {
     direction: 'top',
     opacity: 1,
-    className: 'pin-tip',
+    className: 'pin-tip pin-tip--stage pin-tip--gallery',
     permanent,
   })
 }

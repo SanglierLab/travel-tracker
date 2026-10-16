@@ -621,3 +621,7 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Décision** : pour une galerie existante, le bloc *Contenu* passe **en premier** et les réglages (titre, lieu, date, position) sont **repliés** dans un `<details>` « Réglages de la galerie » sous le contenu. Pour une nouvelle galerie, le formulaire est ouvert et il n'y a pas encore de contenu.
 - **Titre** : le bloc s'intitule « Contenu · {titre de la galerie} » (titre enregistré, mis à jour après chaque enregistrement des réglages) pour toujours savoir dans quelle galerie on envoie.
 - **Carte** : la carte de position n'est créée qu'à l'ouverture des réglages (Leaflet ne se dimensionne pas dans un bloc replié).
+
+## 27. Infobulle des galeries (phase 7h)
+
+- L'infobulle d'une galerie reprend la mise en forme de celle d'une étape (`pin-tip--stage` : largeur adaptée au contenu, 11 rem au moins, 20 rem au plus, mêmes marges) : miniature à gauche, puis une ligne par information : titre, date, lieu. Elle peut s'élargir à 22 rem pour la miniature.
