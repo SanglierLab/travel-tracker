@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -44,6 +45,31 @@ public class FfmpegService {
                 "-i", image.toAbsolutePath().toString(),
                 "-frames:v", "1", "-q:v", "2",
                 targetJpeg.toAbsolutePath().toString()));
+    }
+
+    /**
+     * Première ligne de « ffmpeg -version » réduite à la version (ex. « 6.1.1 »), ou vide si ffmpeg n'est pas utilisable.
+     * Sans effet sur les traitements en cours (pas de verrou) : un simple appel de quelques millisecondes.
+     */
+    public Optional<String> version() {
+        try {
+            Process process = new ProcessBuilder(ffmpegPath, "-version").redirectErrorStream(true).start();
+            if (!process.waitFor(5, TimeUnit.SECONDS)) {
+                process.destroyForcibly();
+                return Optional.empty();
+            }
+            String first = new String(process.getInputStream().readNBytes(MAX_LOGGED_BYTES), StandardCharsets.UTF_8).lines().findFirst().orElse("");
+            if (process.exitValue() != 0 || first.isBlank()) {
+                return Optional.empty();
+            }
+            String[] words = first.strip().split("\\s+");
+            return Optional.of(words.length >= 3 && "version".equals(words[1]) ? words[2] : first.strip());
+        } catch (IOException e) {
+            return Optional.empty();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return Optional.empty();
+        }
     }
 
     private void run(List<String> command) throws IOException {

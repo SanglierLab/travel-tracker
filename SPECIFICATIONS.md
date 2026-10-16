@@ -625,3 +625,11 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 ## 27. Infobulle des galeries (phase 7h)
 
 - L'infobulle d'une galerie reprend la mise en forme de celle d'une étape (`pin-tip--stage` : largeur adaptée au contenu, 11 rem au moins, 20 rem au plus, mêmes marges) : miniature à gauche, puis une ligne par information : titre, date, lieu. Elle peut s'élargir à 22 rem pour la miniature.
+
+## 28. Page Config (phase 7i)
+
+- **Rôle** : page d'administration **en lecture seule** (`/admin/config`, tuile « Config » du menu ; pas dans la barre du bas, déjà chargée) alimentée par `GET /api/admin/info` (`InfoService`). Les réglages restent dans `application.yml`.
+- **Contenu** : *Version* (numéro et date de construction, via `build-info` de Maven ; « développement » sans), *Suivi en direct* (par source : état du suivi en cours, délai de relève, seuil « en retard », nombre de positions, dernière position), *Contenu* (galeries, photos, vidéos, textes, taille cumulée des originaux, espace disque libre), *Limites* (tailles maximales, galeries par page, étape « bientôt », coupure du tracé, précision GPS), *Outils* (ffmpeg et sa version, URL de l'API de positions pour GPSLogger, nom de l'en-tête du token).
+- **Secrets** : mots de passe, token d'API et jetons LiveTrack ne sont jamais renvoyés (le token n'est que nommé : valeur dans le fichier de configuration). L'URL de l'API de positions est complétée côté navigateur avec l'adresse du site.
+- **Délais de relève** : lus sur les batchs eux-mêmes (`interval()`), donc toujours ceux réellement appliqués.
+- **Page Points** (liste et correction des points GPS) : reportée après un moment d'utilisation sur le terrain.

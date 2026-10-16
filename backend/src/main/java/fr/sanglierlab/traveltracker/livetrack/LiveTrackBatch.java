@@ -63,6 +63,11 @@ public class LiveTrackBatch {
     }
 
     /** Démarre le suivi de la session (le premier cycle part tout de suite). Remplace un éventuel suivi en cours. */
+    /** Délai entre deux cycles de suivi (affiché dans la page Config). */
+    public Duration interval() {
+        return interval;
+    }
+
     public synchronized void start(long tripId) {
         cancel();
         runningTripId = tripId;

@@ -19,6 +19,12 @@ public interface GalleryItemRepository extends JpaRepository<GalleryItem, Long> 
 
     Optional<GalleryItem> findFirstByGalleryIdAndSortOrderGreaterThanOrderBySortOrderAsc(Long galleryId, int sortOrder);
 
+    long countByType(ItemType type);
+
+    /** Taille cumulée des originaux (photos et vidéos), en octets. */
+    @Query("select coalesce(sum(i.sizeBytes), 0) from GalleryItem i")
+    long totalSizeBytes();
+
     @Query("select coalesce(max(i.sortOrder), 0) from GalleryItem i where i.galleryId = :galleryId")
     int maxSortOrder(@Param("galleryId") Long galleryId);
 

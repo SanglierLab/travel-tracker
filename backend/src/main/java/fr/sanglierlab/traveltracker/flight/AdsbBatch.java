@@ -61,6 +61,11 @@ public class AdsbBatch {
     }
 
     /** Démarre le suivi du vol (le premier cycle part tout de suite). Remplace un éventuel suivi en cours. */
+    /** Délai entre deux cycles de suivi (affiché dans la page Config). */
+    public Duration interval() {
+        return interval;
+    }
+
     public synchronized void start(long tripId) {
         cancel();
         runningTripId = tripId;

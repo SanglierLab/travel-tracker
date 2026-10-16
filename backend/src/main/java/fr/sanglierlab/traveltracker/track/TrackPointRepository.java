@@ -28,6 +28,14 @@ public interface TrackPointRepository extends JpaRepository<TrackPoint, Long> {
             """)
     List<TripPointStats> tripStats();
 
+    /** Nombre de points et heure du dernier point de chaque source (page Config). */
+    @Query("""
+            select new fr.sanglierlab.traveltracker.track.SourceStats(p.source, count(p), max(p.recordedAt))
+            from TrackPoint p
+            group by p.source
+            """)
+    List<SourceStats> sourceStats();
+
     /** À appeler dans une transaction. */
     @Modifying
     @Query("delete from TrackPoint p where p.tripId = :tripId")
