@@ -418,6 +418,11 @@ a { color: var(--color-accent); }
 .stage-tip span { color: var(--color-muted); font-size: 0.85rem; white-space: nowrap; }
 .leaflet-tooltip.pin-tip--gallery { max-width: min(22rem, 80vw); }
 .pin-tip__body { display: flex; align-items: center; gap: 0.6rem; }
+/* Bouton « Recentrer sur la position », sous les boutons de zoom */
+.map-recenter__button { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; }
+.map-recenter__button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.map-recenter[hidden] { display: none; }
+
 /* Infobulle fixe : bouton « Fermer » dans l'angle (zone tactile de 30 px) */
 .leaflet-tooltip.pin-tip--closable { padding-right: 1.9rem; }
 .pin-tip__close {

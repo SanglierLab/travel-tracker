@@ -668,3 +668,11 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Bornes** : la liste occupe 25 à 75 % de la fenêtre, sans jamais descendre sous 22 rem, et la carte garde au moins 20 rem.
 - **Mémoire** : la part de la fenêtre (`journal.listShare`, dans `localStorage`, sans erreur s'il est indisponible) est retenue dans ce navigateur ; elle suit le redimensionnement de la fenêtre. La carte se recalcule seule (observateur de taille). Téléphone et tablette : inchangés.
 
+## 33. Cadrage d'ouverture de la carte (phase 8d)
+
+- **Principe** : à l'ouverture, la carte se centre sur la **dernière position connue** (`track.last`), avec un zoom qui dépend de sa source et de son ancienneté (`frontend/src/openingFrame.js`). Sans dernière position, ou si l'adresse désigne une galerie ou une étape, le cadrage reste celui d'avant (tout le voyage tient à l'écran, zoom 10 au plus). Le cadrage se fait une seule fois, quand galeries, étapes **et tracé** sont chargés (ou en échec) ; les rafraîchissements ne déplacent jamais la carte.
+- **Trois états** : *frais* (pas en retard pour sa source), *en retard* (moins de 6 h), *ancien* (plus de 6 h, seuil de la coupure des traces du téléphone).
+- **Zooms** (ordre : frais, en retard, ancien) : téléphone et montre Garmin 13 / 12 / 6 ; bateau 9 / 8 / 5 ; avion : cadré sur la trace du vol, zoom 5 à 7 (6 s'il n'y a qu'un point) / 5 / 4.
+- **Position fraîche** : la carte reste centrée sur la position, mais le zoom est celui qui fait tenir autour d'elle la fin de la trace de la même source (téléphone, montre : 3 km de trace, zoom 13 à 14 ; bateau : 30 km, zoom 9 à 10 ; avion : tout le dernier vol, zoom 5 à 7). Les points n'ayant pas d'heure individuelle, la portion de trace se mesure en distance, non en durée.
+- **Bouton « Recentrer sur la position »** (sous le zoom) : ramène la carte à ce cadrage, animé sauf si l'animation est réduite ; masqué tant qu'il n'y a pas de dernière position.
+

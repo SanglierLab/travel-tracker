@@ -12,6 +12,7 @@ export const journal = reactive({
   mapLoaded: false, // vrai une fois la réponse reçue (ou en échec) : la carte sait alors si elle a des galeries
   mapError: false,
   track: { segments: [], last: null }, // tracé de la route : lignes par source + dernière position connue
+  trackLoaded: false, // vrai une fois la réponse reçue (ou en échec) : le cadrage d'ouverture de la carte dépend de la dernière position
   upcomingDays: 7, // une étape à venir dans ce nombre de jours (ou moins) est montrée en tête du fil (réglage du serveur)
   today: todayIso(), // date du jour du serveur (remplace celle du navigateur dès qu'elle est connue) : une étape est « à venir » tant que son début la dépasse
   itineraryError: false,
@@ -53,6 +54,8 @@ export async function loadTrack() {
     journal.track = await api('/api/public/track')
   } catch {
     /* réessayé automatiquement au prochain rafraîchissement */
+  } finally {
+    journal.trackLoaded = true
   }
 }
 

@@ -5,6 +5,7 @@ import { STAGE_KINDS, stageColor } from '../stageKinds'
 import { isFuture, itineraryLinks, pointAlong, stageAnchor, stageLine, todayIso } from '../stageGeo'
 import { formatDate, formatDateRange, formatDateTime, timeAgo } from '../format'
 import { TRACK_SOURCES, isLate, itineraryColor, lastHeading, trackColor } from '../trackStyle'
+import { openingFrame } from '../openingFrame'
 
 const props = defineProps({
   galleries: { type: Array, default: () => [] },
@@ -119,15 +120,68 @@ function render() {
   applySelection(props.selectedId, null)
 }
 
-// Cadrage initial : tout ce qui est connu (galeries et tracé) tient à l'écran. Une seule fois.
+// Cadrage d'ouverture (voir openingFrame.js) : centré sur la dernière position connue, zoom selon sa source et son ancienneté.
+function applyOpeningFrame(frame, animate) {
+  let zoom = frame.zoom
+  if (frame.fit) {
+    const fitted = map.getBoundsZoom(L.latLngBounds(frame.fit.points), false, L.point(40, 40))
+    zoom = Math.min(frame.fit.maxZoom, Math.max(frame.fit.minZoom, Math.floor(fitted)))
+  }
+  map.setView(frame.center, zoom, { animate })
+}
+
+// Cadrage initial, une seule fois : sur la dernière position connue s'il y en a une (et si l'adresse ne désigne pas une galerie
+// ou une étape) ; sinon tout ce qui est connu (galeries, étapes et tracé) tient à l'écran.
 function fitInitial() {
   if (fitted || !map || !props.galleriesLoaded) return
+  const frame = props.selectedId == null && props.selectedStageId == null ? openingFrame(props.track) : null
+  if (frame) {
+    fitted = true
+    applyOpeningFrame(frame, false)
+    return
+  }
   const points = props.galleries.map((g) => [g.latitude, g.longitude])
   for (const stage of props.stages) points.push(stageAnchor(stage))
   for (const segment of props.track.segments) points.push(...segment.points)
   if (points.length === 0) return
   fitted = true
   map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 10, animate: false })
+}
+
+// Bouton « Recentrer sur la position » : revient au cadrage d'ouverture (masqué tant qu'il n'y a pas de dernière position).
+let recenterControl = null
+
+function recenter() {
+  const frame = openingFrame(props.track)
+  if (frame) applyOpeningFrame(frame, !prefersReducedMotion())
+}
+
+function updateRecenter() {
+  const container = recenterControl?.getContainer()
+  if (container) container.hidden = !openingFrame(props.track)
+}
+
+function addRecenterControl() {
+  const Recenter = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd() {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control map-recenter')
+      const button = L.DomUtil.create('a', 'map-recenter__button', container)
+      button.href = '#'
+      button.setAttribute('role', 'button')
+      button.setAttribute('title', 'Recentrer sur la position')
+      button.setAttribute('aria-label', 'Recentrer sur la position')
+      button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.5" /><path d="M12 2.5v4M12 17.5v4M2.5 12h4M17.5 12h4" /></svg>'
+      L.DomEvent.disableClickPropagation(container)
+      L.DomEvent.on(button, 'click', (event) => {
+        L.DomEvent.stop(event)
+        recenter()
+      })
+      return container
+    },
+  })
+  recenterControl = new Recenter().addTo(map)
+  updateRecenter()
 }
 
 // Étapes : une ligne d'itinéraire (sous le tracé GPS), des liaisons pointillées et un badge par étape (au milieu du trajet pour un trajet).
@@ -282,6 +336,7 @@ function drawTrack() {
     marker.getElement()?.setAttribute('aria-label', `${TRACK_SOURCES[last.source].label} : dernière position connue${late ? ' (en retard)' : ''}`)
   }
   fitInitial()
+  updateRecenter()
 }
 
 // Trois lignes au plus : la source, l'ancienneté, et « en retard » le cas échéant.
@@ -334,6 +389,7 @@ onMounted(() => {
   observer.observe(element.value)
 
   map.on('zoomend', () => arrows.forEach(orientArrow))
+  addRecenterControl()
   render()
   drawStages()
   applyStageSelection(props.selectedStageId, null)
@@ -344,6 +400,7 @@ onBeforeUnmount(() => {
   observer?.disconnect()
   map?.remove()
   map = null
+  recenterControl = null
   markers.clear()
 })
 

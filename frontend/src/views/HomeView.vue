@@ -360,7 +360,7 @@ watch([settled, viewerItemId, viewer], () => {
         :selected-stage-id="selectedStageId"
         @select-stage="(id) => selectStage(id, true)"
         :today="journal.today"
-        :galleries-loaded="journal.mapLoaded && journal.itineraryLoaded"
+        :galleries-loaded="journal.mapLoaded && journal.itineraryLoaded && journal.trackLoaded"
         @select="(id) => selectGallery(id, true)"
       />
       <ul v-if="hasLegend" class="map-legend" aria-label="Légende de la carte">
