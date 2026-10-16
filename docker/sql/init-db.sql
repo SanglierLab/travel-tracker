@@ -8,4 +8,7 @@ CREATE USER IF NOT EXISTS 'traveltracker'@'localhost' IDENTIFIED BY 'CHANGE_ME';
 CREATE USER IF NOT EXISTS 'traveltracker'@'127.0.0.1' IDENTIFIED BY 'CHANGE_ME';
 GRANT ALL PRIVILEGES ON traveltracker.* TO 'traveltracker'@'localhost';
 GRANT ALL PRIVILEGES ON traveltracker.* TO 'traveltracker'@'127.0.0.1';
+-- Conteneur travel-tracker (réseau Docker bridge) : MariaDB voit la connexion venir de la passerelle Docker (172.x).
+CREATE USER IF NOT EXISTS 'traveltracker'@'172.%' IDENTIFIED BY 'CHANGE_ME';
+GRANT ALL PRIVILEGES ON traveltracker.* TO 'traveltracker'@'172.%';
 FLUSH PRIVILEGES;

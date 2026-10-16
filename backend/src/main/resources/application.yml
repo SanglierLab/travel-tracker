@@ -21,6 +21,9 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: none          # le schéma est géré uniquement par Flyway
+    # Pas de hibernate.jdbc.time_zone : toutes les dates-heures de la base sont des LocalDateTime « heure UTC » écrites telles quelles.
+    # Avec ce réglage ET une JVM qui n'est pas en UTC (poste de développement en Europe/Paris), Hibernate convertissait une seconde
+    # fois (heure d'été comprise) et décalait les heures de 1 ou 2 h. En production la JVM tourne en UTC (-Duser.timezone=UTC).
   flyway:
     enabled: true
   servlet:
@@ -29,6 +32,20 @@ spring:
       # Garder ces limites >= app.max-video-size (et <= client_max_body_size de nginx).
       max-file-size: 600MB
       max-request-size: 600MB
+
+# Journaux : fichier à rotation quotidienne (jour calendaire, heure UTC), les jours passés compressés en .gz, 30 jours conservés.
+# LOG_DIR : dossier des journaux (/data/logs dans Docker, monté depuis le NAS) ; en développement, ./logs.
+# Dans Docker, la console ne reçoit que les avertissements et les erreurs (LOGGING_THRESHOLD_CONSOLE=WARN, voir docker-compose.yml) :
+# tout le reste, démarrage compris, est dans le fichier.
+logging:
+  file:
+    name: ${LOG_DIR:./logs}/travel-tracker.log
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOG_DIR:./logs}/travel-tracker.%d{yyyy-MM-dd}.%i.log.gz
+      max-file-size: 1GB     # « %i » est obligatoire dans le motif ; 1 Go = jamais atteint, donc un seul fichier par jour
+      max-history: 30
+      clean-history-on-start: true
 
 server:
   forward-headers-strategy: native   # IP et protocole réels derrière nginx / HAProxy
@@ -54,28 +71,3 @@ management:
       show-details: never
 
 # app.* : voir AppProperties et docker/config/application.example.yml
-app:
-  # Comptes admin (autant que nécessaire). Hash bcrypt : voir README.md, section « Mot de passe admin ».
-  admins:
-    - username: voyageur
-      password-hash: '$2a$12$q6QMNBPF2YcB3mTWIpAtBebFgpxYftiF1FrRfBcK7nOtMXQl2DZGu'
-
-  # Token de l'API de positions (GPSLogger). 24 caractères minimum, aléatoire.
-  api-token: 'TEST'
-
-  media-dir: /data/media          # ne pas changer : correspond au volume Docker
-  max-photo-size: 30MB
-  max-video-size: 500MB
-  page-size: 10                   # galeries par page
-  track-gap-hours: 6              # coupure du tracé device au-delà de cet écart
-  max-login-failures: 5           # échecs avant blocage de l'IP
-  login-lock-duration: 15m
-  ffmpeg-path: ffmpeg
-
-# Développement local uniquement (HTTP, sans HTTPS) : décommenter.
-# server:
-#   servlet:
-#     session:
-#       cookie:
-#         secure: false
-

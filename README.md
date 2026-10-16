@@ -9,7 +9,7 @@ Site de partage de voyage (galeries photos/vidéos, position, trajets). Spécifi
 ```
 backend/    Spring Boot 4.1.1, Java 25, Maven (fr.sanglierlab:travel-tracker:2.0.0)
 frontend/   Vue 3.5, Vite 8, Vue Router 5
-docker/     docker-compose.yml, Dockerfiles, nginx.conf, exemples de configuration, SQL d'initialisation
+docker/     docker-compose.yml, Dockerfile (image unique), docker-entrypoint.sh, nginx.conf, exemples de configuration, SQL d'initialisation
 ```
 
 ## Mise en production sur le NAS
@@ -19,13 +19,23 @@ docker/     docker-compose.yml, Dockerfiles, nginx.conf, exemples de configurati
 ```
 /volume1/docker/travel-tracker/
 ├── config/application.yml     (créé à l'étape 3)
-└── media/                     (dossier des médias, propriétaire = PUID:PGID de .env)
+├── media/                     (dossier des médias, propriétaire = PUID:PGID de .env)
+└── logs/
+    ├── api/                   (journaux du backend, propriétaire = PUID:PGID de .env)
+    └── web/                   (journaux d'accès de nginx, propriétaire = PUID:PGID de .env)
 ```
+
+Créer les dossiers avant le premier lancement : `mkdir -p media logs/api logs/web`, puis `chown -R PUID:PGID media logs`.
 
 ### 2. Base de données
 
 Exécuter `docker/sql/init-db.sql` avec un compte administrateur MariaDB (après avoir remplacé `CHANGE_ME`).
 Les tables sont créées automatiquement par Flyway au premier démarrage de l'API.
+
+Si la base et l'utilisateur existent déjà, ajouter seulement l'accès depuis le réseau Docker (le conteneur n'est plus en réseau « host ») :
+`CREATE USER IF NOT EXISTS 'traveltracker'@'172.%' IDENTIFIED BY '<mot de passe>'; GRANT ALL PRIVILEGES ON traveltracker.* TO 'traveltracker'@'172.%';`
+Dans `application.yml`, l'adresse de la base est `jdbc:mariadb://host.docker.internal:3306/traveltracker`. Le conteneur MariaDB doit publier son port 3306 sur le NAS
+(`3306:3306`, pas `127.0.0.1:3306:3306`).
 
 ### 3. Configuration
 
@@ -48,7 +58,8 @@ Coller le résultat (`$2y$10$...`) dans `password-hash`, entre apostrophes.
 cd docker
 cp .env.example .env        # puis adapter TT_BASE_DIR, PUID, PGID
 docker compose --env-file .env up -d --build
-docker compose logs -f api  # doit finir par « Started TravelTrackerApplication »
+tail -f /volume1/docker/travel-tracker/logs/api/travel-tracker.log   # doit finir par « Started TravelTrackerApplication »
+docker compose logs travel-tracker     # seulement les avertissements et erreurs (la console de Docker est filtrée)
 ```
 
 Le premier build est long sur un DS220+ (téléchargement des dépendances Maven et npm).
@@ -58,7 +69,7 @@ Le premier build est long sur un DS220+ (téléchargement des dépendances Maven
 ```
 # Sur le PC (dossier docker/)
 docker compose build
-docker save travel-tracker-api:2.0.0 travel-tracker-web:2.0.0 | gzip > travel-tracker-images.tar.gz
+docker save travel-tracker:2.0.0 | gzip > travel-tracker-images.tar.gz
 
 # Sur le NAS, après avoir copié l'archive
 gunzip -c travel-tracker-images.tar.gz | docker load
@@ -70,14 +81,14 @@ Sur le NAS, seuls `docker-compose.yml`, `.env` et les dossiers `config/` et `med
 
 ### 5. HAProxy
 
-Pointer le sous-domaine vers `127.0.0.1:18081` (conteneur `web`). Éléments indispensables :
+Pointer le sous-domaine vers `127.0.0.1:WEB_PORT` (18081 par défaut, voir `.env`) (nginx, dans l'image unique). Éléments indispensables :
 
 ```
 backend travel_tracker
     option forwardfor
     http-request set-header X-Forwarded-Proto https
     timeout server 15m          # uploads de vidéos
-    server web 127.0.0.1:18081
+    server web 127.0.0.1:18081    # = WEB_PORT du fichier .env
 ```
 
 Penser aussi à un `timeout client` suffisant sur le frontend HTTPS concerné.
@@ -95,6 +106,24 @@ Une réponse perdue ne crée jamais de doublon. Le type et la taille du fichier 
 
 Pour un script : `POST /api/admin/galleries/{id}/items/media` (fichier entier, champ `file`) reste disponible.
 
+### 5 bis. Journaux
+
+Les journaux sont écrits dans des dossiers du NAS, pas dans ceux de Docker : une rotation **par jour calendaire (heure UTC)**, les jours passés
+compressés en `.gz`, **30 jours** conservés, puis supprimés.
+
+| Dossier | Contenu | Fichiers |
+|---|---|---|
+| `logs/api/` | journal du backend (INFO, avertissements, erreurs) | `travel-tracker.log` (jour en cours), `travel-tracker.AAAA-MM-JJ.0.log.gz` |
+| `logs/web/` | journal d'accès de nginx (une ligne par requête) | `access-AAAA-MM-JJ.log` (jour en cours), `access-AAAA-MM-JJ.log.gz` |
+
+- **Backend** : rotation faite par l'application elle-même (réglages `logging.*` dans `application.yml`). La console de Docker ne reçoit que les avertissements et erreurs
+  (`LOGGING_THRESHOLD_CONSOLE=WARN`).
+- **nginx** : un fichier par jour écrit directement par nginx ; un script du conteneur (`docker/rotate-logs.sh`, lancé par `docker-entrypoint.sh` au démarrage puis toutes les 15 minutes) compresse les
+  jours passés et supprime les archives de plus de 30 jours. Les erreurs de nginx vont sur la console de Docker.
+- **Filet de sécurité** : le journal de Docker lui-même est limité à 2 fichiers de 5 Mo.
+- La sonde de santé nginx (`/healthz`) n'est pas journalisée.
+- Ces journaux contiennent des adresses IP et les adresses des pages visitées : à traiter comme des données personnelles (ils ne sont jamais servis par le site).
+
 ### 6. Vérifications
 
 - `https://<sous-domaine>/` affiche « Journal de voyage ».
@@ -103,6 +132,7 @@ Pour un script : `POST /api/admin/galleries/{id}/items/media` (fichier entier, c
 - `curl -I -A "Googlebot" https://<sous-domaine>/` répond `403` ; `curl -I -A "GPTBot" https://<sous-domaine>/media/x.jpg` aussi ; `robots.txt` reste lisible avec cet agent.
 - `/connexion` permet de se connecter, puis `/admin` affiche le menu. Aucun lien vers l'administration n'est affiché sur le site public : gardez ces adresses en favori.
 - Après 5 mots de passe erronés, la connexion répond « Trop de tentatives ».
+- `logs/api/travel-tracker.log` et `logs/web/access-AAAA-MM-JJ.log` existent et se remplissent ; le lendemain, le fichier de la veille est en `.gz`.
 
 
 ## Tester l'API (phase 1)
@@ -321,8 +351,7 @@ La ligne passe sous le tracé GPS. Cliquer sur une étape (badge ou ligne) la s�
 **Fil des photos (6d)** : les étapes déjà commencées s'intercalent entre les albums, par date de début (sous les albums du même jour) ; une étape est une pastille
 arrondie avec le picto de son type. Albums et étapes sont paginés ensemble (10 par page). Les étapes à venir ne sont pas dans le fil : un bloc repliable
 « Voir la suite du voyage » les liste en haut de la première page, de la plus lointaine à la plus proche (comme le reste du fil). Une étape qui commence dans `upcoming-days` jours ou moins (7 par défaut, réglable dans `application.yml`, 0 pour désactiver) n'est pas repliée : elle est affichée estompée en tête du fil. Une ligne verticale (le « fil de suivi ») passe sous les cartes, qui ont toutes la même largeur . Pour les étapes à venir, la ligne est en pointillés et la carte, opaque, en bordure pointillée sur le fond de la page. Les étapes ont la même carte que les albums (même date, même titre, même sélection) ; seul le picto de leur type les distingue. Cliquer une étape du fil la met en valeur dans le fil et sur la carte (et inversement) ;
-l'en-tête d'un album porte le même appareil photo que son épingle. « À venir » se décide avec la **date du jour du serveur** (fuseau de la machine :
-pensez à `TZ=Europe/Paris` dans le conteneur) ; le navigateur reprend cette date pour que carte et fil soient toujours d'accord.
+l'en-tête d'un album porte le même appareil photo que son épingle. « À venir » se décide avec la **date du jour du serveur** (fuseau de la JVM : UTC avec le `docker-compose.yml` fourni ; pour une autre date du jour, changez `TZ` et `-Duser.timezone` ensemble) ; le navigateur reprend cette date pour que carte et fil soient toujours d'accord.
 
 **Dans l'administration** : *Menu → Étapes*. On y ajoute, supprime, réordonne (monter/descendre, « Trier par date ») et positionne les étapes sur la carte.
 Pour un trajet, le formulaire permet d'envoyer un fichier **GPX** : il est allégé à l'envoi et son tracé s'affiche sur les cartes de positionnement ;
@@ -359,7 +388,7 @@ Le GPX est lu sur le serveur (sans dépendance, protégé contre les fichiers XM
 La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.
 
 1. Copier `frontend/public/theme.css` (thème par défaut) ou `frontend/themes/classique.css` (exemple sobre, sans ornements) vers `<TT_BASE_DIR>/theme/theme.css` sur le NAS.
-2. Dans `docker/docker-compose.yml`, décommenter la ligne `theme.css` du service `web`.
+2. Dans `docker/docker-compose.yml`, décommenter la ligne `theme.css` du service `travel-tracker`.
 3. `docker compose up -d` : le nouveau thème est pris en compte au rechargement de la page, sans reconstruire d'image.
 
 Le fichier doit être complet (toutes les variables du thème par défaut) et exister avant le démarrage du conteneur.
@@ -367,13 +396,13 @@ Le fichier doit être complet (toutes les variables du thème par défaut) et ex
 ## Développement local
 
 1. Créer `backend/config/application.yml` (dossier ignoré par git) à partir de l'exemple, avec `server.servlet.session.cookie.secure: false`.
-2. Backend : `cd backend && mvn spring-boot:run` (port 8080).
+2. Backend : `cd backend && mvn spring-boot:run` (port 8080). Les journaux vont aussi dans `backend/logs/` (ignoré par git, même rotation qu'en production).
 3. Frontend : `cd frontend && npm install && npm run dev` (le proxy Vite relaie `/api` vers 8080).
 4. Tests : `cd backend && mvn test`.
 5. ffmpeg doit être accessible (dans le PATH, ou via `app.ffmpeg-path`) pour les miniatures de vidéos et les images WebP.
 
 ## Notes
 
-- **Réseau Docker** : les deux conteneurs sont en `network_mode: host` pour joindre MariaDB sur `127.0.0.1:3306`. L'API n'écoute que sur `127.0.0.1:18080`.
+- **Réseau Docker** : le conteneur (nginx + API) a son propre réseau (bridge). Port du NAS = `WEB_PORT` (`.env`) vers le port 18081 de nginx ; l'API n'écoute que sur `127.0.0.1:18080` dans le conteneur. MariaDB est joint par `host.docker.internal:3306` (`extra_hosts: host-gateway`) : son port 3306 doit être publié sur le NAS (pas seulement `127.0.0.1`) et l'utilisateur SQL autorisé depuis `172.%`.
 - **Sessions** : conservées en mémoire. Un redémarrage de l'API déconnecte les admins (sans gravité).
 - **Thème** : `frontend/public/theme.css` est le fichier de variables ; voir le commentaire dans `docker-compose.yml` pour le remplacer sans reconstruire l'image.

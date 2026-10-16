@@ -2,7 +2,7 @@
 
 spring:
   datasource:
-    url: jdbc:mariadb://127.0.0.1:3306/traveltracker
+    url: jdbc:mariadb://host.docker.internal:3306/traveltracker
     username: traveltracker
     password: CHANGE_ME
 

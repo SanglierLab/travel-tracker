@@ -180,12 +180,14 @@
 
 - Hébergement : **Synology DS220+** (Intel, amd64, 6 Go de RAM), Docker.
 - Accès : sous-domaine derrière **HAProxy** (sur le NAS).
-- Deux conteneurs orchestrés par `docker-compose.yml` :
-  1. **`api`** : JAR Spring Boot sur image Java légère, avec **ffmpeg** installé.
-  2. **`web`** : nginx qui sert l'application Vue compilée, relaie `/api` vers `api`, et sert **directement** `/media/` depuis un volume en lecture seule (Range supporté pour la vidéo).
-- HAProxy ne pointe que vers `web` : **même origine**, donc pas de CORS et cookies simples.
-- **Réseau** : les deux conteneurs sont en `network_mode: host` (MariaDB est sur `127.0.0.1:3306` du NAS, invisible depuis un réseau bridge). `api` écoute sur `127.0.0.1:18080` (non exposé), `web` sur le port **18081**.
-- Les Dockerfiles sont dans `docker/` (`api.Dockerfile`, `web.Dockerfile`), le contexte de build est la racine du dépôt.
+- **Image unique** (`docker/Dockerfile`, base `eclipse-temurin:25-jre-jammy`), un seul service dans `docker-compose.yml` :
+  1. **nginx** (port **18081**, cible de HAProxy) : sert l'application Vue compilée, relaie `/api` vers l'API et sert **directement** `/media/` depuis le volume (Range supporté pour la vidéo).
+  2. **API** : JAR Spring Boot sur `127.0.0.1:18080` (interne au conteneur), avec **ffmpeg**.
+  `docker-entrypoint.sh` lance nginx (arrière-plan), la rotation des journaux (boucle de 15 min) puis Java en premier plan.
+- HAProxy ne pointe que vers nginx : **même origine**, donc pas de CORS et cookies simples.
+- **Réseau** : réseau bridge propre au conteneur. Publication `WEB_PORT:18081` (nginx) ; l'API (`127.0.0.1:18080`) n'est pas publiée. MariaDB (conteneur dont le port 3306 est publié sur le NAS) est joint par `host.docker.internal` (`extra_hosts: host-gateway`) ; l'utilisateur SQL est autorisé depuis `172.%` (passerelle Docker). nginx fait confiance à `X-Forwarded-For` venant de `127.0.0.1` et `172.16.0.0/12`.
+- Le conteneur tourne sous l'UID du NAS (`PUID:PGID`), sans root : `nginx.conf` est une configuration complète sans directive `user`, avec fichiers temporaires et pid dans `/tmp`.
+- Le Dockerfile et l'entrée sont dans `docker/`, le contexte de build est la racine du dépôt.
 - Volumes : médias, fichier de configuration, fichier de thème CSS, (MariaDB déjà en place).
 - HAProxy à régler pour les gros uploads (taille de corps et timeouts).
 
@@ -204,10 +206,10 @@ travel-tracker/
 ## 6. Architecture
 
 ```
-Navigateur ──► HAProxy ──► conteneur web (nginx)
+Navigateur ──► HAProxy ──► conteneur (nginx)
                              ├─ /          → application Vue compilée
                              ├─ /media/*   → fichiers (volume en lecture seule)
-                             └─ /api/*     → conteneur api (Spring Boot + ffmpeg)
+                             └─ /api/*     → API Spring Boot + ffmpeg (même conteneur)
                                                 ├─ MariaDB
                                                 └─ volume médias (lecture/écriture)
 GPSLogger ──► /api/track/points (token)
@@ -696,4 +698,12 @@ Une **étape** est un jalon du voyage, passé ou à venir : une **étape simple*
 
 - **Libellé « Étape »** : le type `PLACE` s'affiche « Étape » (au lieu de « Lieu fixe ») partout : boutons du formulaire, légende de la carte, fil, avertissement de changement de type, message du serveur pour un GPX refusé (« Seuls les trajets (train, avion, bateau) ont un tracé GPX. »). Les identifiants (`PLACE`, API) ne changent pas. Dans ce document et les commentaires du code, « lieu fixe » devient « étape simple ».
 - **Plus de lien « Administration »** sur le site public : l'administration reste accessible par `/connexion` et `/admin` (adresses à garder en favori). La page de connexion et l'API sont inchangées.
+- **Fuseaux horaires et base de données** : toutes les dates-heures stockées (`recorded_at`, `created_at`...) sont des `LocalDateTime` qui valent **UTC**, écrits et relus tels quels. Le réglage `hibernate.jdbc.time_zone: UTC` est **retiré** : combiné à une JVM qui n'est pas en UTC (poste de développement en Europe/Paris), Hibernate appliquait une seconde conversion, avec l'heure d'été, et toutes les heures étaient décalées de 1 ou 2 h. Sans lui, la valeur écrite est la valeur lue, quel que soit le fuseau de la JVM (seule l'heure inexistante du passage à l'heure d'été pourrait être décalée d'une heure sur un poste non UTC). En production la JVM est en UTC (`TZ=UTC`, `-Duser.timezone=UTC`), et il est conseillé de lancer aussi le développement avec `-Duser.timezone=UTC`. Les points enregistrés pendant que l'ancien réglage était actif, sur un poste non UTC, sont décalés : à purger en développement.
+
+## 37. Journaux sur le NAS (phase 6)
+
+- **Où** : dossiers montés dans les conteneurs, `${TT_BASE_DIR}/logs` monté sur `/data/logs` : `api/` (backend) et `web/` (nginx).
+- **Rotation** : jour calendaire (UTC), jours passés compressés en `.gz`, **30 jours** conservés. Backend : Logback via les réglages Spring Boot `logging.logback.rollingpolicy.*` (`max-history: 30`, `clean-history-on-start`, `max-file-size: 1GB` pour qu'un jour ne se coupe pas en plusieurs fichiers ; `%i` reste obligatoire dans le motif). nginx : un fichier par jour (`access-AAAA-MM-JJ.log`, nom construit depuis `$time_iso8601`), compressé et purgé par `docker/rotate-logs.sh` lancé par `docker-entrypoint.sh` (au démarrage puis toutes les 15 minutes). nginx n'ayant rien à rouvrir (le nom change chaque jour), aucun signal n'est nécessaire.
+- **Console de Docker** : `LOGGING_THRESHOLD_CONSOLE=WARN` pour l'API (démarrage compris dans le fichier) ; erreurs de nginx sur `stderr` ; journal Docker plafonné à 2 × 5 Mo par conteneur (filet de sécurité). En développement : console au niveau INFO et fichiers dans `backend/logs/`.
+- **Détails** : sonde `/healthz` de nginx hors journal ; fichiers lisibles par tous (permissions par défaut), jamais servis par le site. Les journaux contiennent des adresses IP : données personnelles, à ne pas partager.
 
