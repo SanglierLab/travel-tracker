@@ -99,7 +99,8 @@ Pour un script : `POST /api/admin/galleries/{id}/items/media` (fichier entier, c
 
 - `https://<sous-domaine>/` affiche « Journal de voyage ».
 - `https://<sous-domaine>/robots.txt` renvoie `Disallow: /`.
-- `curl -I https://<sous-domaine>/` montre l'en-tête `X-Robots-Tag: noindex, nofollow, noarchive`.
+- `curl -I https://<sous-domaine>/` montre l'en-tête `X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai` (une seule fois, y compris pour `/api/public/feed`).
+- `curl -I -A "Googlebot" https://<sous-domaine>/` répond `403` ; `curl -I -A "GPTBot" https://<sous-domaine>/media/x.jpg` aussi ; `robots.txt` reste lisible avec cet agent.
 - `/connexion` permet de se connecter, puis `/admin` affiche le menu.
 - Après 5 mots de passe erronés, la connexion répond « Trop de tentatives ».
 

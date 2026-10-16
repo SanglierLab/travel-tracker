@@ -78,7 +78,7 @@ public class SecurityConfig {
 
                 // Non-indexation (en plus de robots.txt, de la balise meta et de l'en-tête nginx).
                 .headers(headers -> headers.addHeaderWriter(
-                        new StaticHeadersWriter("X-Robots-Tag", "noindex, nofollow, noarchive")))
+                        new StaticHeadersWriter("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai")))
 
                 .addFilterBefore(new LoginRateLimitFilter(attempts), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new ApiTokenFilter(properties.apiToken()), UsernamePasswordAuthenticationFilter.class);

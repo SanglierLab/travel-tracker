@@ -110,7 +110,7 @@
 
 25. Site public ouvert à tous. Tout ce qui est admin exige une session, sinon redirection vers la connexion.
 26. Session longue (**7 jours** par défaut), protection CSRF, limitation des tentatives de connexion échouées.
-27. **Non-indexation** à trois niveaux : `robots.txt`, balise `<meta name="robots" content="noindex">` et en-tête HTTP `X-Robots-Tag`.
+27. **Non-indexation** à quatre niveaux : `robots.txt`, balise `<meta name="robots">`, en-tête HTTP `X-Robots-Tag` et refus (403) des robots connus par nginx (voir §34).
 
 ---
 
@@ -675,4 +675,12 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Zooms** (ordre : frais, en retard, ancien) : téléphone et montre Garmin 13 / 12 / 6 ; bateau 9 / 8 / 5 ; avion : cadré sur la trace du vol, zoom 5 à 7 (6 s'il n'y a qu'un point) / 5 / 4.
 - **Position fraîche** : la carte reste centrée sur la position, mais le zoom est celui qui fait tenir autour d'elle la fin de la trace de la même source (téléphone, montre : 3 km de trace, zoom 13 à 14 ; bateau : 30 km, zoom 9 à 10 ; avion : tout le dernier vol, zoom 5 à 7). Les points n'ayant pas d'heure individuelle, la portion de trace se mesure en distance, non en durée.
 - **Bouton « Recentrer sur la position »** (sous le zoom) : ramène la carte à ce cadrage, animé sauf si l'animation est réduite ; masqué tant qu'il n'y a pas de dernière position.
+
+## 34. Non-indexation renforcée (phase 8e)
+
+- **Directives** (balise meta, en-tête nginx sur tout le site, en-tête Spring sur `/api`) : `noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai`. Pour `/api`, nginx masque l'en-tête de Spring (`proxy_hide_header`) afin qu'il n'apparaisse qu'une fois.
+- **`robots.txt`** : `Disallow: /` pour `*` et pour une trentaine de robots nommés (moteurs de recherche, archivage, entraînement d'IA : GPTBot, ClaudeBot, CCBot, Google-Extended, Applebot-Extended, PerplexityBot, Bytespider, etc.).
+- **nginx** : un robot connu (`$blocked_bot`, d'après l'User-Agent) reçoit un **403** sur le site, `/api/`, `/media/` et `/assets/` ; `/robots.txt` reste lisible par tous. Les aperçus de liens des messageries (WhatsApp, Signal, iMessage...) ne sont pas bloqués. Un robot qui ment sur son User-Agent n'est évidemment pas arrêté par ce filtre : les trois autres niveaux restent la règle.
+- **Déjà vrai avant** : aucun plan de site, aucune balise Open Graph, aucun lien public vers le site ; `/media/.uploads/` n'est jamais servi.
+- **Limite** : ces mesures demandent poliment aux robots de s'abstenir ; elles ne protègent pas les contenus. Toute personne qui a l'adresse peut ouvrir le site.
 
