@@ -23,11 +23,12 @@ public class GalleryItemService {
     /** Ajoute un média déjà stocké sur disque, en dernière position. */
     @Transactional
     public GalleryItem addMedia(long galleryId, ItemType type, String fileKey, String originalFilename,
-                                String extension, long sizeBytes, Integer width, Integer height) {
+                                String extension, long sizeBytes, Integer width, Integer height,
+                                String exifJson) {
         requireGallery(galleryId);
         int order = items.maxSortOrder(galleryId) + 1;
         return items.save(GalleryItem.media(galleryId, order, type, fileKey, originalFilename, extension,
-                sizeBytes, width, height));
+                sizeBytes, width, height, exifJson));
     }
 
     @Transactional

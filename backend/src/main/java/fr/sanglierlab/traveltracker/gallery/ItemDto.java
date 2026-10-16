@@ -1,5 +1,7 @@
 package fr.sanglierlab.traveltracker.gallery;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+
 /**
  * Élément de galerie tel que vu par le front.
  * <ul>
@@ -8,6 +10,8 @@ package fr.sanglierlab.traveltracker.gallery;
  *   <li>VIDEO : thumbUrl (null si pas de miniature), originalUrl (lecture et téléchargement).</li>
  * </ul>
  * width / height : à utiliser pour réserver la place avant le chargement de l'image.
+ * exif : prises de vue d'une photo, objet JSON {focalLength (mm), aperture (f/), iso, shutter (secondes, ex. "1/250")} dont chaque
+ * clé peut manquer ; null sans EXIF. Le JSON stocké en base est inséré tel quel dans la réponse.
  */
 public record ItemDto(
         long id,
@@ -21,5 +25,6 @@ public record ItemDto(
         String originalFilename,
         Integer width,
         Integer height,
-        Long sizeBytes) {
+        Long sizeBytes,
+        @JsonRawValue String exif) {
 }

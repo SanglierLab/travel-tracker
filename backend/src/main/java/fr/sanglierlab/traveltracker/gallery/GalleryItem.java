@@ -56,6 +56,10 @@ public class GalleryItem {
 
     private Integer height;
 
+    /** Prises de vue d'une photo, en JSON prêt à l'emploi (voir ExifService) ; null pour une vidéo, un texte ou une photo sans EXIF. */
+    @Column(length = 300)
+    private String exifJson;
+
     /** UTC */
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -74,7 +78,7 @@ public class GalleryItem {
 
     public static GalleryItem media(long galleryId, int sortOrder, ItemType type, String fileKey,
                                     String originalFilename, String extension, long sizeBytes,
-                                    Integer width, Integer height) {
+                                    Integer width, Integer height, String exifJson) {
         GalleryItem item = new GalleryItem();
         item.galleryId = galleryId;
         item.sortOrder = sortOrder;
@@ -85,6 +89,7 @@ public class GalleryItem {
         item.sizeBytes = sizeBytes;
         item.width = width;
         item.height = height;
+        item.exifJson = exifJson;
         return item;
     }
 
@@ -143,5 +148,9 @@ public class GalleryItem {
 
     public Integer getHeight() {
         return height;
+    }
+
+    public String getExifJson() {
+        return exifJson;
     }
 }

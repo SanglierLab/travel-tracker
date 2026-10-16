@@ -411,8 +411,14 @@ a { color: var(--color-accent); }
   padding: calc(0.5rem + env(safe-area-inset-top, 0px)) calc(0.75rem + env(safe-area-inset-right, 0px))
     0.5rem calc(0.75rem + env(safe-area-inset-left, 0px));
 }
+.viewer__heading { flex: 1; min-width: 0; }
+.viewer__exif {
+  margin: 0.1rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.75;
+  font-variant-numeric: tabular-nums;
+}
 .viewer__title {
-  flex: 1;
   min-width: 0;
   margin: 0;
   overflow: hidden;

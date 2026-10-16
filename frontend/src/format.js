@@ -45,3 +45,17 @@ export function formatDateRange(startIso, endIso) {
   const end = toDate(endIso)
   return startIso === endIso ? rangeFormat.format(start) : rangeFormat.formatRange(start, end)
 }
+
+/**
+ * Prises de vue d'une photo en une ligne : « 24 mm · f/1.8 · ISO 200 · 1/250 s ».
+ * `exif` vient du serveur ({ focalLength, aperture, iso, shutter }, chaque clé peut manquer) ; renvoie '' sans donnée.
+ */
+export function formatExif(exif) {
+  if (!exif || typeof exif !== 'object') return ''
+  const parts = []
+  if (exif.focalLength) parts.push(`${exif.focalLength} mm`)
+  if (exif.aperture) parts.push(`f/${exif.aperture}`)
+  if (exif.iso) parts.push(`ISO ${exif.iso}`)
+  if (exif.shutter) parts.push(`${exif.shutter} s`)
+  return parts.join(' · ')
+}

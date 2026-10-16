@@ -26,7 +26,7 @@ import java.util.UUID;
  * <ol>
  *   <li>Vérifications : galerie existante, fichier non vide, format reconnu sur le CONTENU, taille maximale.</li>
  *   <li>L'original est déplacé sur le disque (aucune copie du fichier en mémoire).</li>
- *   <li>Miniature (et image pleine page pour une photo).</li>
+ *   <li>Miniature (et image pleine page pour une photo), puis prises de vue EXIF de la photo.</li>
  *   <li>Enregistrement en base, en dernière position.</li>
  * </ol>
  * Cette méthode n'est volontairement PAS transactionnelle : un envoi de plusieurs centaines de Mo ne doit pas
@@ -43,17 +43,19 @@ public class MediaService {
     private final StorageService storage;
     private final ThumbnailService thumbnails;
     private final FfmpegService ffmpeg;
+    private final ExifService exif;
     private final AppProperties properties;
 
     public MediaService(GalleryRepository galleries, GalleryItemService items, ItemMapper mapper,
                         StorageService storage, ThumbnailService thumbnails, FfmpegService ffmpeg,
-                        AppProperties properties) {
+                        ExifService exif, AppProperties properties) {
         this.galleries = galleries;
         this.items = items;
         this.mapper = mapper;
         this.storage = storage;
         this.thumbnails = thumbnails;
         this.ffmpeg = ffmpeg;
+        this.exif = exif;
         this.properties = properties;
     }
 
@@ -79,13 +81,16 @@ public class MediaService {
             Path original = storage.originalPath(galleryId, fileKey, format.extension());
             file.transferTo(original);
 
-            Dimensions dimensions = format.type() == ItemType.VIDEO
+            boolean video = format.type() == ItemType.VIDEO;
+            Dimensions dimensions = video
                     ? processVideo(galleryId, fileKey, original)
                     : processPhoto(galleryId, fileKey, original, format);
+            // Prises de vue : lues dans l'original (l'image pleine page et la miniature n'ont plus de métadonnées). Photos seulement.
+            String exifJson = video ? null : exif.extractJson(original).orElse(null);
 
             GalleryItem saved = items.addMedia(galleryId, format.type(), fileKey,
                     cleanFilename(file.getOriginalFilename(), format), format.extension(), file.getSize(),
-                    dimensions.width(), dimensions.height());
+                    dimensions.width(), dimensions.height(), exifJson);
             log.info("Média ajouté : galerie={}, type={}, fichier={}, {} Ko",
                     galleryId, format.type(), saved.getOriginalFilename(), file.getSize() / 1024);
             return mapper.toDto(saved);

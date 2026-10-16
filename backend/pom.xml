@@ -21,6 +21,7 @@
         <java.version>25</java.version>
         <thumbnailator.version>0.4.21</thumbnailator.version>
         <commonmark.version>0.30.0</commonmark.version>
+        <metadata-extractor.version>2.21.0</metadata-extractor.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -66,6 +67,12 @@
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
             <version>${thumbnailator.version}</version>
+        </dependency>
+        <!-- Lecture des données EXIF des photos (focale, ouverture, ISO, vitesse) -->
+        <dependency>
+            <groupId>com.drewnoakes</groupId>
+            <artifactId>metadata-extractor</artifactId>
+            <version>${metadata-extractor.version}</version>
         </dependency>
         <!-- Markdown des blocs de texte (rendu côté serveur) -->
         <dependency>

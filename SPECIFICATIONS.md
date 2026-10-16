@@ -604,3 +604,13 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Sécurité** : le lien court contient un code propre à l'activité, traité comme secret au même titre que le jeton. Le jeton du lien donne la position en direct. Seuls l'identifiant et le jeton, validés par expression régulière stricte (hôte `livetrack.garmin.com` en HTTPS), servent à construire les appels : le serveur n'appelle jamais une adresse saisie. Le jeton n'est jamais renvoyé par l'API, ni journalisé ; les erreurs réseau sont converties sans adresse ni cause.
 - **Carte** : tracé en tiret-point, couleur `--track-garmin` (présente dans tous les thèmes), marqueur de dernière position = point rond ; « en retard » après `app.track-late-after.garmin` (5 min par défaut).
 - **À vérifier avec une vraie session** : comportement de `begin` très ancien (premier cycle), réponse exacte quand rien de nouveau, codes HTTP d'une session expirée, réaction de Cloudflare au `User-Agent` du serveur.
+
+## 25. Prises de vue des photos (EXIF, phase 7f)
+
+- **Données** : focale (mm), ouverture (f/), ISO et vitesse d'obturation (secondes), lues dans l'EXIF de l'**original** avec `metadata-extractor` 2.21.0 (la miniature et l'image pleine page n'ont plus de métadonnées, GPS compris).
+- **Quand** : à l'envoi de la photo, juste après la création des miniatures (`MediaService.upload` → `ExifService.extractJson`). Photos seulement : les vidéos et les textes n'en ont pas.
+- **Stockage** : colonne `gallery_item.exif_json` (migration `V5__photo_exif.sql`, `VARCHAR(300)` avec contrôle `JSON_VALID`), JSON prêt à l'emploi, par exemple `{"focalLength":24,"aperture":1.8,"iso":100,"shutter":"1/250"}`. Chaque clé manque si la valeur est absente ou absurde ; `NULL` si aucune des quatre n'existe. Pas de tri ni de filtre sur ces données, donc pas de colonnes séparées.
+- **API** : `ItemDto.exif` insère le JSON stocké tel quel (`@JsonRawValue`) ; `null` pour les vidéos, les textes et les photos sans EXIF.
+- **Robustesse** : un EXIF illisible ou absent n'empêche jamais l'envoi (résultat vide, message de débogage seulement).
+- **Affichage** : sous le titre, dans la barre du viewer plein écran (`24 mm · f/1.8 · ISO 200 · 1/250 s`), uniquement pour une photo qui a des données.
+- **Photos déjà envoyées** : elles n'ont pas de prises de vue (l'EXIF n'est lu qu'à l'envoi). Les renvoyer pour en profiter ; un rattrapage depuis les originaux stockés est possible si besoin.

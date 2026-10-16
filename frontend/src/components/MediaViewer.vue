@@ -1,6 +1,6 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { formatSize } from '../format'
+import { formatExif, formatSize } from '../format'
 
 const props = defineProps({
   items: { type: Array, required: true }, // photos et vidéos de la galerie, dans l'ordre
@@ -15,6 +15,7 @@ const videoFailed = ref(false)
 
 const item = computed(() => props.items[props.index])
 const size = computed(() => formatSize(item.value.sizeBytes))
+const exif = computed(() => (item.value.type === 'PHOTO' ? formatExif(item.value.exif) : ''))
 
 function go(delta) {
   const target = props.index + delta
@@ -101,7 +102,10 @@ onBeforeUnmount(() => {
       <button ref="closeButton" class="viewer__btn" type="button" aria-label="Fermer" @click="$emit('close')">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
       </button>
-      <p class="viewer__title">{{ title }}</p>
+      <div class="viewer__heading">
+        <p class="viewer__title">{{ title }}</p>
+        <p v-if="exif" class="viewer__exif" aria-label="Prises de vue">{{ exif }}</p>
+      </div>
       <span class="viewer__count">{{ index + 1 }} / {{ items.length }}</span>
       <a
         class="viewer__btn"
