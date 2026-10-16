@@ -15,6 +15,14 @@ public record LiveTrackLink(String sessionId, String token) {
     private static final Pattern LINK = Pattern.compile(
             "^https://livetrack\\.garmin\\.com/session/([0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12})/token/([0-9A-Za-z]{8,128})/?(?:[?#].*)?$");
 
+    /** Lien court de partage Garmin (https://gar.mn/xxxx) : il redirige (HTTP 301) vers le lien long. */
+    private static final Pattern SHORT_LINK = Pattern.compile("^https://gar\\.mn/[0-9A-Za-z]{3,40}/?$");
+
+    /** @return vrai si le texte est un lien court Garmin, qu'il faut d'abord résoudre en lien long */
+    public static boolean isShortLink(String raw) {
+        return raw != null && SHORT_LINK.matcher(raw.strip()).matches();
+    }
+
     /** @return le lien analysé, ou vide si le texte n'est pas un lien LiveTrack (mauvais site, jeton absent, http...) */
     public static Optional<LiveTrackLink> parse(String raw) {
         if (raw == null) {

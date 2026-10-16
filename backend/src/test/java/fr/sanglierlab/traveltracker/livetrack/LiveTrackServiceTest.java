@@ -38,6 +38,7 @@ class LiveTrackServiceTest {
     private TrackedTripRepository trips;
     private TrackPointRepository points;
     private LiveTrackBatch batch;
+    private LiveTrackLinkResolver resolver;
     private LiveTrackService service;
 
     @BeforeEach
@@ -45,12 +46,13 @@ class LiveTrackServiceTest {
         trips = mock(TrackedTripRepository.class);
         points = mock(TrackPointRepository.class);
         batch = mock(LiveTrackBatch.class);
+        resolver = mock(LiveTrackLinkResolver.class);
         when(trips.save(any())).thenAnswer(invocation -> {
             TrackedTrip saved = invocation.getArgument(0);
             return saved.getId() == null ? assignId(saved, 100L) : saved;
         });
         when(points.tripStats()).thenReturn(List.of());
-        service = new LiveTrackService(trips, points, batch);
+        service = new LiveTrackService(trips, points, batch, resolver);
     }
 
     private TrackedTrip existing(long id, TripStatus status) {
@@ -92,6 +94,50 @@ class LiveTrackServiceTest {
                     .as(String.valueOf(invalid)).isInstanceOf(ApiException.class).hasMessageContaining("Lien LiveTrack invalide");
         }
         verify(trips, never()).save(any());
+    }
+
+    @Test
+    void unLienLongNAppelleJamaisLeResolveur() {
+        service.create(new LiveTrackRequest(LINK, null));
+
+        verify(resolver, never()).resolve(any());
+    }
+
+    @Test
+    void unLienCourtEstRemplaceParLeLienLongPointe() {
+        when(resolver.resolve("https://gar.mn/poxXxXxXlA")).thenReturn(LiveTrackLink.parse(LINK));
+
+        service.create(new LiveTrackRequest(" https://gar.mn/poxXxXxXlA ", null));
+
+        ArgumentCaptor<TrackedTrip> saved = ArgumentCaptor.forClass(TrackedTrip.class);
+        verify(trips).save(saved.capture());
+        assertThat(saved.getValue().getIdentifier()).isEqualTo(SESSION);
+        assertThat(saved.getValue().getAccessToken()).isEqualTo(TOKEN);
+    }
+
+    @Test
+    void unLienCourtInconnuEstRefuse() {
+        when(resolver.resolve(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.create(new LiveTrackRequest("https://gar.mn/abcdef", null)))
+                .isInstanceOf(ApiException.class).hasMessageContaining("lien court");
+        verify(trips, never()).save(any());
+    }
+
+    @Test
+    void garminInjoignablePendantLaResolutionDonne502() {
+        when(resolver.resolve(any())).thenThrow(new LiveTrackException("Garmin injoignable (ConnectException)"));
+
+        assertThatThrownBy(() -> service.create(new LiveTrackRequest("https://gar.mn/abcdef", null)))
+                .isInstanceOfSatisfying(ApiException.class, e -> assertThat(e.status().value()).isEqualTo(502));
+    }
+
+    @Test
+    void unLienCourtDUnAutreSiteNeDeclenchePasDAppel() {
+        for (String other : new String[]{"https://gar.mn.evil.com/abc", "http://gar.mn/abcdef", "https://evil.com/gar.mn/abc", "https://gar.mn/a/b"}) {
+            assertThatThrownBy(() -> service.create(new LiveTrackRequest(other, null))).isInstanceOf(ApiException.class);
+        }
+        verify(resolver, never()).resolve(any());
     }
 
     @Test

@@ -124,13 +124,13 @@ onMounted(load)
   <AdminLayout>
     <h1>Montre Garmin</h1>
     <p class="muted">
-      Sur la montre, démarrez une activité avec LiveTrack, puis copiez le lien de partage (« à partager avec vos amis ») et collez-le ici. Chaque activité a son propre lien. Une seule session peut être suivie à la fois. Pendant le suivi, les positions de la montre s'affichent sur la carte du site. Ce suivi repose sur la page publique de Garmin, sans API officielle : il peut cesser de fonctionner si Garmin la modifie.
+      Sur la montre, démarrez une activité avec LiveTrack, puis copiez le lien de partage (le lien court https://gar.mn/… ou le lien long livetrack.garmin.com) et collez-le ici ; un lien court est converti automatiquement en lien long. Chaque activité a son propre lien. Une seule session peut être suivie à la fois. Pendant le suivi, les positions de la montre s'affichent sur la carte du site. Ce suivi repose sur la page publique de Garmin, sans API officielle : il peut cesser de fonctionner si Garmin la modifie.
     </p>
 
     <form class="card" @submit.prevent="create">
       <h2>Ajouter une session</h2>
       <label class="field">
-        <span>Lien LiveTrack</span>
+        <span>Lien de partage LiveTrack (court ou long)</span>
         <input
           v-model="form.link"
           type="url"
@@ -138,7 +138,7 @@ onMounted(load)
           autocomplete="off"
           autocapitalize="off"
           spellcheck="false"
-          placeholder="https://livetrack.garmin.com/session/…/token/…"
+          placeholder="https://gar.mn/… ou https://livetrack.garmin.com/session/…"
         />
       </label>
       <label class="field">

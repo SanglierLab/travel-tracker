@@ -7,6 +7,7 @@ import fr.sanglierlab.traveltracker.track.TrackedTripRepository;
 import fr.sanglierlab.traveltracker.track.TripPointStats;
 import fr.sanglierlab.traveltracker.track.TripStatus;
 import fr.sanglierlab.traveltracker.track.TripType;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -27,11 +29,14 @@ public class LiveTrackService {
     private final TrackedTripRepository trips;
     private final TrackPointRepository points;
     private final LiveTrackBatch batch;
+    private final LiveTrackLinkResolver resolver;
 
-    public LiveTrackService(TrackedTripRepository trips, TrackPointRepository points, LiveTrackBatch batch) {
+    public LiveTrackService(TrackedTripRepository trips, TrackPointRepository points, LiveTrackBatch batch,
+                            LiveTrackLinkResolver resolver) {
         this.trips = trips;
         this.points = points;
         this.batch = batch;
+        this.resolver = resolver;
     }
 
     @Transactional(readOnly = true)
@@ -43,8 +48,7 @@ public class LiveTrackService {
     }
 
     public LiveTrackResponse create(LiveTrackRequest request) {
-        LiveTrackLink link = LiveTrackLink.parse(request.link()).orElseThrow(() -> ApiException.badRequest(
-                "Lien LiveTrack invalide : collez le lien complet, de la forme https://livetrack.garmin.com/session/…/token/…"));
+        LiveTrackLink link = toLongLink(request.link());
         if (trips.existsByTypeAndIdentifier(TripType.LIVETRACK, link.sessionId())) {
             throw ApiException.conflict("Cette session LiveTrack est déjà enregistrée.");
         }
@@ -53,6 +57,27 @@ public class LiveTrackService {
         TrackedTrip trip = trips.save(new TrackedTrip(TripType.LIVETRACK, label,
                 LocalDateTime.now(ZoneOffset.UTC), link.sessionId(), link.token()));
         return toResponse(trip, null);
+    }
+
+    /**
+     * Lien long : enregistré tel quel. Lien court (https://gar.mn/…, celui que propose l'application Garmin) : on suit sa redirection pour
+     * retrouver et enregistrer le lien long, seul utilisable ensuite.
+     */
+    private LiveTrackLink toLongLink(String raw) {
+        Optional<LiveTrackLink> direct = LiveTrackLink.parse(raw);
+        if (direct.isPresent()) {
+            return direct.get();
+        }
+        if (!LiveTrackLink.isShortLink(raw)) {
+            throw ApiException.badRequest("Lien LiveTrack invalide : collez le lien de partage de l'activité "
+                    + "(https://gar.mn/… ou https://livetrack.garmin.com/session/…/token/…).");
+        }
+        try {
+            return resolver.resolve(raw).orElseThrow(() -> ApiException.badRequest(
+                    "Ce lien court ne mène pas à une session LiveTrack (lien inconnu ou expiré)."));
+        } catch (LiveTrackException e) {
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "Impossible de résoudre le lien court : " + e.getMessage() + ". Réessayez, ou collez le lien long.");
+        }
     }
 
     /** Démarre le suivi. Refusé si une autre session est déjà suivie : il faut d'abord l'arrêter. */

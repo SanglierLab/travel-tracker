@@ -61,4 +61,16 @@ class LiveTrackLinkTest {
 
         assertThat(link.toString()).doesNotContain(TOKEN).contains("1debb03f");
     }
+
+    @Test
+    void reconnaitLesLiensCourtsGarmin() {
+        assertThat(LiveTrackLink.isShortLink("https://gar.mn/poxXxXxXlA")).isTrue();
+        assertThat(LiveTrackLink.isShortLink("  https://gar.mn/abc/ ")).isTrue();
+        assertThat(LiveTrackLink.isShortLink("http://gar.mn/abcdef")).isFalse();
+        assertThat(LiveTrackLink.isShortLink("https://gar.mn.evil.com/abc")).isFalse();
+        assertThat(LiveTrackLink.isShortLink("https://gar.mn/a/b")).isFalse();
+        assertThat(LiveTrackLink.isShortLink(null)).isFalse();
+        // Un lien long n'est pas un lien court (et inversement) : le service teste d'abord le lien long.
+        assertThat(LiveTrackLink.parse("https://gar.mn/poxXxXxXlA")).isEmpty();
+    }
 }

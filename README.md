@@ -278,7 +278,7 @@ curl -s -b $JAR $BASE/api/admin/cruises                                         
 ## Suivi d'une montre Garmin (LiveTrack)
 
 Même principe que les vols et les croisières, avec le lien de partage LiveTrack d'une montre Garmin. Sur la montre, démarrez une activité avec LiveTrack
-et envoyez-vous le lien (« à partager avec vos amis »). Dans l'administration (*Menu → Montre Garmin*), collez le lien, enregistrez la session, puis activez
+et envoyez-vous le lien de partage. Dans l'administration (*Menu → Montre Garmin*), collez le lien (court `https://gar.mn/…`, converti automatiquement en lien long, ou long `https://livetrack.garmin.com/session/…`), enregistrez la session, puis activez
 son suivi. Un batch lit les nouvelles positions toutes les 60 secondes (`app.livetrack-poll-interval`) et les affiche en tiret-point sur la carte (source `GARMIN`).
 Le suivi s'arrête tout seul quand l'activité se termine. Chaque activité crée un nouveau lien, à enregistrer à chaque fois ; une seule session est suivie à la fois.
 
