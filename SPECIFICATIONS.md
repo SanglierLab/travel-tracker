@@ -607,13 +607,14 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 
 ## 25. Prises de vue des photos (EXIF, phase 7f)
 
-- **Données** : focale (mm), ouverture (f/), ISO et vitesse d'obturation (secondes), lues dans l'EXIF de l'**original** avec `metadata-extractor` 2.21.0 (la miniature et l'image pleine page n'ont plus de métadonnées, GPS compris).
+- **Données** : focale (mm), ouverture (f/), ISO, vitesse d'obturation (secondes) et date de prise de vue (`takenAt`), lues dans l'EXIF de l'**original** avec `metadata-extractor` 2.21.0 (la miniature et l'image pleine page n'ont plus de métadonnées, GPS compris).
 - **Quand** : à l'envoi de la photo, juste après la création des miniatures (`MediaService.upload` → `ExifService.extractJson`). Photos seulement : les vidéos et les textes n'en ont pas.
-- **Stockage** : colonne `gallery_item.exif_json` (migration `V5__photo_exif.sql`, `VARCHAR(300)` avec contrôle `JSON_VALID`), JSON prêt à l'emploi, par exemple `{"focalLength":24,"aperture":1.8,"iso":100,"shutter":"1/250"}`. Chaque clé manque si la valeur est absente ou absurde ; `NULL` si aucune des quatre n'existe. Pas de tri ni de filtre sur ces données, donc pas de colonnes séparées.
+- **Stockage** : colonne `gallery_item.exif_json` (migration `V5__photo_exif.sql`, `VARCHAR(300)` avec contrôle `JSON_VALID`), JSON prêt à l'emploi, par exemple `{"focalLength":24,"aperture":1.8,"iso":100,"shutter":"1/250","takenAt":"2026-10-12T16:03:21"}`. Chaque clé manque si la valeur est absente ou absurde ; `NULL` si aucune des cinq n'existe.
+- **Date de prise de vue** : `DateTimeOriginal` (à défaut `DateTimeDigitized`), lue comme texte. L'EXIF standard ne contient **aucun fuseau horaire** : c'est l'heure affichée par l'horloge de l'appareil, que l'on suppose réglé sur l'heure locale du lieu. (L'EXIF 2.31 a ajouté les étiquettes facultatives `OffsetTimeOriginal`, etc. ; elles sont ignorées.) `takenAt` est donc une date-heure **locale sans fuseau** (`AAAA-MM-JJThh:mm:ss`), jamais convertie, ni côté serveur ni côté navigateur. Valeurs ignorées : `0000:00:00…`, dates invalides, années hors 1990–2100. Elle ne sert **ni à dater ni à trier** les photos. Pas de tri ni de filtre sur ces données, donc pas de colonnes séparées.
 - **API** : `ItemDto.exif` insère le JSON stocké tel quel (`@JsonRawValue`) ; `null` pour les vidéos, les textes et les photos sans EXIF.
 - **Robustesse** : un EXIF illisible ou absent n'empêche jamais l'envoi (résultat vide, message de débogage seulement).
-- **Affichage** : sous le titre, dans la barre du viewer plein écran (`24 mm · f/1.8 · ISO 200 · 1/250 s`), uniquement pour une photo qui a des données.
-- **Photos déjà envoyées** : elles n'ont pas de prises de vue (l'EXIF n'est lu qu'à l'envoi). Les renvoyer pour en profiter ; un rattrapage depuis les originaux stockés est possible si besoin.
+- **Affichage** : sous le titre, dans la barre du viewer plein écran (`12 oct. 2026, 16:03 · 24 mm · f/1.8 · ISO 200 · 1/250 s`) ; une photo prise à 16 h au Japon s'affiche 16:00 quel que soit le fuseau du lecteur, uniquement pour une photo qui a des données.
+- **Photos déjà envoyées** : elles n'ont pas de prises de vue (l'EXIF n'est lu qu'à l'envoi). Les renvoyer pour en profiter (pas de rattrapage prévu).
 
 ## 26. Page d'une galerie : contenu d'abord (phase 7g)
 

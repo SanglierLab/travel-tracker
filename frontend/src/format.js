@@ -50,9 +50,26 @@ export function formatDateRange(startIso, endIso) {
  * Prises de vue d'une photo en une ligne : « 24 mm · f/1.8 · ISO 200 · 1/250 s ».
  * `exif` vient du serveur ({ focalLength, aperture, iso, shutter }, chaque clé peut manquer) ; renvoie '' sans donnée.
  */
+const SHOT_DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/**
+ * Date et heure de prise de vue, telles que l'appareil les affichait (heure locale du lieu, sans fuseau) :
+ * « 2026-10-12T16:03:21 » → « 12 oct. 2026, 16:03 ». Aucune conversion : la date est lue en UTC uniquement
+ * pour le formatage, l'heure est recopiée telle quelle.
+ */
+export function formatShotTime(takenAt) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(typeof takenAt === 'string' ? takenAt : '')
+  if (!m) return ''
+  const date = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+  if (Number.isNaN(date.getTime())) return ''
+  return `${SHOT_DATE.format(date)}, ${m[4]}:${m[5]}`
+}
+
 export function formatExif(exif) {
   if (!exif || typeof exif !== 'object') return ''
   const parts = []
+  const shot = formatShotTime(exif.takenAt)
+  if (shot) parts.push(shot)
   if (exif.focalLength) parts.push(`${exif.focalLength} mm`)
   if (exif.aperture) parts.push(`f/${exif.aperture}`)
   if (exif.iso) parts.push(`ISO ${exif.iso}`)
