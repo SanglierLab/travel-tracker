@@ -152,7 +152,7 @@ const gpx = reactive({ useEndpoints: false, uploading: false, progress: 0, error
 const confirmRemoveGpx = ref(false)
 const removingGpx = ref(false)
 
-// L'envoi n'est possible que pour un trajet déjà ENREGISTRÉ comme trajet (le serveur refuse un GPX pour un lieu fixe).
+// L'envoi n'est possible que pour un trajet déjà ENREGISTRÉ comme trajet (le serveur refuse un GPX pour une étape simple).
 const canUseGpx = computed(() => id.value !== null && stage.value && isTrip(stage.value.kind) && trip.value)
 const mustSaveAsTrip = computed(() => id.value !== null && stage.value && !isTrip(stage.value.kind) && trip.value)
 
@@ -196,7 +196,7 @@ async function removeGpx() {
   }
 }
 
-// Passer un trajet en lieu fixe efface sa position d'arrivée et son tracé : on le dit avant d'enregistrer.
+// Passer un trajet en étape simple efface sa position d'arrivée et son tracé : on le dit avant d'enregistrer.
 const losesTripData = computed(() => id.value !== null && stage.value && isTrip(stage.value.kind) && !trip.value)
 </script>
 
@@ -284,7 +284,7 @@ const losesTripData = computed(() => id.value !== null && stage.value && isTrip(
         <p v-else-if="mustSaveAsTrip" class="muted">Enregistrez d'abord cette étape comme trajet pour pouvoir lui associer un tracé GPX.</p>
 
         <p v-if="losesTripData" class="stages__warning" role="status">
-          En passant cette étape en lieu fixe, sa position d'arrivée{{ stage.hasPath ? ' et son tracé GPX seront supprimés' : ' sera supprimée' }} à l'enregistrement.
+          En choisissant le type « Étape », sa position d'arrivée{{ stage.hasPath ? ' et son tracé GPX seront supprimés' : ' sera supprimée' }} à l'enregistrement.
         </p>
 
         <p v-if="error" class="error" role="alert">{{ error }}</p>

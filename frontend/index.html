@@ -3,12 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4eee2" />
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai" />
     <title>Journal de voyage</title>
     <link rel="icon" href="data:," />
     <link rel="stylesheet" href="/theme.css" />
   </head>
   <body>
+    <!-- Recoloration des tuiles OpenStreetMap (voir --map-tiles-filter dans theme.css) : papier chaud, eau gris-bleu, verts de thé. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+      <filter id="tiles-washi" color-interpolation-filters="sRGB">
+        <feColorMatrix type="matrix" values="0.80 0.13 -0.06 0 0.13  0.05 0.70 0.08 0 0.13  -0.11 0.06 0.81 0 0.155  0 0 0 1 0" />
+      </filter>
+    </svg>
     <div id="app"></div>
     <script type="module" src="/src/main.js"></script>
   </body>

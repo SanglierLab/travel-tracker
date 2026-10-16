@@ -2,7 +2,7 @@
 // pour que chaque type ait partout le même picto. Les albums photo ont leur propre picto (un appareil photo), distinct de ceux-ci.
 
 export const STAGE_KINDS = {
-  PLACE: { label: 'Lieu fixe', icon: 'M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10zM12 8.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z' },
+  PLACE: { label: 'Étape', icon: 'M12 21s-6-5.2-6-10a6 6 0 1112 0c0 4.8-6 10-6 10zM12 8.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z' },
   TRAIN: { label: 'Train', icon: 'M7 3h10a2 2 0 012 2v9a3 3 0 01-3 3H8a3 3 0 01-3-3V5a2 2 0 012-2zM5 10h14M8 20l-2 2M16 20l2 2M9 14h.01M15 14h.01' },
   PLANE: { label: 'Avion', icon: 'M12 2c.8 0 1.2 1 1.2 2.5V9l8.3 5v2l-8.3-2.2v4.7l2.3 1.8v1.5L12 20.8 8.5 21.8v-1.5l2.3-1.8v-4.7L2.5 16v-2l8.3-5V4.5C10.8 3 11.2 2 12 2z' },
   BOAT: { label: 'Bateau', icon: 'M12 3v11M12 4l6 9h-6M4 16h16l-2 4H6z' },
@@ -31,7 +31,7 @@ export function stageKindClass(kind) {
 
 export const KIND_ORDER = ['PLACE', 'TRAIN', 'PLANE', 'BOAT']
 
-/** Un trajet a une position de départ et une d'arrivée ; un lieu fixe une seule position. */
+/** Un trajet a une position de départ et une d'arrivée ; une étape simple une seule position. */
 export function isTrip(kind) {
   return kind !== 'PLACE'
 }

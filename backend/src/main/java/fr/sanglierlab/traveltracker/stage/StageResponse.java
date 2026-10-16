@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * Une étape telle que vue par le front.
  *
- * @param endLatitude  position de fin ; null pour un lieu fixe
+ * @param endLatitude  position de fin ; null pour une étape simple
  * @param hasPath      un tracé GPX est enregistré (trajets seulement)
  * @param pathPoints   nombre de points du tracé enregistré
  * @param path         le tracé, points [latitude, longitude] (longitude continue : elle peut dépasser ±180) ;

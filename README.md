@@ -101,7 +101,7 @@ Pour un script : `POST /api/admin/galleries/{id}/items/media` (fichier entier, c
 - `https://<sous-domaine>/robots.txt` renvoie `Disallow: /`.
 - `curl -I https://<sous-domaine>/` montre l'en-tête `X-Robots-Tag: noindex, nofollow, noarchive, nosnippet, noimageindex, noai, noimageai` (une seule fois, y compris pour `/api/public/feed`).
 - `curl -I -A "Googlebot" https://<sous-domaine>/` répond `403` ; `curl -I -A "GPTBot" https://<sous-domaine>/media/x.jpg` aussi ; `robots.txt` reste lisible avec cet agent.
-- `/connexion` permet de se connecter, puis `/admin` affiche le menu.
+- `/connexion` permet de se connecter, puis `/admin` affiche le menu. Aucun lien vers l'administration n'est affiché sur le site public : gardez ces adresses en favori.
 - Après 5 mots de passe erronés, la connexion répond « Trop de tentatives ».
 
 
@@ -308,7 +308,7 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/livetracks/1/st
 
 ## Étapes du voyage (API)
 
-Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau
+Les étapes sont les grandes lignes du voyage : une **étape simple** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau
 (Tokyo → Shimoda, le 5 mars). Elles s'affichent sur la carte, même dans le futur, et dans le fil des photos (étape 6d à venir).
 
 **Sur la carte publique (6c-1)** : chaque étape est un badge arrondi avec le picto de son type (lieu, train, avion, bateau), placé au milieu du trajet pour un trajet ; une étape dont la date de début n'est pas atteinte est estompée (« à venir »). Les albums gardent leur épingle, avec un appareil photo au centre. La légende liste ces éléments. 
@@ -331,7 +331,7 @@ la case « Reprendre les extrémités du tracé comme positions » place le dép
 Les commandes `curl` ci-dessous permettent aussi de tout tester directement (session et CSRF comme dans « Tester l'API »).
 
 ```bash
-# Un lieu fixe : une seule position (début), pas de GPX. Types : PLACE, TRAIN, PLANE, BOAT
+# Une étape simple : une seule position (début), pas de GPX. Types : PLACE, TRAIN, PLANE, BOAT
 curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" $BASE/api/admin/stages \
   -d '{"name":"Tokyo","kind":"PLACE","startDate":"2026-03-01","endDate":"2026-03-05","startLatitude":35.6762,"startLongitude":139.6503}'
 
@@ -358,7 +358,7 @@ Le GPX est lu sur le serveur (sans dépendance, protégé contre les fichiers XM
 
 La mise en page ne change jamais ; seules les couleurs, polices et formes se règlent, dans un fichier de variables CSS.
 
-1. Copier `frontend/public/theme.css` (thème par défaut) ou `frontend/themes/japon.css` (exemple) vers `<TT_BASE_DIR>/theme/theme.css` sur le NAS.
+1. Copier `frontend/public/theme.css` (thème par défaut) ou `frontend/themes/classique.css` (exemple sobre, sans ornements) vers `<TT_BASE_DIR>/theme/theme.css` sur le NAS.
 2. Dans `docker/docker-compose.yml`, décommenter la ligne `theme.css` du service `web`.
 3. `docker compose up -d` : le nouveau thème est pris en compte au rechargement de la page, sans reconstruire d'image.
 

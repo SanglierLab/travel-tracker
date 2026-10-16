@@ -142,7 +142,49 @@ a { color: var(--color-accent); }
 }
 
 .home__header h1 { font-size: 1.6rem; margin-bottom: 1rem; }
-.home__footer { margin-top: 2rem; text-align: center; font-size: 0.9rem; }
+
+/* Touches décoratives venues du thème (voir theme.css) : sceau devant le titre, filet doré, vagues très discrètes derrière la liste,
+   coin vermillon des albums, ombre douce des cartes, recoloration des tuiles. Chaque variable absente (ancien thème) = aucun effet. */
+.home__header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--accent-gold, var(--color-border));
+  letter-spacing: 0.02em;
+}
+.home__header h1::before {
+  content: var(--seal-text, none);
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.55em;
+  height: 1.55em;
+  border-radius: var(--radius-small);
+  background: var(--accent-seal, var(--color-accent));
+  color: var(--color-surface);
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1;
+  transform: rotate(-4deg);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+}
+.home__list { background-image: var(--ornament-wave, none); background-size: 28px 28px; }
+.gallery { box-shadow: var(--shadow-card, none); }
+.gallery--selected { box-shadow: 0 0 0 2px var(--color-accent), var(--shadow-card, none); }
+.gallery:not(.stage-card)::after {
+  content: "";
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(225deg, var(--accent-seal, transparent) 50%, transparent 50%);
+  border-top-right-radius: var(--radius);
+  opacity: 0.9;
+  pointer-events: none;
+}
+.leaflet-tile-pane { filter: var(--map-tiles-filter, none); }
 
 /* La largeur de la liste vient de --list-width (posée par la page quand le visiteur a déplacé le séparateur) ; par défaut, elle suit la fenêtre. */
 .home__splitter { display: none; }
@@ -404,6 +446,27 @@ a { color: var(--color-accent); }
 .pin--selected path { fill: var(--color-marker-selected); }
 
 /* Infobulle : miniature + titre + date et lieu */
+/* Habillage Leaflet aux couleurs du thème : infobulles (papier, filet vermillon, titre serif), boutons de zoom, mention OSM */
+.leaflet-container .leaflet-tooltip {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--accent-seal, var(--color-accent));
+  color: var(--color-text);
+  box-shadow: var(--shadow-card, 0 1px 4px rgba(0, 0, 0, 0.3));
+}
+.leaflet-container .leaflet-tooltip-top::before { border-top-color: var(--color-surface); }
+.leaflet-container .leaflet-tooltip-bottom::before { border-bottom-color: var(--color-surface); }
+.leaflet-container .leaflet-tooltip-left::before { border-left-color: var(--color-surface); }
+.leaflet-container .leaflet-tooltip-right::before { border-right-color: var(--color-surface); }
+.stage-tip strong { font-family: var(--font-title); font-size: 1rem; }
+.leaflet-container .leaflet-bar { border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-card, 0 1px 4px rgba(0, 0, 0, 0.3)); }
+.leaflet-container .leaflet-bar a, .leaflet-container .leaflet-bar a:hover, .leaflet-container .leaflet-bar a:focus { background-color: var(--color-surface); color: var(--color-text); border-bottom-color: var(--color-border); }
+.leaflet-container .leaflet-bar a:hover, .leaflet-container .leaflet-bar a:focus { background-color: var(--color-bg); }
+.leaflet-container .leaflet-bar a:first-child { border-top-left-radius: var(--radius-small); border-top-right-radius: var(--radius-small); }
+.leaflet-container .leaflet-bar a:last-child { border-bottom-left-radius: var(--radius-small); border-bottom-right-radius: var(--radius-small); border-bottom: 0; }
+.leaflet-container .leaflet-control-attribution { background: color-mix(in srgb, var(--color-surface) 80%, transparent); color: var(--color-muted); }
+.leaflet-container .leaflet-control-attribution a { color: var(--color-accent); }
+
 .leaflet-tooltip.pin-tip {
   max-width: 16rem;
   padding: 0.4rem;
@@ -440,7 +503,7 @@ a { color: var(--color-accent); }
   cursor: pointer;
 }
 .pin-tip__close:hover, .pin-tip__close:focus-visible { color: var(--color-text); }
-.pin-tip__body img { flex: none; width: 56px; height: 56px; object-fit: cover; border-radius: 4px; }
+.pin-tip__body img { flex: none; width: 56px; height: 56px; object-fit: cover; border: 1px solid var(--color-border); border-radius: var(--radius-small); }
 .pin-tip__body .stage-tip { min-width: 0; }
 .pin-tip__body .stage-tip span { white-space: normal; overflow-wrap: anywhere; }
 

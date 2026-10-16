@@ -55,7 +55,7 @@ public class StageService {
         Stage stage = find(id);
         fill(stage, request);
         if (!stage.getKind().isTrip()) {
-            stage.setPathData(null); // un lieu fixe n'a pas de tracé
+            stage.setPathData(null); // une étape simple n'a pas de tracé
         }
         return toResponse(stages.save(stage), true);
     }
@@ -97,7 +97,7 @@ public class StageService {
     public StageResponse uploadGpx(long id, InputStream gpx, long size, boolean useEndpoints) {
         Stage stage = find(id);
         if (!stage.getKind().isTrip()) {
-            throw ApiException.badRequest("Un lieu fixe n'a pas de tracé GPX : seuls les trajets en ont un.");
+            throw ApiException.badRequest("Seuls les trajets (train, avion, bateau) ont un tracé GPX.");
         }
         if (size > MAX_GPX_BYTES) {
             throw ApiException.payloadTooLarge("Fichier GPX trop volumineux (10 Mo maximum).");
@@ -163,7 +163,7 @@ public class StageService {
             }
             endLatitude = request.endLatitude();
             endLongitude = request.endLongitude();
-        } // un lieu fixe n'a qu'une position : une éventuelle position de fin est ignorée
+        } // une étape simple n'a qu'une position : une éventuelle position de fin est ignorée
         stage.apply(name, request.kind(), request.startDate(), request.endDate(),
                 request.startLatitude(), request.startLongitude(), endLatitude, endLongitude);
     }

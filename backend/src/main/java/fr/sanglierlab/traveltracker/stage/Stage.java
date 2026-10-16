@@ -17,7 +17,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-/** Étape du voyage (lieu fixe ou trajet). Dates en jours ; heures techniques en UTC. */
+/** Étape du voyage (étape simple ou trajet). Dates en jours ; heures techniques en UTC. */
 @Entity
 @Table(name = "stage")
 public class Stage {

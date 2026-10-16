@@ -155,7 +155,7 @@ export function arcBetween(start, end, { greatCircleBase = false, count = 48 } =
 }
 
 /**
- * Ligne d'itinéraire d'une étape : null pour un lieu fixe ; le tracé GPX s'il y en a un ; sinon un arc de cercle
+ * Ligne d'itinéraire d'une étape : null pour une étape simple ; le tracé GPX s'il y en a un ; sinon un arc de cercle
  * entre le départ et l'arrivée (porté par le grand cercle pour un avion).
  */
 export function stageLine(stage) {

@@ -1,0 +1,53 @@
+/*
+ * Thème « Classique » (ambiance sobre, vert-bleu) : uniquement des variables. Fichier COMPLET : pour changer l'ambiance selon la destination,
+ * copier ce fichier dans le volume Docker (voir docker-compose.yml) et modifier les valeurs.
+ * La mise en page (style.css) n'est jamais touchée.
+ */
+:root {
+  /* Couleurs */
+  --color-bg: #eef1ef;
+  --color-surface: #ffffff;
+  --color-text: #17262d;
+  --color-muted: #566872;
+  --color-border: #d3dcd9;
+  --color-accent: #0b6b73;
+  --color-accent-contrast: #ffffff;
+  --color-danger: #b3261e;
+  --color-placeholder: #cfd8d5;   /* fond des miniatures en attente et de la carte avant chargement */
+  --color-marker: #0b6b73;            /* marqueur de galerie sur la carte */
+  --color-marker-selected: #d9480f;   /* marqueur de la galerie sélectionnée */
+  --color-overlay: rgba(10, 25, 30, 0.55);   /* pastille de lecture sur les vidéos */
+
+  /* Touches décoratives (neutres ici : aucun sceau, aucun motif, tuiles d'origine) */
+  --accent-seal: transparent;
+  --accent-gold: #d3dcd9;
+  --shadow-card: none;
+  --seal-text: none;
+  --ornament-wave: none;
+  --map-tiles-filter: none;
+
+  /* Tracé des étapes du voyage (itinéraire : plus épais et plus marqué que la trace GPS) */
+  --itinerary: #c2185b;   /* liaisons entre étapes, et repli si un type n'a pas sa couleur */
+
+  /* Tracé et pastille de chaque type d'étape (le style de trait, lui, est fixe : plein, points, tirets) */
+  --stage-place: #6d4c41;
+  --stage-train: #c2185b;
+  --stage-plane: #1e63c9;
+  --stage-boat: #0e8f9a;
+
+  /* Tracés sur la carte, selon la source */
+  --track-device: #e0561b;
+  --track-adsb: #6a3fc4;
+  --track-ais: #1f8a4c;
+  --track-garmin: #b8860b;
+  --track-late: #8a9499;   /* dernière position « en retard » (plus de nouvelles depuis le délai de sa source), quelle que soit la source */
+
+  /* Typographie (polices système : rien à télécharger, japonais inclus) */
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-title: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Noto Serif", "Hiragino Mincho ProN", "Yu Mincho", serif;
+
+  /* Formes et gabarits */
+  --radius: 10px;
+  --radius-small: 6px;
+  --max-width: 72rem;
+}

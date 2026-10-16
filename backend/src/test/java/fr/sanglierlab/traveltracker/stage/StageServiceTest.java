@@ -270,7 +270,7 @@ class StageServiceTest {
         existing(stage(1, 1, "Tokyo", StageKind.PLACE, D1, D5));
 
         assertThatThrownBy(() -> service.uploadGpx(1, gpx(), 300, false))
-                .isInstanceOf(ApiException.class).hasMessageContaining("lieu fixe");
+                .isInstanceOf(ApiException.class).hasMessageContaining("trajets");
     }
 
     @Test

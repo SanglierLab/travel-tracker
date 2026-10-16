@@ -496,9 +496,6 @@ watch([settled, viewerItemId, viewer], () => {
         <Pagination :page="journal.data.page" :total-pages="journal.data.totalPages" />
       </template>
 
-      <footer class="home__footer">
-        <RouterLink to="/admin" class="muted">Administration</RouterLink>
-      </footer>
     </main>
 
     <MediaViewer

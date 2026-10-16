@@ -11,7 +11,7 @@ import java.time.LocalDate;
 
 /**
  * Création / modification d'une étape. Règles qui dépendent du type (position de fin obligatoire pour un trajet,
- * ignorée pour un lieu fixe) : voir {@link StageService}.
+ * ignorée pour une étape simple) : voir {@link StageService}.
  */
 public record StageRequest(
         @NotBlank(message = "Le nom est obligatoire.")
