@@ -940,3 +940,18 @@ a.btn--icon { text-decoration: none; }
 .gpx__option { display: flex; align-items: flex-start; gap: 0.6rem; margin: 0.75rem 0; font-weight: 400; }
 .gpx__option input { flex: none; width: 1.3rem; height: 1.3rem; margin-top: 0.15rem; accent-color: var(--color-accent); }
 .gpx .btn--small { margin-top: 0.5rem; }
+
+/* Réglages d'une galerie : bloc replié sous le contenu */
+.settings { margin-top: 1rem; }
+.settings__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  min-height: 44px;
+  align-content: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+.settings[open] > .settings__summary { margin-bottom: 0.75rem; }
+.content__gallery { font-weight: 400; overflow-wrap: anywhere; }

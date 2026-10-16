@@ -11,6 +11,7 @@ import TextEditorDialog from './TextEditorDialog.vue'
 // blocs de texte, réordonnancement, suppression. `items` est géré par le parent (v-model:items).
 const props = defineProps({
   galleryId: { type: Number, required: true },
+  galleryTitle: { type: String, default: '' }, // rappelé dans le titre : on sait toujours dans quelle galerie on envoie
   items: { type: Array, required: true },
 })
 const emit = defineEmits(['update:items'])
@@ -191,7 +192,7 @@ async function confirmDeletion() {
 
 <template>
   <section class="card admin__section content">
-    <h2>Contenu</h2>
+    <h2>Contenu<span v-if="galleryTitle" class="content__gallery"> · {{ galleryTitle }}</span></h2>
 
     <!-- Zone d'envoi : bouton pour le téléphone, glisser-déposer pour l'ordinateur -->
     <div class="dropzone" @dragover.prevent @drop.prevent="onDrop">

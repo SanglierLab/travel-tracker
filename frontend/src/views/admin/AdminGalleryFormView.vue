@@ -31,6 +31,8 @@ const deleting = ref(false)
 const confirmDelete = ref(false)
 const error = ref('')
 const saved = ref(false)
+// Nouvelle galerie : le formulaire est ouvert. Galerie existante : replié, le contenu passe en premier.
+const settingsOpen = ref(id.value === null)
 
 function messageOf(e, fallback) {
   return e instanceof ApiError && e.body?.message ? e.body.message : fallback
@@ -40,6 +42,7 @@ async function load() {
   error.value = ''
   saved.value = false
   detail.value = null
+  settingsOpen.value = id.value === null
   if (id.value === null) {
     Object.assign(form, { title: '', placeName: '', galleryDate: today(), position: null })
     try {
@@ -156,7 +159,22 @@ async function remove() {
     <p v-else-if="id !== null && !detail" class="error" role="alert">{{ error }}</p>
 
     <template v-else>
-      <form class="card" @submit.prevent="save">
+      <GalleryContent
+        v-if="id !== null"
+        :key="id"
+        :gallery-id="id"
+        :gallery-title="detail.title"
+        :items="detail.items"
+        @update:items="(items) => (detail.items = items)"
+      />
+
+      <!-- Réglages repliés pour une galerie existante : le contenu (envoi de photos) est en haut, sans risque de modifier la fiche par erreur. -->
+      <details class="card settings" :open="settingsOpen" @toggle="settingsOpen = $event.target.open">
+        <summary class="settings__summary">
+          {{ id === null ? 'Informations de la galerie' : 'Réglages de la galerie' }}
+          <small v-if="id !== null" class="muted">titre, lieu, date, position</small>
+        </summary>
+      <form @submit.prevent="save">
         <label class="field">
           <span>Titre</span>
           <input v-model="form.title" type="text" maxlength="200" required placeholder="Palais impérial" />
@@ -172,7 +190,8 @@ async function remove() {
 
         <div class="field">
           <span>Position sur la carte</span>
-          <LocationPicker v-model="form.position" :center="center" />
+          <!-- La carte n'est créée qu'une fois la section visible : Leaflet ne sait pas se dimensionner dans un bloc replié. -->
+          <LocationPicker v-if="settingsOpen" v-model="form.position" :center="center" />
           <details class="picker__manual">
             <summary>Saisir les coordonnées à la main</summary>
             <label class="field">
@@ -192,14 +211,7 @@ async function remove() {
           {{ saving ? 'Enregistrement…' : id === null ? 'Créer la galerie' : 'Enregistrer' }}
         </button>
       </form>
-
-      <GalleryContent
-        v-if="id !== null"
-        :key="id"
-        :gallery-id="id"
-        :items="detail.items"
-        @update:items="(items) => (detail.items = items)"
-      />
+      </details>
 
       <section v-if="id !== null" class="card admin__section">
         <h2>Actions</h2>

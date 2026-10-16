@@ -614,3 +614,10 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Robustesse** : un EXIF illisible ou absent n'empêche jamais l'envoi (résultat vide, message de débogage seulement).
 - **Affichage** : sous le titre, dans la barre du viewer plein écran (`24 mm · f/1.8 · ISO 200 · 1/250 s`), uniquement pour une photo qui a des données.
 - **Photos déjà envoyées** : elles n'ont pas de prises de vue (l'EXIF n'est lu qu'à l'envoi). Les renvoyer pour en profiter ; un rattrapage depuis les originaux stockés est possible si besoin.
+
+## 26. Page d'une galerie : contenu d'abord (phase 7g)
+
+- **Problème** : sur téléphone, l'envoi de photos (bloc *Contenu*) était sous le formulaire de réglages : défilement obligatoire et risque de modifier la fiche par erreur.
+- **Décision** : pour une galerie existante, le bloc *Contenu* passe **en premier** et les réglages (titre, lieu, date, position) sont **repliés** dans un `<details>` « Réglages de la galerie » sous le contenu. Pour une nouvelle galerie, le formulaire est ouvert et il n'y a pas encore de contenu.
+- **Titre** : le bloc s'intitule « Contenu · {titre de la galerie} » (titre enregistré, mis à jour après chaque enregistrement des réglages) pour toujours savoir dans quelle galerie on envoie.
+- **Carte** : la carte de position n'est créée qu'à l'ouverture des réglages (Leaflet ne se dimensionne pas dans un bloc replié).
