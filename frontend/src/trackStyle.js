@@ -6,6 +6,7 @@ import { distanceKm, headingDegrees } from './stageGeo'
 export const TRACK_SOURCES = {
   DEVICE: { label: 'Téléphone', cssVar: '--track-device', fallback: '#e0561b', dash: null, weight: 4, kind: null, lateAfterSeconds: 600 }, // trait plein
   ADSB: { label: 'Avion', cssVar: '--track-adsb', fallback: '#6a3fc4', dash: '1 9', weight: 4, kind: 'PLANE', lateAfterSeconds: 300 }, // pointillés
+  GARMIN: { label: 'Montre Garmin', cssVar: '--track-garmin', fallback: '#b8860b', dash: '6 4 1 4', weight: 4, kind: null, lateAfterSeconds: 300 }, // tiret-point
   AIS: { label: 'Bateau', cssVar: '--track-ais', fallback: '#1f8a4c', dash: '14 10', weight: 4, kind: 'BOAT', lateAfterSeconds: 1200 }, // tirets espacés
 }
 

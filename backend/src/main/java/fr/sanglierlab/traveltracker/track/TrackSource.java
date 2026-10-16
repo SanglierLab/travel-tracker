@@ -7,5 +7,7 @@ public enum TrackSource {
     /** Transport aérien (ADS-B) : positions des vols suivis. */
     ADSB,
     /** Transport maritime (AIS) : positions des croisières suivies. */
-    AIS
+    AIS,
+    /** Montre Garmin (LiveTrack) : positions d'une session de suivi en direct. */
+    GARMIN
 }

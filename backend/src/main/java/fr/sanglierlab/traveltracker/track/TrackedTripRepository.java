@@ -10,4 +10,6 @@ public interface TrackedTripRepository extends JpaRepository<TrackedTrip, Long> 
     Optional<TrackedTrip> findFirstByTypeAndStatus(TripType type, TripStatus status);
 
     List<TrackedTrip> findByTypeOrderByScheduledDepartureDescIdDesc(TripType type);
+
+    boolean existsByTypeAndIdentifier(TripType type, String identifier);
 }

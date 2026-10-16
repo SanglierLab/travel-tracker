@@ -44,13 +44,15 @@ public record AppProperties(
     public record LateAfter(
             @NotNull @DefaultValue("10m") Duration device,
             @NotNull @DefaultValue("5m") Duration adsb,
-            @NotNull @DefaultValue("20m") Duration ais) {
+            @NotNull @DefaultValue("20m") Duration ais,
+            @NotNull @DefaultValue("5m") Duration garmin) {
 
         public Duration of(TrackSource source) {
             return switch (source) {
                 case DEVICE -> device;
                 case ADSB -> adsb;
                 case AIS -> ais;
+                case GARMIN -> garmin;
             };
         }
     }

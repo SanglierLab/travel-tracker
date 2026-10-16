@@ -20,22 +20,24 @@ class TrackQueryServiceTest {
         when(repository.findAllRows()).thenReturn(List.of());
         AppProperties properties = new AppProperties(List.of(), "x".repeat(24), Path.of("."),
                 DataSize.ofMegabytes(30), DataSize.ofMegabytes(500), 10, 6, 100, 5, Duration.ofMinutes(15), "ffmpeg", 7,
-                new AppProperties.LateAfter(Duration.ofMinutes(10), Duration.ofMinutes(5), Duration.ofSeconds(1200)));
+                new AppProperties.LateAfter(Duration.ofMinutes(10), Duration.ofMinutes(5), Duration.ofSeconds(1200), Duration.ofMinutes(3)));
 
         TrackResponse response = new TrackQueryService(repository, properties).publicTrack();
 
         assertThat(response.lateAfterSeconds())
                 .containsEntry(TrackSource.DEVICE, 600L)
                 .containsEntry(TrackSource.ADSB, 300L)
-                .containsEntry(TrackSource.AIS, 1200L);
+                .containsEntry(TrackSource.AIS, 1200L)
+                .containsEntry(TrackSource.GARMIN, 180L);
     }
 
     @Test
     void chaqueSourceADonneSonDelai() {
-        AppProperties.LateAfter late = new AppProperties.LateAfter(Duration.ofMinutes(1), Duration.ofMinutes(2), Duration.ofMinutes(3));
+        AppProperties.LateAfter late = new AppProperties.LateAfter(Duration.ofMinutes(1), Duration.ofMinutes(2), Duration.ofMinutes(3), Duration.ofMinutes(4));
 
         assertThat(late.of(TrackSource.DEVICE)).isEqualTo(Duration.ofMinutes(1));
         assertThat(late.of(TrackSource.ADSB)).isEqualTo(Duration.ofMinutes(2));
         assertThat(late.of(TrackSource.AIS)).isEqualTo(Duration.ofMinutes(3));
+        assertThat(late.of(TrackSource.GARMIN)).isEqualTo(Duration.ofMinutes(4));
     }
 }

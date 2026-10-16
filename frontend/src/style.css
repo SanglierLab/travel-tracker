@@ -828,6 +828,8 @@ progress { width: 100%; height: 0.6rem; accent-color: var(--color-accent); }
   white-space: nowrap;
 }
 .badge--active { border-color: var(--track-adsb); color: var(--track-adsb); font-weight: 600; }
+.flight--garmin.flight--active { border-color: var(--track-garmin); box-shadow: 0 0 0 1px var(--track-garmin); }
+.flight--garmin .badge--active { border-color: var(--track-garmin); color: var(--track-garmin); }
 .flight--ais .badge--active { border-color: var(--track-ais); color: var(--track-ais); }
 
 /* Interrupteur : grande cible tactile, aucune animation */

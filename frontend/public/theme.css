@@ -31,6 +31,7 @@
   --track-device: #e0561b;
   --track-adsb: #6a3fc4;
   --track-ais: #1f8a4c;
+  --track-garmin: #b8860b;
   --track-late: #8a9499;   /* dernière position « en retard » (plus de nouvelles depuis le délai de sa source), quelle que soit la source */
 
   /* Typographie (polices système : rien à télécharger, japonais inclus) */

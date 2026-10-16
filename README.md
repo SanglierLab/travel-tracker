@@ -275,6 +275,23 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/cruises/1/start
 curl -s -b $JAR $BASE/api/admin/cruises                                             # état, nombre de positions, dernière position
 ```
 
+## Suivi d'une montre Garmin (LiveTrack)
+
+Même principe que les vols et les croisières, avec le lien de partage LiveTrack d'une montre Garmin. Sur la montre, démarrez une activité avec LiveTrack
+et envoyez-vous le lien (« à partager avec vos amis »). Dans l'administration (*Menu → Montre Garmin*), collez le lien, enregistrez la session, puis activez
+son suivi. Un batch lit les nouvelles positions toutes les 60 secondes (`app.livetrack-poll-interval`) et les affiche en tiret-point sur la carte (source `GARMIN`).
+Le suivi s'arrête tout seul quand l'activité se termine. Chaque activité crée un nouveau lien, à enregistrer à chaque fois ; une seule session est suivie à la fois.
+
+**Attention** : Garmin ne fournit pas d'API officielle. Ce suivi reproduit ce que fait la page publique du lien et peut cesser de fonctionner si Garmin la
+modifie. Le lien contient un jeton secret (il donne la position en direct) : ne le publiez pas. Il est stocké en base, jamais renvoyé par l'API ni écrit dans
+les journaux. L'outil manuel `GarminLiveTrackManual` (dossier de tests) lit un `garmin-curl.txt` local, déjà exclu de git.
+
+```bash
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" \
+  -d '{"link":"https://livetrack.garmin.com/session/…/token/…","name":"Randonnée"}' $BASE/api/admin/livetracks
+curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/livetracks/1/start   # on ; /stop pour arrêter
+```
+
 ## Étapes du voyage (API)
 
 Les étapes sont les grandes lignes du voyage : un **lieu fixe** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau

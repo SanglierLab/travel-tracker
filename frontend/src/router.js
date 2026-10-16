@@ -49,6 +49,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/livetrack',
+      name: 'admin-livetrack',
+      component: () => import('./views/admin/AdminLiveTrackView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin/etapes',
       name: 'admin-stages',
       component: () => import('./views/admin/AdminStagesView.vue'),

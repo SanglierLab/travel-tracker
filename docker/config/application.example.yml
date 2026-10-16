@@ -29,8 +29,10 @@ app:
   #   device: 10m
   #   adsb: 5m
   #   ais: 20m
+  #   garmin: 5m
   # adsb-poll-interval: 30s       # (facultatif) fréquence de récupération des positions du vol suivi
   # ais-poll-interval: 5m         # (facultatif) fréquence de récupération des positions du navire suivi
+  # livetrack-poll-interval: 60s  # (facultatif) fréquence de lecture des nouvelles positions de la montre Garmin (LiveTrack)
 
 # Développement local uniquement (HTTP, sans HTTPS) : décommenter.
 # server:
