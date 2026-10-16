@@ -648,3 +648,16 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Nettoyage** : les envois (et marques) inactifs depuis plus de 48 h sont effacés au début de chaque nouvel envoi. Annuler dans l'interface interrompt l'envoi mais garde ce qui est reçu 48 h (une reprise reste possible).
 - **Sécurité** : l'identifiant d'envoi est un UUID validé (aucun chemin), `.uploads` est refusé par nginx (`/media/.uploads/` → 404), le type reste reconnu sur le contenu.
 - **Conservé** : l'envoi en un bloc `POST .../items/media` (scripts, curl).
+
+## 30. Marqueurs d'étape : pastille ronde (phase 8c)
+
+- **Forme** : pastille ronde de 28 px, couleur du type (`--stage-color`), picto blanc agrandi (marge 4 px, trait 2,4), liseré blanc de 1,5 px et ombre douce. Plus de boîte carrée.
+- **Étape à venir** : pastille **creuse** (fond blanc quasi opaque, liseré et picto de la couleur du type) ; plus d'estompage ni de pointillés.
+- **Sélection** : anneau de 3 px de `--color-marker-selected` autour de la pastille, sans changer sa taille ni son ancrage.
+- **Légende** : même style (pastille ronde, version creuse pour « à venir »). Flèches et liens entre étapes inchangés (lien neutre `--itinerary`, décision de ne pas les colorer par type).
+
+## 31. Fermer une infobulle à la main (phase 8c)
+
+- **Infobulles concernées** : celles de l'étape et de la galerie **sélectionnées**, qui restent affichées sans jamais se fermer seules. Elles ont un bouton « × » (`aria-label` « Fermer », zone tactile de 30 px) dans l'angle supérieur droit. Les infobulles de survol (éléments non sélectionnés, dernière position) disparaissent déjà quand le pointeur s'en va : pas de bouton.
+- **Effet** : ferme seulement l'infobulle ; l'élément reste sélectionné (carte, fil et adresse inchangés). Un nouveau clic sur son marqueur la rouvre ; changer de sélection en affiche une nouvelle.
+

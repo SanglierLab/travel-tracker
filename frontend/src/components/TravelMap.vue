@@ -37,9 +37,24 @@ let observer = null
 let fitted = false
 const markers = new Map() // id de galerie -> { marker, gallery }
 
+// Bouton « Fermer » d'une infobulle fixe (celle de l'élément sélectionné, qui ne se ferme pas toute seule).
+// Fermer l'infobulle ne désélectionne pas : un nouveau clic sur le marqueur la rouvre.
+function closeButton(onClose) {
+  const button = document.createElement('button')
+  button.type = 'button'
+  button.className = 'pin-tip__close'
+  button.textContent = '×'
+  button.setAttribute('aria-label', 'Fermer')
+  L.DomEvent.on(button, 'click', (event) => {
+    L.DomEvent.stop(event)
+    onClose()
+  })
+  return button
+}
+
 // Contenu construit à la demande (à l'ouverture), avec textContent : le titre est saisi par un admin,
 // on ne l'insère jamais comme du HTML. Les miniatures ne sont donc chargées que pour les infobulles affichées.
-function tooltipContent(gallery) {
+function tooltipContent(gallery, onClose = null) {
   const body = document.createElement('div')
   body.className = 'pin-tip__body'
   if (gallery.coverUrl) {
@@ -61,16 +76,18 @@ function tooltipContent(gallery) {
   place.textContent = gallery.placeName
   text.append(title, date, place)
   body.append(text)
+  if (onClose) body.append(closeButton(onClose))
   return body
 }
 
 function bindTooltip(entry, permanent) {
   entry.marker.unbindTooltip()
-  entry.marker.bindTooltip(() => tooltipContent(entry.gallery), {
+  entry.marker.bindTooltip(() => tooltipContent(entry.gallery, permanent ? () => entry.marker.closeTooltip() : null), {
     direction: 'top',
     opacity: 1,
-    className: 'pin-tip pin-tip--stage pin-tip--gallery',
+    className: `pin-tip pin-tip--stage pin-tip--gallery${permanent ? ' pin-tip--closable' : ''}`,
     permanent,
+    interactive: permanent,
   })
 }
 
@@ -88,7 +105,10 @@ function render() {
   markers.clear()
   for (const gallery of props.galleries) {
     const marker = L.marker([gallery.latitude, gallery.longitude], { icon: pinIcon(false), riseOnHover: true })
-    marker.on('click', () => emit('select', gallery.id))
+    marker.on('click', () => {
+      emit('select', gallery.id)
+      if (gallery.id === props.selectedId && !marker.isTooltipOpen()) marker.openTooltip() // rouvre l'infobulle fermée à la main
+    })
     marker.addTo(layer)
     const entry = { marker, gallery }
     bindTooltip(entry, false)
@@ -141,7 +161,10 @@ function drawStages() {
     }
 
     entry.marker = L.marker(stageAnchor(stage), { icon: stageIcon(stage.kind, { future }), keyboard: true, title: '', zIndexOffset: -500 })
-    entry.marker.on('click', () => emit('select-stage', stage.id))
+    entry.marker.on('click', () => {
+      emit('select-stage', stage.id)
+      if (stage.id === props.selectedStageId && !entry.marker.isTooltipOpen()) entry.marker.openTooltip() // rouvre l'infobulle fermée à la main
+    })
     entry.marker.addTo(stageLayer)
     stageEntries.set(stage.id, entry)
     styleStage(entry, stage.id === props.selectedStageId, label)
@@ -174,7 +197,13 @@ function styleStage(entry, selected, label = STAGE_KINDS[entry.stage.kind]?.labe
   entry.marker.setIcon(stageIcon(stage.kind, { future, selected }))
   entry.marker.setZIndexOffset(selected ? 900 : -500)
   entry.marker.unbindTooltip()
-  entry.marker.bindTooltip(() => stageTooltip(stage, future), { direction: 'top', opacity: 1, className: 'pin-tip pin-tip--stage', permanent: selected })
+  entry.marker.bindTooltip(() => stageTooltip(stage, future, selected ? () => entry.marker.closeTooltip() : null), {
+    direction: 'top',
+    opacity: 1,
+    className: `pin-tip pin-tip--stage${selected ? ' pin-tip--closable' : ''}`,
+    permanent: selected,
+    interactive: selected,
+  })
   if (selected) entry.marker.openTooltip()
   entry.line?.setStyle({ weight: selected ? (STAGE_KINDS[stage.kind]?.weight ?? 7) + 3 : (STAGE_KINDS[stage.kind]?.weight ?? 7), opacity: selected ? 0.95 : future ? 0.3 : 0.6 })
   const markerElement = entry.marker.getElement()
@@ -197,7 +226,7 @@ function applyStageSelection(id, previousId) {
 }
 
 // Deux lignes : le nom (lieu ou trajet), puis la date (« · à venir » si l'étape n'a pas commencé).
-function stageTooltip(stage, future) {
+function stageTooltip(stage, future, onClose = null) {
   const body = document.createElement('div')
   body.className = 'stage-tip'
   const title = document.createElement('strong')
@@ -205,6 +234,7 @@ function stageTooltip(stage, future) {
   const date = document.createElement('span')
   date.textContent = `${formatDateRange(stage.startDate, stage.endDate)}${future ? ' · à venir' : ''}`
   body.append(title, date)
+  if (onClose) body.append(closeButton(onClose))
   return body
 }
 

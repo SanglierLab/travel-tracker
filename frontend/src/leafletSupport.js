@@ -48,17 +48,17 @@ export function pinIcon(selected) {
 }
 
 /**
- * Marqueur d'étape : un badge arrondi (et non une épingle) avec le picto de son type.
- * Une étape à venir est estompée (classe stage-pin--future).
+ * Marqueur d'étape : une pastille ronde (et non une épingle) avec le picto de son type.
+ * Une étape à venir est une pastille creuse (classe stage-pin--future) ; la sélection ajoute un anneau, sans changer la taille.
  */
 export function stageIcon(kind, { future = false, selected = false } = {}) {
   const icon = STAGE_KINDS[kind]?.icon ?? STAGE_KINDS.PLACE.icon
   return L.divIcon({
     className: `stage-pin ${stageKindClass(kind)}${future ? ' stage-pin--future' : ''}${selected ? ' stage-pin--selected' : ''}`,
     html: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${icon}" /></svg>`,
-    iconSize: selected ? [42, 42] : [34, 34],
-    iconAnchor: selected ? [21, 21] : [17, 17],
-    tooltipAnchor: [0, selected ? -21 : -17],
+    iconSize: [28, 28],
+    iconAnchor: [14, 14],
+    tooltipAnchor: [0, -14],
   })
 }
 
