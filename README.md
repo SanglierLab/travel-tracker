@@ -82,6 +82,19 @@ backend travel_tracker
 
 Penser aussi à un `timeout client` suffisant sur le frontend HTTPS concerné.
 
+Depuis l'envoi par morceaux (voir « Envoyer des photos et vidéos en voyage »), chaque requête d'envoi est courte (2 à 4 Mo) : ces délais longs ne servent
+plus qu'à la validation d'une grosse vidéo (traitement sur le serveur, quelques secondes à quelques minutes sur le NAS) et aux envois en un seul bloc par `curl`.
+
+### Envoyer des photos et vidéos en voyage
+
+Dans la page d'une galerie, les fichiers partent un par un, **en petits morceaux** (2 Mo, réduits jusqu'à 256 Ko si la connexion est mauvaise, agrandis jusqu'à 4 Mo
+quand elle tient). Si la connexion coupe, se bloque ou renvoie la page d'un portail de wifi, le morceau est réessayé automatiquement (1, 2, 4, 8, 15 puis 30 s, dix échecs
+de suite au plus). Hors connexion, l'envoi attend le retour du réseau. Si l'envoi finit par s'arrêter (« Connexion trop instable »), ce qui est déjà arrivé est conservé
+sur le serveur pendant 48 h : « Réessayer », ou simplement rechoisir le même fichier (même après avoir rechargé la page), reprend là où il s'était arrêté.
+Une réponse perdue ne crée jamais de doublon. Le type et la taille du fichier sont contrôlés dès le premier morceau, pas après 500 Mo d'envoi.
+
+Pour un script : `POST /api/admin/galleries/{id}/items/media` (fichier entier, champ `file`) reste disponible.
+
 ### 6. Vérifications
 
 - `https://<sous-domaine>/` affiche « Journal de voyage ».

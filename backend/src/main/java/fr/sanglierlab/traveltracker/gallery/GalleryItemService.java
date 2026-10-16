@@ -75,6 +75,12 @@ public class GalleryItemService {
         });
     }
 
+    /** Un élément par son identifiant (404 s'il n'existe pas). */
+    @Transactional(readOnly = true)
+    public GalleryItem get(long itemId) {
+        return find(itemId);
+    }
+
     private GalleryItem find(long itemId) {
         return items.findById(itemId).orElseThrow(() -> ApiException.notFound("Élément"));
     }

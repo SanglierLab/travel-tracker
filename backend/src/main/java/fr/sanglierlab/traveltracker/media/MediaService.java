@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.UUID;
 
 /**
@@ -68,36 +69,89 @@ public class MediaService {
         }
 
         MediaFormat format = detectFormat(file);
-        long maxBytes = (format.type() == ItemType.VIDEO ? properties.maxVideoSize() : properties.maxPhotoSize())
-                .toBytes();
-        if (file.getSize() > maxBytes) {
-            throw ApiException.payloadTooLarge("Fichier trop volumineux (maximum "
-                    + maxBytes / (1024 * 1024) + " Mo pour ce type de fichier).");
-        }
+        checkSize(format, file.getSize());
 
         String fileKey = UUID.randomUUID().toString();
         try {
             storage.prepareGalleryDir(galleryId);
             Path original = storage.originalPath(galleryId, fileKey, format.extension());
             file.transferTo(original);
-
-            boolean video = format.type() == ItemType.VIDEO;
-            Dimensions dimensions = video
-                    ? processVideo(galleryId, fileKey, original)
-                    : processPhoto(galleryId, fileKey, original, format);
-            // Prises de vue : lues dans l'original (l'image pleine page et la miniature n'ont plus de métadonnées). Photos seulement.
-            String exifJson = video ? null : exif.extractJson(original).orElse(null);
-
-            GalleryItem saved = items.addMedia(galleryId, format.type(), fileKey,
-                    cleanFilename(file.getOriginalFilename(), format), format.extension(), file.getSize(),
-                    dimensions.width(), dimensions.height(), exifJson);
-            log.info("Média ajouté : galerie={}, type={}, fichier={}, {} Ko",
-                    galleryId, format.type(), saved.getOriginalFilename(), file.getSize() / 1024);
-            return mapper.toDto(saved);
+            return finish(galleryId, format, fileKey, original, cleanFilename(file.getOriginalFilename(), format), file.getSize());
         } catch (IOException | RuntimeException e) {
             storage.deleteMedia(galleryId, fileKey, format.extension());
             throw e;
         }
+    }
+
+    /**
+     * Ajoute un média dont le fichier est déjà complet sur le disque (envoi par morceaux, voir {@link UploadService}) : mêmes contrôles que
+     * {@link #upload}, puis le fichier est <b>déplacé</b> (pas copié) à sa place définitive.
+     */
+    public ItemDto ingest(long galleryId, Path source, String originalFilename) throws IOException {
+        if (!galleries.existsById(galleryId)) {
+            throw ApiException.notFound("Galerie");
+        }
+        long size = Files.size(source);
+        if (size == 0) {
+            throw ApiException.badRequest("Le fichier est vide.");
+        }
+        MediaFormat format;
+        try (InputStream in = Files.newInputStream(source)) {
+            format = FileTypeDetector.detect(in).orElseThrow(() -> ApiException.unsupportedMedia(
+                    "Format non accepté. Formats acceptés : JPEG, PNG, WebP (photos) et MP4 (vidéos)."));
+        }
+        checkSize(format, size);
+
+        String fileKey = UUID.randomUUID().toString();
+        try {
+            storage.prepareGalleryDir(galleryId);
+            Path original = storage.originalPath(galleryId, fileKey, format.extension());
+            Files.move(source, original, StandardCopyOption.REPLACE_EXISTING);
+            return finish(galleryId, format, fileKey, original, cleanFilename(originalFilename, format.extension()), size);
+        } catch (IOException | RuntimeException e) {
+            storage.deleteMedia(galleryId, fileKey, format.extension());
+            throw e;
+        }
+    }
+
+    /** Refuse un fichier plus gros que la limite de son type (photo ou vidéo). */
+    void checkSize(MediaFormat format, long size) {
+        long maxBytes = (format.type() == ItemType.VIDEO ? properties.maxVideoSize() : properties.maxPhotoSize()).toBytes();
+        if (size > maxBytes) {
+            throw ApiException.payloadTooLarge("Fichier trop volumineux (maximum " + maxBytes / (1024 * 1024) + " Mo pour ce type de fichier).");
+        }
+    }
+
+    /** Début d'un fichier (au moins {@link FileTypeDetector#HEADER_SIZE} octets) : son format, ou une erreur 415 s'il n'est pas accepté. */
+    public MediaFormat detectHeader(byte[] header) {
+        return FileTypeDetector.detect(header).orElseThrow(() -> ApiException.unsupportedMedia(
+                "Format non accepté. Formats acceptés : JPEG, PNG, WebP (photos) et MP4 (vidéos)."));
+    }
+
+    /** Contrôle de taille d'un fichier d'après son début, avant d'en recevoir la suite (envoi par morceaux). */
+    public void checkDeclaredSize(MediaFormat format, long declaredSize) {
+        checkSize(format, declaredSize);
+    }
+
+    /** Un élément déjà enregistré, tel que le voit le front (idempotence de la validation d'un envoi). */
+    public ItemDto existing(long itemId) {
+        return mapper.toDto(items.get(itemId));
+    }
+
+    /** Miniatures, EXIF et enregistrement en base d'un original déjà à sa place. */
+    private ItemDto finish(long galleryId, MediaFormat format, String fileKey, Path original, String filename, long size)
+            throws IOException {
+        Dimensions dimensions = format.type() == ItemType.VIDEO
+                ? processVideo(galleryId, fileKey, original)
+                : processPhoto(galleryId, fileKey, original, format);
+        // Prises de vue : lues dans l'original (l'image pleine page et la miniature n'ont plus de métadonnées). Photos seulement.
+        String exifJson = format.type() == ItemType.VIDEO ? null : exif.extractJson(original).orElse(null);
+
+        GalleryItem saved = items.addMedia(galleryId, format.type(), fileKey, filename, format.extension(), size,
+                dimensions.width(), dimensions.height(), exifJson);
+        log.info("Média ajouté : galerie={}, type={}, fichier={}, {} Ko",
+                galleryId, format.type(), saved.getOriginalFilename(), size / 1024);
+        return mapper.toDto(saved);
     }
 
     // -----------------------------------------------------------------------
@@ -148,10 +202,14 @@ public class MediaService {
 
     /** Nom proposé au téléchargement : sans chemin ni caractères de contrôle, 255 caractères maximum. */
     static String cleanFilename(String original, MediaFormat format) {
+        return cleanFilename(original, format.extension());
+    }
+
+    static String cleanFilename(String original, String fallbackExtension) {
         String name = original == null ? "" : original.replace('\\', '/');
         name = name.substring(name.lastIndexOf('/') + 1).replaceAll("\\p{Cntrl}", "").strip();
         if (name.isEmpty()) {
-            name = "media." + format.extension();
+            name = "media." + fallbackExtension;
         }
         return name.length() > 255 ? name.substring(0, 255) : name;
     }

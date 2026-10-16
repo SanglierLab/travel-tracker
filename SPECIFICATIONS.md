@@ -633,3 +633,17 @@ Une **étape** est un jalon du voyage, passé ou à venir : un **lieu fixe** (un
 - **Secrets** : mots de passe, token d'API et jetons LiveTrack ne sont jamais renvoyés (le token n'est que nommé : valeur dans le fichier de configuration). L'URL de l'API de positions est complétée côté navigateur avec l'adresse du site.
 - **Délais de relève** : lus sur les batchs eux-mêmes (`interval()`), donc toujours ceux réellement appliqués.
 - **Page Points** (liste et correction des points GPS) : reportée après un moment d'utilisation sur le terrain.
+
+## 29. Envois fiabilisés (phase 8a)
+
+- **Problème** : un envoi d'un seul tenant (une requête pour tout le fichier) repart de zéro à chaque coupure (4G/5G, wifi d'hôtel), et une réponse perdue après un envoi réussi donnait un doublon au réessai.
+- **Protocole par morceaux, avec reprise** (`UploadService`, `UploadController`, état dans `<médias>/.uploads`) :
+  1. `POST /api/admin/galleries/{id}/uploads` `{filename, size, fingerprint}` → `{id, received, size, chunkSize}`. L'empreinte (nom, taille, date de modification, hachée côté serveur) fait **reprendre l'envoi interrompu du même fichier**, même après un rechargement de la page.
+  2. `PUT /api/admin/uploads/{id}?offset=N` (octets bruts, 8 Mo au plus) : le morceau doit commencer **exactement** à l'octet reçu ; sinon `409 {received}`. Un morceau coupé en route est retiré (le fichier ne contient jamais de morceau partiel) ; réponse 408 si le corps est incomplet.
+  3. `POST /api/admin/uploads/{id}/complete` : traitement habituel (miniatures, EXIF, base), le fichier est **déplacé**, pas copié (`MediaService.ingest`). **Idempotent** : marque `<id>.done` ; redemandé, il renvoie le même élément. Fichier refusé : l'envoi est effacé ; échec avant déplacement (disque...) : l'envoi est conservé pour réessayer.
+  4. `GET /api/admin/uploads/{id}` (état) et `DELETE` (abandon).
+- **Contrôles précoces** : dès le premier morceau, le type est reconnu sur le contenu (415 sinon) et la taille comparée à la limite de son type (413) ; l'annonce de taille est bornée à la plus grande limite dès le début.
+- **Client** (`resumableUpload.js`) : morceaux de 2 Mo, divisés par deux à chaque échec (plancher 256 Ko), doublés après trois succès (plafond 4 Mo) ; après toute erreur, état redemandé au serveur (le morceau a pu arriver sans réponse) ; réessais à 1, 2, 4, 8, 15, 30 s, dix échecs de suite au plus ; blocage sans octet pendant 45 s = échec réessayé ; réponse 200 sans JSON (portail captif) = échec réessayé ; 5xx, 408, 429 réessayés, les autres erreurs HTTP (401, 413, 415...) arrêtent l'envoi ; **hors connexion**, attente de l'événement `online` sans compter d'échec ; serveur ayant oublié l'envoi (404) : recommencé de zéro, deux fois au plus. À l'arrêt définitif, l'entrée passe en erreur « réseau » : elle reprend toute seule au retour de la connexion, ou par « Réessayer ».
+- **Nettoyage** : les envois (et marques) inactifs depuis plus de 48 h sont effacés au début de chaque nouvel envoi. Annuler dans l'interface interrompt l'envoi mais garde ce qui est reçu 48 h (une reprise reste possible).
+- **Sécurité** : l'identifiant d'envoi est un UUID validé (aucun chemin), `.uploads` est refusé par nginx (`/media/.uploads/` → 404), le type reste reconnu sur le contenu.
+- **Conservé** : l'envoi en un bloc `POST .../items/media` (scripts, curl).

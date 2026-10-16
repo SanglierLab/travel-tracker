@@ -1,7 +1,8 @@
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { onBeforeRouteLeave } from 'vue-router'
-import { api, ApiError, uploadFile } from '../api'
+import { api, ApiError } from '../api'
+import { uploadResumable } from '../resumableUpload'
 import { formatSize } from '../format'
 import { createUploadQueue } from '../uploadQueue'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -23,7 +24,7 @@ function messageOf(e, fallback) {
 // --- Envoi ---------------------------------------------------------------
 
 const queue = createUploadQueue(
-  (file, onProgress, signal) => uploadFile(`/api/admin/galleries/${props.galleryId}/items/media`, file, { onProgress, signal }),
+  (file, onProgress, signal, onNote) => uploadResumable(props.galleryId, file, { onProgress, onNote, signal }),
   { onUploaded: addItem },
 )
 
@@ -84,13 +85,20 @@ function onVisibilityChange() {
 }
 watch(queue.busy, updateWakeLock)
 
+// Au retour du réseau, les envois interrompus par une coupure reprennent d'eux-mêmes.
+function onOnline() {
+  queue.retryNetwork()
+}
+
 onMounted(() => {
   window.addEventListener('beforeunload', onBeforeUnload)
   document.addEventListener('visibilitychange', onVisibilityChange)
+  window.addEventListener('online', onOnline)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('beforeunload', onBeforeUnload)
   document.removeEventListener('visibilitychange', onVisibilityChange)
+  window.removeEventListener('online', onOnline)
   queue.dispose()
   wakeLock?.release?.().catch(() => {})
 })
@@ -210,7 +218,7 @@ async function confirmDeletion() {
         <button class="btn btn--ghost btn--block" type="button" @click="openEditor()">Ajouter un texte</button>
       </div>
       <p class="muted dropzone__hint">
-        JPEG, PNG, WebP ou MP4. Les fichiers partent un par un : gardez l'écran allumé jusqu'à la fin.
+        JPEG, PNG, WebP ou MP4. Les fichiers partent un par un, en petits morceaux : si la connexion coupe, l'envoi reprend tout seul là où il s'est arrêté. Gardez l'écran allumé jusqu'à la fin.
       </p>
     </div>
 
@@ -227,6 +235,7 @@ async function confirmDeletion() {
               :value="Math.round(entry.progress * 100)"
               :aria-label="`Envoi de ${entry.name}`"
             ></progress>
+            <span v-if="entry.note" class="uploads__note" role="status">{{ entry.note }}</span>
             <span v-if="entry.status === 'error'" class="error uploads__error" role="alert">{{ entry.error }}</span>
           </div>
           <div class="uploads__actions">

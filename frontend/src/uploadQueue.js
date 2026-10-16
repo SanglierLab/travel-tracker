@@ -10,16 +10,19 @@ function describeError(error) {
   if (status === 401) return 'Session expirée : reconnectez-vous, puis réessayez.'
   if (status === 413) return error.body?.message ?? 'Fichier trop volumineux.'
   if (error?.body?.message) return error.body.message
+  if (status === 404) return "Cet envoi n'existe plus sur le serveur. Réessayez : il repartira du début."
+  if (status >= 500 || status === 408 || status === 429) return `Le serveur ne répond pas correctement (erreur ${status}). Réessayez : l'envoi reprendra là où il s'est arrêté.`
   if (status) return `Le serveur a refusé le fichier (erreur ${status}).`
-  return "Échec de l'envoi (réseau). Réessayez."
+  return "Connexion trop instable. Ce qui a été envoyé est conservé : « Réessayer » reprend là où l'envoi s'est arrêté (c'est automatique au retour du réseau)."
 }
 
 /**
- * @param {(file: File, onProgress: (fraction: number) => void, signal: AbortSignal) => Promise<any>} send
+ * @param {(file: File, onProgress: (fraction: number) => void, signal: AbortSignal, onNote: (note: string) => void) => Promise<any>} send
  * @param {{ onUploaded?: (result: any) => void }} [options]
  */
 export function createUploadQueue(send, { onUploaded } = {}) {
-  // Chaque entrée : { id, file, name, size, status: 'waiting' | 'uploading' | 'done' | 'error', progress (0..1), error }
+  // Chaque entrée : { id, file, name, size, status: 'waiting' | 'uploading' | 'done' | 'error', progress (0..1), note, error, network }
+  // note : message passager pendant l'envoi (« connexion instable, nouvel essai… ») ; network : l'échec vient du réseau (reprise possible)
   const entries = reactive([])
   let running = false
   let current = null // { entry, controller } : l'envoi en cours
@@ -28,7 +31,7 @@ export function createUploadQueue(send, { onUploaded } = {}) {
 
   function add(files) {
     for (const file of files) {
-      entries.push({ id: ++counter, file, name: file.name, size: file.size, status: 'waiting', progress: 0, error: '' })
+      entries.push({ id: ++counter, file, name: file.name, size: file.size, status: 'waiting', progress: 0, note: '', error: '', network: false })
     }
     pump()
   }
@@ -47,13 +50,20 @@ export function createUploadQueue(send, { onUploaded } = {}) {
 
   async function run(entry) {
     entry.status = 'uploading'
-    entry.progress = 0
     entry.error = ''
+    entry.note = ''
+    entry.network = false
     const controller = new AbortController()
     current = { entry, controller }
     try {
-      const result = await send(entry.file, (fraction) => (entry.progress = fraction), controller.signal)
+      const result = await send(
+        entry.file,
+        (fraction) => (entry.progress = fraction),
+        controller.signal,
+        (note) => (entry.note = note),
+      )
       entry.status = 'done'
+      entry.note = ''
       entry.progress = 1
       onUploaded?.(result)
     } catch (error) {
@@ -61,7 +71,9 @@ export function createUploadQueue(send, { onUploaded } = {}) {
         remove(entry) // annulé par l'utilisateur : ce n'est pas une erreur
       } else {
         entry.status = 'error'
+        entry.note = ''
         entry.error = describeError(error)
+        entry.network = !error?.status
       }
     } finally {
       current = null
@@ -96,6 +108,19 @@ export function createUploadQueue(send, { onUploaded } = {}) {
     pump()
   }
 
+  /** Relance les envois en échec à cause du réseau (au retour de la connexion). L'envoi reprend là où le serveur s'était arrêté. */
+  function retryNetwork() {
+    let any = false
+    for (const entry of entries) {
+      if (entry.status === 'error' && entry.network) {
+        entry.status = 'waiting'
+        entry.error = ''
+        any = true
+      }
+    }
+    if (any) pump()
+  }
+
   function clearDone() {
     for (let i = entries.length - 1; i >= 0; i--) {
       if (entries[i].status === 'done') entries.splice(i, 1)
@@ -108,5 +133,5 @@ export function createUploadQueue(send, { onUploaded } = {}) {
     entries.splice(0, entries.length)
   }
 
-  return { entries, busy, add, cancel, retry, retryAll, clearDone, dispose }
+  return { entries, busy, add, cancel, retry, retryAll, retryNetwork, clearDone, dispose }
 }
