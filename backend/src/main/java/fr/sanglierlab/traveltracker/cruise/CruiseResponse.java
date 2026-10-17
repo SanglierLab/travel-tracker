@@ -9,8 +9,9 @@ import java.time.Instant;
  * @param scheduledDeparture date et heure (UTC) de départ ; minuit UTC quand aucune heure n'a été saisie
  * @param status             PLANNED (jamais démarré), ACTIVE (suivi en cours) ou FINISHED (suivi arrêté)
  * @param pointCount         nombre de positions enregistrées pour cette croisière
+ * @param archived    true si le trajet est archivé (hors de la liste courante)
  * @param lastPointAt        heure (UTC) de la dernière position enregistrée, ou null
  */
 public record CruiseResponse(long id, String identifier, Instant scheduledDeparture, TripStatus status,
-                             long pointCount, Instant lastPointAt) {
+                             boolean archived, long pointCount, Instant lastPointAt) {
 }

@@ -172,6 +172,24 @@ class LiveTrackServiceTest {
     }
 
     @Test
+    void refuseDeDemarrerUneSessionArchivee() {
+        TrackedTrip trip = existing(7, TripStatus.FINISHED);
+        trip.setArchived(true);
+
+        assertThatThrownBy(() -> service.start(7)).isInstanceOf(ApiException.class).hasMessageContaining("archivé");
+        verify(batch, never()).start(anyLong());
+    }
+
+    @Test
+    void refuseDeDemarrerUneSessionSansLien() {
+        TrackedTrip trip = existing(7, TripStatus.FINISHED);
+        trip.clearAccessToken();
+
+        assertThatThrownBy(() -> service.start(7)).isInstanceOf(ApiException.class).hasMessageContaining("nouveau lien");
+        verify(batch, never()).start(anyLong());
+    }
+
+    @Test
     void redemarrerLaSessionDejaActiveEstPermis() {
         TrackedTrip trip = existing(7, TripStatus.ACTIVE);
         when(trips.findFirstByTypeAndStatus(TripType.LIVETRACK, TripStatus.ACTIVE)).thenReturn(Optional.of(trip));

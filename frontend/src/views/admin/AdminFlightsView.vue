@@ -98,6 +98,31 @@ async function remove() {
   }
 }
 
+// --- Archivage et export GPX (communs à tous les trajets : /api/admin/trips/:id/...) ---------
+
+const showArchived = ref(false)
+const archivedCount = computed(() => (flights.value ?? []).filter((flight) => flight.archived).length)
+const visible = computed(() => (flights.value ?? []).filter((flight) => showArchived.value || !flight.archived))
+
+async function setArchived(flight, archived) {
+  actionError.value = ''
+  notice.value = ''
+  busyId.value = flight.id
+  try {
+    await api(`/api/admin/trips/${flight.id}/${archived ? 'archive' : 'unarchive'}`, { method: 'POST' })
+    await load({ silent: true })
+  } catch (e) {
+    actionError.value = messageOf(e, "L'action a échoué. Vérifiez votre connexion et réessayez.")
+  } finally {
+    busyId.value = null
+  }
+}
+
+/** Le fichier est téléchargé par le navigateur (même origine, session admin). */
+function gpxUrl(flight) {
+  return `/api/admin/trips/${flight.id}/gpx`
+}
+
 // --- Affichage ------------------------------------------------------------------
 
 const STATUS = { PLANNED: 'Prévu', ACTIVE: 'Suivi en cours', FINISHED: 'Suivi arrêté' }
@@ -184,14 +209,19 @@ onMounted(load)
     <p v-else-if="!flights" class="muted">Chargement…</p>
     <p v-else-if="flights.length === 0" class="muted">Aucun vol enregistré pour le moment.</p>
 
-    <ul v-else class="flights">
-      <li v-for="flight in flights" :key="flight.id" class="card flight" :class="{ 'flight--active': flight.status === 'ACTIVE' }">
+    <label v-else-if="archivedCount > 0" class="flights__filter">
+      <input v-model="showArchived" type="checkbox" />
+      <span>Afficher les trajets archivés ({{ archivedCount }})</span>
+    </label>
+
+    <ul v-if="flights && flights.length > 0" class="flights">
+      <li v-for="flight in visible" :key="flight.id" class="card flight" :class="{ 'flight--active': flight.status === 'ACTIVE', 'flight--archived': flight.archived }">
         <div class="flight__head">
           <div class="flight__id">
             <strong class="flight__number">{{ flight.identifier }}</strong>
             <span class="muted">{{ departure(flight) }}</span>
           </div>
-          <span class="badge" :class="{ 'badge--active': flight.status === 'ACTIVE' }">{{ STATUS[flight.status] }}</span>
+          <span class="badge" :class="{ 'badge--active': flight.status === 'ACTIVE' }">{{ flight.archived ? 'Archivé' : STATUS[flight.status] }}</span>
         </div>
         <p class="muted flight__points">{{ positions(flight) }}</p>
         <div class="flight__actions">
@@ -201,21 +231,44 @@ onMounted(load)
             role="switch"
             :aria-checked="flight.status === 'ACTIVE'"
             :aria-label="`Suivi du vol ${flight.identifier}`"
-            :disabled="busyId !== null"
+            :disabled="busyId !== null || flight.archived"
             @click="toggle(flight)"
           >
             <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
             <span>{{ flight.status === 'ACTIVE' ? 'Activé' : 'Désactivé' }}</span>
           </button>
-          <button
-            class="btn btn--ghost btn--small btn--danger-text"
-            type="button"
-            :disabled="flight.status === 'ACTIVE' || busyId !== null"
-            :title="flight.status === 'ACTIVE' ? 'Arrêtez le suivi pour pouvoir supprimer ce vol' : undefined"
-            @click="toDelete = flight"
-          >
-            Supprimer
-          </button>
+          <div class="flight__buttons">
+            <a
+              v-if="flight.pointCount > 0"
+              class="btn btn--ghost btn--small"
+              :href="gpxUrl(flight)"
+              download
+            >
+              Exporter GPX
+            </a>
+            <button
+              v-if="!flight.archived"
+              class="btn btn--ghost btn--small"
+              type="button"
+              :disabled="flight.status === 'ACTIVE' || busyId !== null"
+              :title="flight.status === 'ACTIVE' ? 'Arrêtez le suivi pour pouvoir archiver ce vol' : 'Masque ce vol de la liste ; son tracé reste sur la carte'"
+              @click="setArchived(flight, true)"
+            >
+              Archiver
+            </button>
+            <button v-else class="btn btn--ghost btn--small" type="button" :disabled="busyId !== null" @click="setArchived(flight, false)">
+              Restaurer
+            </button>
+            <button
+              class="btn btn--ghost btn--small btn--danger-text"
+              type="button"
+              :disabled="flight.status === 'ACTIVE' || busyId !== null"
+              :title="flight.status === 'ACTIVE' ? 'Arrêtez le suivi pour pouvoir supprimer ce vol' : undefined"
+              @click="toDelete = flight"
+            >
+              Supprimer
+            </button>
+          </div>
         </div>
       </li>
     </ul>
@@ -232,6 +285,7 @@ onMounted(load)
         Le vol {{ toDelete.identifier }} sera supprimé<template v-if="toDelete.pointCount > 0">{{ pointsWarning(toDelete) }}</template>,
         <strong>de façon définitive</strong>. Son tracé disparaîtra de la carte.
       </p>
+      <p class="muted">Pour le garder sur la carte sans l'afficher dans la liste, archivez-le plutôt.</p>
     </ConfirmDialog>
   </AdminLayout>
 </template>

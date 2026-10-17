@@ -57,6 +57,9 @@ public class CruiseService {
     /** Démarre le suivi. Refusé si une autre croisière est déjà suivie : il faut d'abord l'arrêter. */
     public synchronized CruiseResponse start(long id) {
         TrackedTrip trip = find(id);
+        if (trip.isArchived()) {
+            throw ApiException.conflict("Ce trajet est archivé : restaurez-le avant de démarrer son suivi.");
+        }
         trips.findFirstByTypeAndStatus(TripType.BOAT, TripStatus.ACTIVE)
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
@@ -115,7 +118,7 @@ public class CruiseService {
 
     private static CruiseResponse toResponse(TrackedTrip trip, TripPointStats stats) {
         return new CruiseResponse(trip.getId(), trip.getIdentifier(), trip.getScheduledDeparture().toInstant(ZoneOffset.UTC),
-                trip.getStatus(), stats == null ? 0 : stats.count(),
+                trip.getStatus(), trip.isArchived(), stats == null ? 0 : stats.count(),
                 stats == null ? null : stats.lastRecordedAt().toInstant(ZoneOffset.UTC));
     }
 }

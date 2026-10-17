@@ -49,6 +49,10 @@ public class TrackedTrip {
     @Column(nullable = false, length = 10)
     private TripStatus status;
 
+    /** Archivé : hors de la liste courante de l'admin ; les positions sont conservées. */
+    @Column(nullable = false)
+    private boolean archived;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
@@ -86,6 +90,19 @@ public class TrackedTrip {
 
     public void setStatus(TripStatus status) {
         this.status = status;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
+    /** Efface le jeton du lien de partage (à l'archivage d'une session LiveTrack). */
+    public void clearAccessToken() {
+        this.accessToken = null;
     }
 
     public Long getId() {

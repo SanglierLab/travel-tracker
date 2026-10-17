@@ -57,6 +57,9 @@ public class FlightService {
     /** Démarre le suivi. Refusé si un autre vol est déjà suivi : il faut d'abord l'arrêter. */
     public synchronized FlightResponse start(long id) {
         TrackedTrip trip = find(id);
+        if (trip.isArchived()) {
+            throw ApiException.conflict("Ce trajet est archivé : restaurez-le avant de démarrer son suivi.");
+        }
         trips.findFirstByTypeAndStatus(TripType.PLANE, TripStatus.ACTIVE)
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
@@ -115,7 +118,7 @@ public class FlightService {
 
     private static FlightResponse toResponse(TrackedTrip trip, TripPointStats stats) {
         return new FlightResponse(trip.getId(), trip.getIdentifier(), trip.getScheduledDeparture().toInstant(ZoneOffset.UTC),
-                trip.getStatus(), stats == null ? 0 : stats.count(),
+                trip.getStatus(), trip.isArchived(), stats == null ? 0 : stats.count(),
                 stats == null ? null : stats.lastRecordedAt().toInstant(ZoneOffset.UTC));
     }
 }

@@ -41,6 +41,9 @@ public interface TrackPointRepository extends JpaRepository<TrackPoint, Long> {
     @Query("delete from TrackPoint p where p.tripId = :tripId")
     void deleteByTripId(@Param("tripId") Long tripId);
 
+    /** Les points d'un trajet, du plus ancien au plus récent (export GPX). */
+    List<TrackPoint> findByTripIdOrderByRecordedAtAscIdAsc(Long tripId);
+
     boolean existsBySourceAndRecordedAtAndLatitudeAndLongitude(
             TrackSource source, LocalDateTime recordedAt, BigDecimal latitude, BigDecimal longitude);
 }

@@ -336,6 +336,17 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" \
 curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/livetracks/1/start   # on ; /stop pour arrêter
 ```
 
+## Archiver et exporter un trajet (vols, croisières, sessions Garmin)
+
+Sur les pages **Vols**, **Croisières** et **Montre** de l'admin :
+
+- **Exporter GPX** : télécharge toutes les positions enregistrées du trajet (un seul tracé, heures en UTC), par exemple `vol-AFR1234-2026-10-12.gpx`. Absent tant que le trajet n'a aucune position.
+- **Archiver** : retire le trajet de la liste courante, sans toucher à ses positions : le tracé reste sur la carte. Impossible tant que le suivi est actif. Pour une session Garmin, le lien de partage (secret) est effacé.
+- **Restaurer** : remet un trajet archivé dans la liste (visible avec la case « Afficher les trajets archivés »). Une session Garmin restaurée ne peut plus être suivie : enregistrez un nouveau lien.
+- **Supprimer** : supprime le trajet *et* ses positions (le tracé disparaît de la carte).
+
+API : `POST /api/admin/trips/{id}/archive`, `POST /api/admin/trips/{id}/unarchive`, `GET /api/admin/trips/{id}/gpx` (`id` = identifiant du trajet, voir la liste de l'admin).
+
 ## Étapes du voyage (API)
 
 Les étapes sont les grandes lignes du voyage : une **étape simple** (Tokyo, du 1er au 5 mars) ou un **trajet** en train, avion ou bateau
@@ -406,3 +417,11 @@ Le fichier doit être complet (toutes les variables du thème par défaut) et ex
 - **Réseau Docker** : le conteneur (nginx + API) a son propre réseau (bridge). Port du NAS = `WEB_PORT` (`.env`) vers le port 18081 de nginx ; l'API n'écoute que sur `127.0.0.1:18080` dans le conteneur. MariaDB est joint par `host.docker.internal:3306` (`extra_hosts: host-gateway`) : son port 3306 doit être publié sur le NAS (pas seulement `127.0.0.1`) et l'utilisateur SQL autorisé depuis `172.%`.
 - **Sessions** : conservées en mémoire. Un redémarrage de l'API déconnecte les admins (sans gravité).
 - **Thème** : `frontend/public/theme.css` est le fichier de variables ; voir le commentaire dans `docker-compose.yml` pour le remplacer sans reconstruire l'image.
+
+
+## Mémoire du conteneur
+
+- Le tas Java est plafonné à **768 Mo** (`-Xmx` dans `JAVA_OPTS`) et rendu au système quand il est inutilisé (`G1PeriodicGCInterval=60000`, `MaxHeapFreeRatio=30`) ; la limite du conteneur est de 1280 Mo.
+- Après des envois de gros fichiers, le décodage des images fait grossir le tas : c'est normal, il redescend ensuite (une à deux minutes d'inactivité).
+- Le chiffre affiché par Docker/DSM **inclut le cache disque** (photos et vidéos lues ou écrites), que le noyau libère seul en cas de besoin. Pour la mémoire réellement utilisée :
+  `docker exec travel-tracker sh -c 'grep -E "^(anon|file) " /sys/fs/cgroup/memory.stat'` (`anon` = processus, `file` = cache).

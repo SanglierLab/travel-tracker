@@ -12,8 +12,9 @@ import java.time.Instant;
  * @param registeredAt heure (UTC) de l'enregistrement
  * @param status       PLANNED (jamais démarrée), ACTIVE (suivi en cours) ou FINISHED (suivi arrêté ou session terminée)
  * @param pointCount   nombre de positions enregistrées
+ * @param archived    true si le trajet est archivé (hors de la liste courante)
  * @param lastPointAt  heure (UTC) de la dernière position enregistrée, ou null
  */
 public record LiveTrackResponse(long id, String label, String reference, Instant registeredAt, TripStatus status,
-                                long pointCount, Instant lastPointAt) {
+                                boolean archived, long pointCount, Instant lastPointAt) {
 }

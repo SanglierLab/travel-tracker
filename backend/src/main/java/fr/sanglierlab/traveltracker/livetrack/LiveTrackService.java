@@ -83,6 +83,12 @@ public class LiveTrackService {
     /** Démarre le suivi. Refusé si une autre session est déjà suivie : il faut d'abord l'arrêter. */
     public synchronized LiveTrackResponse start(long id) {
         TrackedTrip trip = find(id);
+        if (trip.isArchived()) {
+            throw ApiException.conflict("Ce trajet est archivé : restaurez-le avant de démarrer son suivi.");
+        }
+        if (trip.getAccessToken() == null || trip.getAccessToken().isBlank()) {
+            throw ApiException.conflict("Le lien de cette session n'est plus conservé (session archivée) : enregistrez un nouveau lien.");
+        }
         trips.findFirstByTypeAndStatus(TripType.LIVETRACK, TripStatus.ACTIVE)
                 .filter(other -> !other.getId().equals(id))
                 .ifPresent(other -> {
@@ -132,7 +138,7 @@ public class LiveTrackService {
 
     private static LiveTrackResponse toResponse(TrackedTrip trip, TripPointStats stats) {
         return new LiveTrackResponse(trip.getId(), trip.getLabel(), LiveTrackLink.shortId(trip.getIdentifier()),
-                trip.getScheduledDeparture().toInstant(ZoneOffset.UTC), trip.getStatus(),
+                trip.getScheduledDeparture().toInstant(ZoneOffset.UTC), trip.getStatus(), trip.isArchived(),
                 stats == null ? 0 : stats.count(),
                 stats == null ? null : stats.lastRecordedAt().toInstant(ZoneOffset.UTC));
     }

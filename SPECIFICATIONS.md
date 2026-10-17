@@ -707,3 +707,18 @@ Une **étape** est un jalon du voyage, passé ou à venir : une **étape simple*
 - **Console de Docker** : `LOGGING_THRESHOLD_CONSOLE=WARN` pour l'API (démarrage compris dans le fichier) ; erreurs de nginx sur `stderr` ; journal Docker plafonné à 2 × 5 Mo par conteneur (filet de sécurité). En développement : console au niveau INFO et fichiers dans `backend/logs/`.
 - **Détails** : sonde `/healthz` de nginx hors journal ; fichiers lisibles par tous (permissions par défaut), jamais servis par le site. Les journaux contiennent des adresses IP : données personnelles, à ne pas partager.
 
+## 38. Archivage et export GPX des trajets (phase 9a)
+
+- **`trip_id`** : identifiant auto-incrémenté de `tracked_trip`, créé quand l'admin enregistre un vol, une croisière ou une session LiveTrack. Les points reçus pendant le suivi portent ce `trip_id` ; les points du téléphone (GPSLogger) n'en ont pas (voir section suivante pour la suite prévue).
+- **Archivage** : colonne `tracked_trip.archived` (migration `V6__trip_archived.sql`). Un trajet archivé sort de la liste courante (case « Afficher les trajets archivés » pour le voir), garde ses positions, et son tracé reste sur la carte. Refusé tant que le suivi est actif (409) ; un trajet archivé ne peut pas être démarré (409). Pour une session LiveTrack, l'archivage efface le jeton du lien de partage ; une session dont le jeton est effacé ne peut plus être démarrée.
+- **Suppression** : inchangée (trajet et positions). La confirmation propose d'archiver à la place.
+- **Export GPX** : `GET /api/admin/trips/{id}/gpx`, GPX 1.1, un seul `<trk>`/`<trkseg>` avec toutes les positions brutes triées par heure (`lat`, `lon`, `<time>` UTC à la milliseconde), nom de fichier `vol-…`, `croisiere-…` ou `livetrack-…` + date de départ. 409 si le trajet n'a aucune position (le bouton n'est alors pas affiché).
+- **API commune** : `TripAdminController` / `TripAdminService` (`/api/admin/trips/{id}/archive|unarchive|gpx`), valables pour tous les types de trajet.
+
+## 39. Prévu : sessions « Téléphone » (phase 9b, non réalisé)
+
+- Nouveau type de trajet `DEVICE` : les points GPSLogger sont rattachés automatiquement à une session.
+- **Découpage automatique par silence** : un point rejoint la session dont les points voisins sont à moins de **3 h** (réglable dans `application.yml`) ; au-delà, il ouvre une nouvelle session. Pas de fusion automatique. Les points reçus en retard ou dans le désordre se rangent selon leur heure de prise (`recorded_at`).
+- **Corrections manuelles** (page admin « Téléphone ») : **Couper ici** (date et heure, ou « maintenant » : les points suivants partent dans une nouvelle session ; une coupure manuelle n'est jamais recollée), **Renommer** (nom par défaut « Téléphone · 12 oct. 14:05 »), Exporter GPX, Archiver, Restaurer, Supprimer.
+- Le filtre anti-pics et la coupure du tracé aux trous de réception s'appliquent à tous les points `DEVICE`, qu'ils aient un `trip_id` ou non.
+- Pas de migration des points existants (base de préproduction vidée avant la mise en service).

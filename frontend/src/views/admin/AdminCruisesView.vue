@@ -98,6 +98,31 @@ async function remove() {
   }
 }
 
+// --- Archivage et export GPX (communs à tous les trajets : /api/admin/trips/:id/...) ---------
+
+const showArchived = ref(false)
+const archivedCount = computed(() => (cruises.value ?? []).filter((cruise) => cruise.archived).length)
+const visible = computed(() => (cruises.value ?? []).filter((cruise) => showArchived.value || !cruise.archived))
+
+async function setArchived(cruise, archived) {
+  actionError.value = ''
+  notice.value = ''
+  busyId.value = cruise.id
+  try {
+    await api(`/api/admin/trips/${cruise.id}/${archived ? 'archive' : 'unarchive'}`, { method: 'POST' })
+    await load({ silent: true })
+  } catch (e) {
+    actionError.value = messageOf(e, "L'action a échoué. Vérifiez votre connexion et réessayez.")
+  } finally {
+    busyId.value = null
+  }
+}
+
+/** Le fichier est téléchargé par le navigateur (même origine, session admin). */
+function gpxUrl(cruise) {
+  return `/api/admin/trips/${cruise.id}/gpx`
+}
+
 // --- Affichage ------------------------------------------------------------------
 
 const STATUS = { PLANNED: 'Prévu', ACTIVE: 'Suivi en cours', FINISHED: 'Suivi arrêté' }
@@ -184,14 +209,19 @@ onMounted(load)
     <p v-else-if="!cruises" class="muted">Chargement…</p>
     <p v-else-if="cruises.length === 0" class="muted">Aucune croisière enregistrée pour le moment.</p>
 
-    <ul v-else class="flights">
-      <li v-for="cruise in cruises" :key="cruise.id" class="card flight flight--ais" :class="{ 'flight--active': cruise.status === 'ACTIVE' }">
+    <label v-else-if="archivedCount > 0" class="flights__filter">
+      <input v-model="showArchived" type="checkbox" />
+      <span>Afficher les trajets archivés ({{ archivedCount }})</span>
+    </label>
+
+    <ul v-if="cruises && cruises.length > 0" class="flights">
+      <li v-for="cruise in visible" :key="cruise.id" class="card flight flight--ais" :class="{ 'flight--active': cruise.status === 'ACTIVE', 'flight--archived': cruise.archived }">
         <div class="flight__head">
           <div class="flight__id">
             <strong class="flight__number">{{ cruise.identifier }}</strong>
             <span class="muted">{{ departure(cruise) }}</span>
           </div>
-          <span class="badge" :class="{ 'badge--active': cruise.status === 'ACTIVE' }">{{ STATUS[cruise.status] }}</span>
+          <span class="badge" :class="{ 'badge--active': cruise.status === 'ACTIVE' }">{{ cruise.archived ? 'Archivé' : STATUS[cruise.status] }}</span>
         </div>
         <p class="muted flight__points">{{ positions(cruise) }}</p>
         <div class="flight__actions">
@@ -201,21 +231,44 @@ onMounted(load)
             role="switch"
             :aria-checked="cruise.status === 'ACTIVE'"
             :aria-label="`Suivi du navire ${cruise.identifier}`"
-            :disabled="busyId !== null"
+            :disabled="busyId !== null || cruise.archived"
             @click="toggle(cruise)"
           >
             <span class="switch__track" aria-hidden="true"><span class="switch__knob"></span></span>
             <span>{{ cruise.status === 'ACTIVE' ? 'Activé' : 'Désactivé' }}</span>
           </button>
-          <button
-            class="btn btn--ghost btn--small btn--danger-text"
-            type="button"
-            :disabled="cruise.status === 'ACTIVE' || busyId !== null"
-            :title="cruise.status === 'ACTIVE' ? 'Arrêtez le suivi pour pouvoir supprimer cette croisière' : undefined"
-            @click="toDelete = cruise"
-          >
-            Supprimer
-          </button>
+          <div class="flight__buttons">
+            <a
+              v-if="cruise.pointCount > 0"
+              class="btn btn--ghost btn--small"
+              :href="gpxUrl(cruise)"
+              download
+            >
+              Exporter GPX
+            </a>
+            <button
+              v-if="!cruise.archived"
+              class="btn btn--ghost btn--small"
+              type="button"
+              :disabled="cruise.status === 'ACTIVE' || busyId !== null"
+              :title="cruise.status === 'ACTIVE' ? 'Arrêtez le suivi pour pouvoir archiver cette croisière' : 'Masque cette croisière de la liste ; son tracé reste sur la carte'"
+              @click="setArchived(cruise, true)"
+            >
+              Archiver
+            </button>
+            <button v-else class="btn btn--ghost btn--small" type="button" :disabled="busyId !== null" @click="setArchived(cruise, false)">
+              Restaurer
+            </button>
+            <button
+              class="btn btn--ghost btn--small btn--danger-text"
+              type="button"
+              :disabled="cruise.status === 'ACTIVE' || busyId !== null"
+              :title="cruise.status === 'ACTIVE' ? 'Arrêtez le suivi pour pouvoir supprimer cette croisière' : undefined"
+              @click="toDelete = cruise"
+            >
+              Supprimer
+            </button>
+          </div>
         </div>
       </li>
     </ul>
@@ -232,6 +285,7 @@ onMounted(load)
         La croisière {{ toDelete.identifier }} sera supprimée<template v-if="toDelete.pointCount > 0">{{ pointsWarning(toDelete) }}</template>,
         <strong>de façon définitive</strong>. Son tracé disparaîtra de la carte.
       </p>
+      <p class="muted">Pour le garder sur la carte sans l'afficher dans la liste, archivez-le plutôt.</p>
     </ConfirmDialog>
   </AdminLayout>
 </template>
