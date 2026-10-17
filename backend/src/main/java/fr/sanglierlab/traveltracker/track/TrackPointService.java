@@ -54,16 +54,23 @@ public class TrackPointService {
     private final TrackPointRepository points;
     private final int maxAccuracyMeters;
     private final Clock clock;
+    /** Rattache les points du téléphone à une session ; null dans les tests qui n'en ont pas besoin. */
+    private final DeviceSessionService sessions;
 
     @Autowired
-    public TrackPointService(TrackPointRepository points, AppProperties properties) {
-        this(points, properties.trackMaxAccuracyMeters(), Clock.systemUTC());
+    public TrackPointService(TrackPointRepository points, AppProperties properties, DeviceSessionService sessions) {
+        this(points, properties.trackMaxAccuracyMeters(), Clock.systemUTC(), sessions);
     }
 
     TrackPointService(TrackPointRepository points, int maxAccuracyMeters, Clock clock) {
+        this(points, maxAccuracyMeters, clock, null);
+    }
+
+    TrackPointService(TrackPointRepository points, int maxAccuracyMeters, Clock clock, DeviceSessionService sessions) {
         this.points = points;
         this.maxAccuracyMeters = maxAccuracyMeters;
         this.clock = clock;
+        this.sessions = sessions;
     }
 
     /**
@@ -102,8 +109,13 @@ public class TrackPointService {
         if (points.existsBySourceAndRecordedAtAndLatitudeAndLongitude(source, at, lat, lon)) {
             return Result.DUPLICATE;
         }
+        // Un point du téléphone rejoint (ou ouvre) la session de son excursion : seulement une fois accepté et non doublon.
+        Long ownerTrip = tripId;
+        if (tripId == null && source == TrackSource.DEVICE && sessions != null) {
+            ownerTrip = sessions.assign(at);
+        }
         try {
-            points.saveAndFlush(new TrackPoint(source, tripId, lat, lon, accuracy, at));
+            points.saveAndFlush(new TrackPoint(source, ownerTrip, lat, lon, accuracy, at));
         } catch (DataIntegrityViolationException e) {
             // Deux envois identiques arrivés en même temps : la contrainte d'unicité a tranché.
             return Result.DUPLICATE;

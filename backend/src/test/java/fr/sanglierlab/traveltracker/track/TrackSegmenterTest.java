@@ -35,6 +35,31 @@ class TrackSegmenterTest {
     }
 
     @Test
+    void lesPointsDuTelephoneRattachesAUneSessionRestentCoupesAuxTrous() {
+        List<TrackRow> rows = new ArrayList<>();
+        rows.add(row(TrackSource.DEVICE, 4L, 35.0, 139.0, T0));
+        rows.add(row(TrackSource.DEVICE, 4L, 35.001, 139.0, T0.plusMinutes(1)));
+        rows.add(row(TrackSource.DEVICE, 4L, 35.5, 139.5, T0.plusHours(7))); // plus que GAP : coupure, même dans une session
+        rows.add(row(TrackSource.DEVICE, 4L, 35.501, 139.5, T0.plusHours(7).plusMinutes(1)));
+
+        assertThat(TrackSegmenter.build(rows, GAP).segments()).hasSize(2);
+    }
+
+    @Test
+    void deuxSessionsDuTelephoneDonnentDeuxLignes() {
+        List<TrackRow> rows = new ArrayList<>();
+        rows.add(row(TrackSource.DEVICE, 4L, 35.0, 139.0, T0));
+        rows.add(row(TrackSource.DEVICE, 4L, 35.001, 139.0, T0.plusMinutes(1)));
+        rows.add(row(TrackSource.DEVICE, 5L, 35.002, 139.0, T0.plusMinutes(2)));
+        rows.add(row(TrackSource.DEVICE, 5L, 35.003, 139.0, T0.plusMinutes(3)));
+
+        TrackResponse response = TrackSegmenter.build(rows, GAP);
+
+        assertThat(response.segments()).hasSize(2);
+        assertThat(response.segments()).extracting(Segment::tripId).containsExactly(4L, 5L);
+    }
+
+    @Test
     void uneMarcheContinueFormeUneSeuleLigneAllegee() {
         TrackResponse response = TrackSegmenter.build(walk(T0, 35.0), GAP);
 

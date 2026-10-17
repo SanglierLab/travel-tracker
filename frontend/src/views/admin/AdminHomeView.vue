@@ -28,6 +28,9 @@ async function onLogout() {
       <RouterLink class="tile" to="/admin/livetrack">
         <span class="tile__icon" aria-hidden="true">⌚</span>Montre Garmin
       </RouterLink>
+      <RouterLink class="tile" to="/admin/telephone">
+        <span class="tile__icon" aria-hidden="true">📱</span>Téléphone
+      </RouterLink>
       <RouterLink class="tile" to="/admin/etapes">
         <span class="tile__icon" aria-hidden="true">📍</span>Étapes
       </RouterLink>

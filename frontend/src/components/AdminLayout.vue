@@ -26,6 +26,10 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a6 6 0 016 6c0 4.5-6 12-6 12S6 13.5 6 9a6 6 0 016-6zm0 4a2 2 0 100 4 2 2 0 000-4z" /></svg>
         <span>Montre</span>
       </RouterLink>
+      <RouterLink to="/admin/telephone" class="admin-nav__item" active-class="admin-nav__item--active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8a1 1 0 011 1v16a1 1 0 01-1 1H8a1 1 0 01-1-1V4a1 1 0 011-1zM11 18h2" /></svg>
+        <span>Tél.</span>
+      </RouterLink>
       <RouterLink to="/" class="admin-nav__item">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" /></svg>
         <span>Site</span>

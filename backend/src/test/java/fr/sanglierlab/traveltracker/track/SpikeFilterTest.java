@@ -133,6 +133,18 @@ class SpikeFilterTest {
     }
 
     @Test
+    void lesPointsDuTelephoneRattachesAUneSessionSontAussiFiltres() {
+        List<TrackRow> rows = new ArrayList<>();
+        for (TrackRow row : walk(0, 10)) {
+            rows.add(new TrackRow(row.source(), 4L, row.latitude(), row.longitude(), row.recordedAt()));
+        }
+        TrackRow spike = spikeAt(5);
+        rows.set(5, new TrackRow(spike.source(), 4L, spike.latitude(), spike.longitude(), spike.recordedAt()));
+
+        assertThat(SpikeFilter.apply(rows, LONG_AFTER).size()).isEqualTo(9);
+    }
+
+    @Test
     void lesTrajetsSuivisNeSontJamaisFiltres() {
         // un avion va à 800 km/h : normal pour ADS-B (et ces points ne sont pas ceux du téléphone)
         List<TrackRow> rows = new ArrayList<>();

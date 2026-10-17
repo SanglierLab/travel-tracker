@@ -1092,3 +1092,12 @@ a.btn--icon { text-decoration: none; }
 .flights__filter input { width: 1.25rem; height: 1.25rem; accent-color: var(--color-accent); }
 .flight--archived { opacity: 0.75; }
 .flight__buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.5rem; }
+.flight__number--text { font-size: 1.15rem; letter-spacing: 0; overflow-wrap: anywhere; }
+.flight__form { margin-top: 0.5rem; }
+.flight__actions { flex-wrap: wrap; }
+
+/* La barre d'administration compte 9 entrées : sur petit écran, libellés un peu plus petits, et défilement si besoin. */
+@media (max-width: 480px) {
+  .admin-nav { overflow-x: auto; }
+  .admin-nav__item { min-width: 3.4rem; padding: 0 0.15rem; font-size: 0.68rem; }
+}

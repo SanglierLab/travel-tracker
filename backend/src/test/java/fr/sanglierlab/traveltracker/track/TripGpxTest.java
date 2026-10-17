@@ -47,5 +47,7 @@ class TripGpxTest {
         assertThat(TripGpx.fileName(trip(TripType.BOAT, "Croisière 227123456", "227123456"))).isEqualTo("croisiere-227123456-2026-10-12.gpx");
         assertThat(TripGpx.fileName(trip(TripType.LIVETRACK, "Tokyo – Asakusa / été", "uuid"))).isEqualTo("livetrack-Tokyo-Asakusa-ete-2026-10-12.gpx");
         assertThat(TripGpx.fileName(trip(TripType.LIVETRACK, "日本", "uuid"))).isEqualTo("livetrack-7-2026-10-12.gpx");
+        assertThat(TripGpx.fileName(trip(TripType.DEVICE, "Tokyo – Asakusa", "device-x"))).isEqualTo("telephone-Tokyo-Asakusa-2026-10-12.gpx");
+        assertThat(TripGpx.fileName(trip(TripType.DEVICE, "", "device-x"))).isEqualTo("telephone-0000-2026-10-12.gpx");
     }
 }

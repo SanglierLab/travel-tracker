@@ -55,6 +55,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/admin/telephone',
+      name: 'admin-devices',
+      component: () => import('./views/admin/AdminDevicesView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/admin/config',
       name: 'admin-config',
       component: () => import('./views/admin/AdminConfigView.vue'),

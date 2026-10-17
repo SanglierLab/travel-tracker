@@ -109,7 +109,7 @@ public final class SpikeFilter {
     }
 
     private static boolean isDevice(TrackRow row) {
-        return row.source() == TrackSource.DEVICE && row.tripId() == null;
+        return row.source() == TrackSource.DEVICE;
     }
 
     private static double speedKmh(TrackRow from, TrackRow to) {

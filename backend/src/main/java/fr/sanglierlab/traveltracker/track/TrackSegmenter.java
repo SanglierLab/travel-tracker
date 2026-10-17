@@ -49,7 +49,7 @@ public final class TrackSegmenter {
 
         List<Raw> raws = new ArrayList<>();
         for (Map.Entry<GroupKey, List<TrackRow>> group : groups.entrySet()) {
-            boolean cutOnGaps = group.getKey().tripId() == null;
+            boolean cutOnGaps = group.getKey().tripId() == null || group.getKey().source() == TrackSource.DEVICE;
             List<TrackRow> current = new ArrayList<>();
             Instant previous = null;
             for (TrackRow row : group.getValue()) {

@@ -336,6 +336,12 @@ curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -H "Content-Type: application/json" \
 curl -s -b $JAR -H "X-XSRF-TOKEN: $XSRF" -X POST $BASE/api/admin/livetracks/1/start   # on ; /stop pour arrêter
 ```
 
+## Sessions « Téléphone » (GPSLogger)
+
+Les positions du téléphone sont rangées automatiquement dans des **sessions** : une nouvelle session commence quand le téléphone est resté plus de **3 heures** sans envoyer de position (réglable : `app.device-session-gap-hours` dans `application.yml`). Rien à configurer côté GPSLogger.
+
+Page **Téléphone** de l'admin : **Renommer** une session, **Couper ici** (par exemple pour séparer deux sorties rapprochées, ou avec « Maintenant » pour démarrer une nouvelle excursion avant de partir), **Exporter GPX**, **Archiver / Restaurer**, **Supprimer**. Une coupure est définitive : elle n'est jamais recollée automatiquement.
+
 ## Archiver et exporter un trajet (vols, croisières, sessions Garmin)
 
 Sur les pages **Vols**, **Croisières** et **Montre** de l'admin :

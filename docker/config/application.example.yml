@@ -21,6 +21,7 @@ app:
   page-size: 10                   # éléments (albums + étapes) par page du fil
   upcoming-days: 7                # une étape à venir dans ce nombre de jours (ou moins) est montrée en tête du fil ; 0 : aucune
   track-gap-hours: 6              # coupure du tracé device au-delà de cet écart
+  device-session-gap-hours: 3     # silence (en heures) après lequel un point du téléphone ouvre une nouvelle session
   track-max-accuracy-meters: 100  # points du téléphone plus imprécis que cela : ignorés à l'ajout
   max-login-failures: 5           # échecs avant blocage de l'IP
   login-lock-duration: 15m

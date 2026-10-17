@@ -33,8 +33,14 @@ public final class TripGpx {
             case PLANE -> "vol";
             case BOAT -> "croisiere";
             case LIVETRACK -> "livetrack";
+            case DEVICE -> "telephone";
         };
-        String name = trip.getType() == TripType.LIVETRACK ? trip.getLabel() : trip.getIdentifier();
+        String name = switch (trip.getType()) {
+            case LIVETRACK, DEVICE -> trip.getLabel().isBlank()
+                    ? trip.getScheduledDeparture().format(DateTimeFormatter.ofPattern("HHmm", Locale.ROOT))
+                    : trip.getLabel();
+            default -> trip.getIdentifier();
+        };
         String safe = java.text.Normalizer.normalize(name, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .replaceAll("[^A-Za-z0-9]+", "-")

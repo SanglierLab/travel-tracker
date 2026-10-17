@@ -50,7 +50,7 @@ public class TripAdminService {
         if (list.isEmpty()) {
             throw ApiException.conflict("Ce trajet n'a aucune position à exporter.");
         }
-        return new GpxFile(TripGpx.fileName(trip), TripGpx.build(trip.getLabel(), list));
+        return new GpxFile(TripGpx.fileName(trip), TripGpx.build(trip.getLabel().isBlank() ? "Téléphone " + trip.getScheduledDeparture() + " UTC" : trip.getLabel(), list));
     }
 
     private TrackedTrip find(long id) {

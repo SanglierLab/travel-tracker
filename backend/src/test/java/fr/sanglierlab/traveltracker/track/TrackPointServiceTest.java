@@ -41,6 +41,39 @@ class TrackPointServiceTest {
     }
 
     @Test
+    void unPointDuTelephoneEstRattacheAUneSessionSeulementSiAccepte() {
+        DeviceSessionService sessions = mock(DeviceSessionService.class);
+        when(sessions.assign(any())).thenReturn(42L);
+        TrackPointService withSessions = new TrackPointService(repository, 100, Clock.fixed(NOW, ZoneOffset.UTC), sessions);
+        when(repository.existsBySourceAndRecordedAtAndLatitudeAndLongitude(any(), any(), any(), any())).thenReturn(false);
+
+        assertThat(withSessions.ingest(TrackSource.DEVICE, new BigDecimal("35.6"), new BigDecimal("139.7"), null, TEN_AM)).isEqualTo(Result.CREATED);
+        ArgumentCaptor<TrackPoint> saved = ArgumentCaptor.forClass(TrackPoint.class);
+        verify(repository).saveAndFlush(saved.capture());
+        assertThat(saved.getValue().getTripId()).isEqualTo(42L);
+
+        // point écarté (0°/0°) ou doublon : aucune session créée
+        withSessions.ingest(TrackSource.DEVICE, BigDecimal.ZERO, BigDecimal.ZERO, null, TEN_AM);
+        when(repository.existsBySourceAndRecordedAtAndLatitudeAndLongitude(any(), any(), any(), any())).thenReturn(true);
+        withSessions.ingest(TrackSource.DEVICE, new BigDecimal("35.6"), new BigDecimal("139.7"), null, TEN_AM);
+        org.mockito.Mockito.verify(sessions, org.mockito.Mockito.times(1)).assign(any());
+    }
+
+    @Test
+    void lesPointsDUnTrajetSuiviNeChangentPasDeSession() {
+        DeviceSessionService sessions = mock(DeviceSessionService.class);
+        TrackPointService withSessions = new TrackPointService(repository, 100, Clock.fixed(NOW, ZoneOffset.UTC), sessions);
+        when(repository.existsBySourceAndRecordedAtAndLatitudeAndLongitude(any(), any(), any(), any())).thenReturn(false);
+
+        withSessions.ingest(TrackSource.ADSB, 7L, new BigDecimal("35.6"), new BigDecimal("139.7"), null, TEN_AM);
+
+        ArgumentCaptor<TrackPoint> saved = ArgumentCaptor.forClass(TrackPoint.class);
+        verify(repository).saveAndFlush(saved.capture());
+        assertThat(saved.getValue().getTripId()).isEqualTo(7L);
+        org.mockito.Mockito.verifyNoInteractions(sessions);
+    }
+
+    @Test
     void enregistreUnNouveauPointAvecLesMemesArrondisQueLaBase() {
         when(repository.existsBySourceAndRecordedAtAndLatitudeAndLongitude(any(), any(), any(), any())).thenReturn(false);
 

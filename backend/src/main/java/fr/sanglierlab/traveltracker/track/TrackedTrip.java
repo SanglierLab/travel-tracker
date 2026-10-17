@@ -88,6 +88,10 @@ public class TrackedTrip {
         updatedAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 
+    public void setLabel(String label) {
+        this.label = label;
+    }
+
     public void setStatus(TripStatus status) {
         this.status = status;
     }

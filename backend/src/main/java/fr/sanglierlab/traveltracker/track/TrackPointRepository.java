@@ -36,6 +36,23 @@ public interface TrackPointRepository extends JpaRepository<TrackPoint, Long> {
             """)
     List<SourceStats> sourceStats();
 
+    /** Premier et dernier point de chaque trajet (sessions « Téléphone »). */
+    @Query("""
+            select new fr.sanglierlab.traveltracker.track.TripPointRange(p.tripId, count(p), min(p.recordedAt), max(p.recordedAt))
+            from TrackPoint p
+            where p.tripId is not null
+            group by p.tripId
+            """)
+    List<TripPointRange> tripRanges();
+
+    @Query("select max(p.recordedAt) from TrackPoint p where p.tripId = :tripId")
+    LocalDateTime lastRecordedAt(@Param("tripId") Long tripId);
+
+    /** Découpage d'une session : les points à partir de {@code at} passent dans l'autre trajet. À appeler dans une transaction. */
+    @Modifying
+    @Query("update TrackPoint p set p.tripId = :to where p.tripId = :from and p.recordedAt >= :at")
+    int moveFrom(@Param("from") Long from, @Param("to") Long to, @Param("at") LocalDateTime at);
+
     /** À appeler dans une transaction. */
     @Modifying
     @Query("delete from TrackPoint p where p.tripId = :tripId")

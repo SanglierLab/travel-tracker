@@ -1,0 +1,257 @@
+2026-10-17T16:23:22.686+02:00  INFO 13668 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : Starting TravelTrackerApplication using Java 25.0.2 with PID 13668 (C:\ProjetsEnCours\Git\travel-tracker\backend\target\classes started by Ludo in C:\ProjetsEnCours\Git\travel-tracker\backend)
+2026-10-17T16:23:22.689+02:00  INFO 13668 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-17T16:23:23.726+02:00  INFO 13668 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-17T16:23:23.794+02:00  INFO 13668 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 58 ms. Found 5 JPA repository interfaces.
+2026-10-17T16:23:24.454+02:00  INFO 13668 --- [travel-tracker] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-17T16:23:24.470+02:00  INFO 13668 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-17T16:23:24.470+02:00  INFO 13668 --- [travel-tracker] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-17T16:23:24.554+02:00  INFO 13668 --- [travel-tracker] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1818 ms
+2026-10-17T16:23:24.927+02:00  INFO 13668 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-17T16:23:25.082+02:00  WARN 13668 --- [travel-tracker] [main] o.m.jdbc.message.server.ErrorPacket      : Error: 1045-28000: Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+2026-10-17T16:23:26.087+02:00  WARN 13668 --- [travel-tracker] [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/hibernate/autoconfigure/HibernateJpaConfiguration.class]: Failed to initialize dependency 'flywayInitializer' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+---------------------------------------------------------------------------------------------------------------------------------
+SQL State  : 28000
+Error Code : 1045
+Message    : (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+
+2026-10-17T16:23:26.090+02:00  INFO 13668 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-10-17T16:23:26.102+02:00  INFO 13668 --- [travel-tracker] [main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-10-17T16:23:26.114+02:00 ERROR 13668 --- [travel-tracker] [main] o.s.boot.SpringApplication               : Application run failed
+
+org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'entityManagerFactory' defined in class path resource [org/springframework/boot/hibernate/autoconfigure/HibernateJpaConfiguration.class]: Failed to initialize dependency 'flywayInitializer' of LoadTimeWeaverAware bean 'entityManagerFactory': Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+---------------------------------------------------------------------------------------------------------------------------------
+SQL State  : 28000
+Error Code : 1045
+Message    : (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:322) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:201) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:977) ~[spring-context-7.0.9.jar:7.0.9]
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:621) ~[spring-context-7.0.9.jar:7.0.9]
+	at org.springframework.boot.web.server.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:143) ~[spring-boot-web-server-4.1.1.jar:4.1.1]
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:756) ~[spring-boot-4.1.1.jar:4.1.1]
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:445) ~[spring-boot-4.1.1.jar:4.1.1]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:321) ~[spring-boot-4.1.1.jar:4.1.1]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1365) ~[spring-boot-4.1.1.jar:4.1.1]
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1354) ~[spring-boot-4.1.1.jar:4.1.1]
+	at fr.sanglierlab.traveltracker.TravelTrackerApplication.main(TravelTrackerApplication.java:12) ~[classes/:na]
+Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'flywayInitializer' defined in class path resource [org/springframework/boot/flyway/autoconfigure/FlywayAutoConfiguration$FlywayConfiguration.class]: Unable to obtain connection from database: (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+---------------------------------------------------------------------------------------------------------------------------------
+SQL State  : 28000
+Error Code : 1045
+Message    : (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1815) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:603) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:525) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:333) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:371) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:331) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:196) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:309) ~[spring-beans-7.0.9.jar:7.0.9]
+	... 10 common frames omitted
+Caused by: org.flywaydb.core.internal.exception.sqlExceptions.FlywaySqlUnableToConnectToDbException: Unable to obtain connection from database: (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+---------------------------------------------------------------------------------------------------------------------------------
+SQL State  : 28000
+Error Code : 1045
+Message    : (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+
+	at org.flywaydb.core.internal.jdbc.JdbcUtils.openConnection(JdbcUtils.java:78) ~[flyway-core-12.4.0.jar:na]
+	at org.flywaydb.core.internal.jdbc.JdbcConnectionFactory.<init>(JdbcConnectionFactory.java:76) ~[flyway-core-12.4.0.jar:na]
+	at org.flywaydb.core.FlywayExecutor.init(FlywayExecutor.java:275) ~[flyway-core-12.4.0.jar:na]
+	at org.flywaydb.core.FlywayExecutor.execute(FlywayExecutor.java:120) ~[flyway-core-12.4.0.jar:na]
+	at org.flywaydb.core.Flyway.migrate(Flyway.java:181) ~[flyway-core-12.4.0.jar:na]
+	at org.springframework.boot.flyway.autoconfigure.FlywayMigrationInitializer.afterPropertiesSet(FlywayMigrationInitializer.java:67) ~[spring-boot-flyway-4.1.1.jar:4.1.1]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.invokeInitMethods(AbstractAutowireCapableBeanFactory.java:1862) ~[spring-beans-7.0.9.jar:7.0.9]
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1811) ~[spring-beans-7.0.9.jar:7.0.9]
+	... 17 common frames omitted
+Caused by: java.sql.SQLInvalidAuthorizationSpecException: (conn=47361) Access denied for user 'traveltracker'@'172.17.0.1' (using password: YES)
+	at org.mariadb.jdbc.export.ExceptionFactory.createException(ExceptionFactory.java:313) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.export.ExceptionFactory.create(ExceptionFactory.java:402) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.client.impl.StandardClient.authenticationHandler(StandardClient.java:595) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.client.impl.StandardClient.handleAuthentication(StandardClient.java:440) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.client.impl.StandardClient.setupConnection(StandardClient.java:191) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.client.impl.StandardClient.<init>(StandardClient.java:159) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.Driver.connect(Driver.java:61) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.Driver.connect(Driver.java:90) ~[mariadb-java-client-3.5.10.jar:na]
+	at org.mariadb.jdbc.Driver.connect(Driver.java:28) ~[mariadb-java-client-3.5.10.jar:na]
+	at com.zaxxer.hikari.util.DriverDataSource.getConnection(DriverDataSource.java:144) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.pool.PoolBase.newConnection(PoolBase.java:373) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.pool.PoolBase.newPoolEntry(PoolBase.java:210) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.pool.HikariPool.createPoolEntry(HikariPool.java:488) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.pool.HikariPool.checkFailFast(HikariPool.java:576) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.pool.HikariPool.<init>(HikariPool.java:97) ~[HikariCP-7.0.2.jar:na]
+	at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:111) ~[HikariCP-7.0.2.jar:na]
+	at org.flywaydb.core.internal.jdbc.JdbcUtils.openConnection(JdbcUtils.java:73) ~[flyway-core-12.4.0.jar:na]
+	... 24 common frames omitted
+
+2026-10-17T16:23:56.387+02:00  INFO 30976 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : Starting TravelTrackerApplication using Java 25.0.2 with PID 30976 (C:\ProjetsEnCours\Git\travel-tracker\backend\target\classes started by Ludo in C:\ProjetsEnCours\Git\travel-tracker\backend)
+2026-10-17T16:23:56.391+02:00  INFO 30976 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-17T16:23:57.220+02:00  INFO 30976 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-17T16:23:57.285+02:00  INFO 30976 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 56 ms. Found 5 JPA repository interfaces.
+2026-10-17T16:23:57.930+02:00  INFO 30976 --- [travel-tracker] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-17T16:23:57.945+02:00  INFO 30976 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-17T16:23:57.946+02:00  INFO 30976 --- [travel-tracker] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-17T16:23:58.014+02:00  INFO 30976 --- [travel-tracker] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1576 ms
+2026-10-17T16:23:58.356+02:00  INFO 30976 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-17T16:23:58.441+02:00  INFO 30976 --- [travel-tracker] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@4586a8aa
+2026-10-17T16:23:58.442+02:00  INFO 30976 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-17T16:23:58.453+02:00  INFO 30976 --- [travel-tracker] [main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mariadb://192.168.1.40:3316/traveltracker?user=traveltracker&password=******** (MariaDB 11.7)
+2026-10-17T16:23:58.535+02:00  INFO 30976 --- [travel-tracker] [main] o.f.core.internal.command.DbValidate     : Successfully validated 6 migrations (execution time 00:00.028s)
+2026-10-17T16:23:58.551+02:00  INFO 30976 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Current version of schema `traveltracker`: 5
+2026-10-17T16:23:58.564+02:00  INFO 30976 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Migrating schema `traveltracker` to version "6 - trip archived"
+2026-10-17T16:23:58.638+02:00  INFO 30976 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Successfully applied 1 migration to schema `traveltracker`, now at version v6 (execution time 00:00.052s)
+2026-10-17T16:23:58.726+02:00  INFO 30976 --- [travel-tracker] [main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-17T16:23:58.787+02:00  INFO 30976 --- [travel-tracker] [main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-10-17T16:23:59.125+02:00  INFO 30976 --- [travel-tracker] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-17T16:23:59.210+02:00  INFO 30976 --- [travel-tracker] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mariadb://192.168.1.40:3316/traveltracker?user=traveltracker&password=X6t57Om7x8dA]
+	Database driver: MariaDB Connector/J
+	Database dialect: MariaDBDialect
+	Database version: 11.7.2
+	Default catalog/schema: traveltracker/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-17T16:23:59.967+02:00  INFO 30976 --- [travel-tracker] [main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-17T16:23:59.973+02:00  INFO 30976 --- [travel-tracker] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-17T16:24:00.076+02:00  WARN 30976 --- [travel-tracker] [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'loginAttemptService' defined in file [C:\ProjetsEnCours\Git\travel-tracker\backend\target\classes\fr\sanglierlab\traveltracker\auth\LoginAttemptService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'app-fr.sanglierlab.traveltracker.config.AppProperties': Could not bind properties to 'AppProperties' : prefix=app, ignoreInvalidFields=false, ignoreUnknownFields=true
+2026-10-17T16:24:00.077+02:00  INFO 30976 --- [travel-tracker] [main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-17T16:24:00.079+02:00  INFO 30976 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-17T16:24:00.090+02:00  INFO 30976 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-10-17T16:24:00.093+02:00  INFO 30976 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-10-17T16:24:00.104+02:00  INFO 30976 --- [travel-tracker] [main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-10-17T16:24:00.114+02:00 ERROR 30976 --- [travel-tracker] [main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Binding to target fr.sanglierlab.traveltracker.config.AppProperties failed:
+
+    Property: app.apiToken
+    Value: "null"
+    Reason: ne doit pas être vide
+
+    Property: app.admins
+    Value: "null"
+    Reason: ne doit pas être vide
+
+
+Action:
+
+Update your application's configuration
+
+2026-10-17T16:24:42.566+02:00  INFO 14880 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : Starting TravelTrackerApplication using Java 25.0.2 with PID 14880 (C:\ProjetsEnCours\Git\travel-tracker\backend\target\classes started by Ludo in C:\ProjetsEnCours\Git\travel-tracker\backend)
+2026-10-17T16:24:42.569+02:00  INFO 14880 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-17T16:24:43.388+02:00  INFO 14880 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-17T16:24:43.447+02:00  INFO 14880 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 51 ms. Found 5 JPA repository interfaces.
+2026-10-17T16:24:44.065+02:00  INFO 14880 --- [travel-tracker] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-17T16:24:44.080+02:00  INFO 14880 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-17T16:24:44.080+02:00  INFO 14880 --- [travel-tracker] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-17T16:24:44.149+02:00  INFO 14880 --- [travel-tracker] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1532 ms
+2026-10-17T16:24:44.469+02:00  INFO 14880 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-17T16:24:44.592+02:00  INFO 14880 --- [travel-tracker] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@9f0fc36
+2026-10-17T16:24:44.594+02:00  INFO 14880 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-17T16:24:44.604+02:00  INFO 14880 --- [travel-tracker] [main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mariadb://192.168.1.40:3316/traveltracker?user=traveltracker&password=******** (MariaDB 11.7)
+2026-10-17T16:24:44.678+02:00  INFO 14880 --- [travel-tracker] [main] o.f.core.internal.command.DbValidate     : Successfully validated 6 migrations (execution time 00:00.022s)
+2026-10-17T16:24:44.694+02:00  INFO 14880 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Current version of schema `traveltracker`: 6
+2026-10-17T16:24:44.697+02:00  INFO 14880 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Schema `traveltracker` is up to date. No migration necessary.
+2026-10-17T16:24:44.789+02:00  INFO 14880 --- [travel-tracker] [main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-17T16:24:44.831+02:00  INFO 14880 --- [travel-tracker] [main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-10-17T16:24:45.143+02:00  INFO 14880 --- [travel-tracker] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-17T16:24:45.207+02:00  INFO 14880 --- [travel-tracker] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mariadb://192.168.1.40:3316/traveltracker?user=traveltracker&password=X6t57Om7x8dA]
+	Database driver: MariaDB Connector/J
+	Database dialect: MariaDBDialect
+	Database version: 11.7.2
+	Default catalog/schema: traveltracker/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-17T16:24:45.916+02:00  INFO 14880 --- [travel-tracker] [main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-17T16:24:45.922+02:00  INFO 14880 --- [travel-tracker] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-17T16:24:46.027+02:00  WARN 14880 --- [travel-tracker] [main] ConfigServletWebServerApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.UnsatisfiedDependencyException: Error creating bean with name 'loginAttemptService' defined in file [C:\ProjetsEnCours\Git\travel-tracker\backend\target\classes\fr\sanglierlab\traveltracker\auth\LoginAttemptService.class]: Unsatisfied dependency expressed through constructor parameter 0: Error creating bean with name 'app-fr.sanglierlab.traveltracker.config.AppProperties': Could not bind properties to 'AppProperties' : prefix=app, ignoreInvalidFields=false, ignoreUnknownFields=true
+2026-10-17T16:24:46.027+02:00  INFO 14880 --- [travel-tracker] [main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-17T16:24:46.029+02:00  INFO 14880 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown initiated...
+2026-10-17T16:24:46.040+02:00  INFO 14880 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Shutdown completed.
+2026-10-17T16:24:46.042+02:00  INFO 14880 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Stopping service [Tomcat]
+2026-10-17T16:24:46.053+02:00  INFO 14880 --- [travel-tracker] [main] .s.b.a.l.ConditionEvaluationReportLogger : 
+
+Error starting ApplicationContext. To display the condition evaluation report re-run your application with 'debug' enabled.
+2026-10-17T16:24:46.064+02:00 ERROR 14880 --- [travel-tracker] [main] o.s.b.d.LoggingFailureAnalysisReporter   : 
+
+***************************
+APPLICATION FAILED TO START
+***************************
+
+Description:
+
+Binding to target fr.sanglierlab.traveltracker.config.AppProperties failed:
+
+    Property: app.apiToken
+    Value: "null"
+    Reason: ne doit pas être vide
+
+    Property: app.admins
+    Value: "null"
+    Reason: ne doit pas être vide
+
+
+Action:
+
+Update your application's configuration
+
+2026-10-17T16:25:07.438+02:00  INFO 21772 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : Starting TravelTrackerApplication using Java 25.0.2 with PID 21772 (C:\ProjetsEnCours\Git\travel-tracker\backend\target\classes started by Ludo in C:\ProjetsEnCours\Git\travel-tracker\backend)
+2026-10-17T16:25:07.441+02:00  INFO 21772 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : No active profile set, falling back to 1 default profile: "default"
+2026-10-17T16:25:08.274+02:00  INFO 21772 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-17T16:25:08.337+02:00  INFO 21772 --- [travel-tracker] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 55 ms. Found 5 JPA repository interfaces.
+2026-10-17T16:25:08.977+02:00  INFO 21772 --- [travel-tracker] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat initialized with port 8080 (http)
+2026-10-17T16:25:08.988+02:00  INFO 21772 --- [travel-tracker] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-10-17T16:25:08.989+02:00  INFO 21772 --- [travel-tracker] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/11.0.24]
+2026-10-17T16:25:09.065+02:00  INFO 21772 --- [travel-tracker] [main] b.w.c.s.WebApplicationContextInitializer : Root WebApplicationContext: initialization completed in 1579 ms
+2026-10-17T16:25:09.417+02:00  INFO 21772 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-17T16:25:09.528+02:00  INFO 21772 --- [travel-tracker] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.mariadb.jdbc.Connection@1b4a3a1
+2026-10-17T16:25:09.529+02:00  INFO 21772 --- [travel-tracker] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-17T16:25:09.541+02:00  INFO 21772 --- [travel-tracker] [main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mariadb://192.168.1.40:3316/traveltracker?user=traveltracker&password=******** (MariaDB 11.7)
+2026-10-17T16:25:09.615+02:00  INFO 21772 --- [travel-tracker] [main] o.f.core.internal.command.DbValidate     : Successfully validated 6 migrations (execution time 00:00.023s)
+2026-10-17T16:25:09.632+02:00  INFO 21772 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Current version of schema `traveltracker`: 6
+2026-10-17T16:25:09.635+02:00  INFO 21772 --- [travel-tracker] [main] o.f.core.internal.command.DbMigrate      : Schema `traveltracker` is up to date. No migration necessary.
+2026-10-17T16:25:09.716+02:00  INFO 21772 --- [travel-tracker] [main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-10-17T16:25:09.754+02:00  INFO 21772 --- [travel-tracker] [main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-10-17T16:25:10.055+02:00  INFO 21772 --- [travel-tracker] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-17T16:25:10.112+02:00  INFO 21772 --- [travel-tracker] [main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:mariadb://192.168.1.40:3316/traveltracker?user=traveltracker&password=X6t57Om7x8dA]
+	Database driver: MariaDB Connector/J
+	Database dialect: MariaDBDialect
+	Database version: 11.7.2
+	Default catalog/schema: traveltracker/undefined
+	Autocommit mode: undefined/unknown
+	Isolation level: REPEATABLE_READ [default REPEATABLE_READ]
+	JDBC fetch size: none
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-17T16:25:10.784+02:00  INFO 21772 --- [travel-tracker] [main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-17T16:25:10.790+02:00  INFO 21772 --- [travel-tracker] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-17T16:25:10.935+02:00  INFO 21772 --- [travel-tracker] [main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-10-17T16:25:12.008+02:00  INFO 21772 --- [travel-tracker] [main] f.s.traveltracker.media.StorageService   : Dossier des médias : C:\data\media
+2026-10-17T16:25:12.217+02:00  INFO 21772 --- [travel-tracker] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+2026-10-17T16:25:12.649+02:00  INFO 21772 --- [travel-tracker] [main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/api/actuator'
+2026-10-17T16:25:12.702+02:00  INFO 21772 --- [travel-tracker] [main] o.s.boot.tomcat.TomcatWebServer          : Tomcat started on port 8080 (http) with context path '/'
+2026-10-17T16:25:12.709+02:00  INFO 21772 --- [travel-tracker] [main] f.s.t.TravelTrackerApplication           : Started TravelTrackerApplication in 5.75 seconds (process running for 6.135)
+2026-10-17T16:25:33.606+02:00  INFO 21772 --- [travel-tracker] [http-nio-8080-exec-4] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-10-17T16:25:33.606+02:00  INFO 21772 --- [travel-tracker] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-10-17T16:25:33.607+02:00  INFO 21772 --- [travel-tracker] [http-nio-8080-exec-4] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms

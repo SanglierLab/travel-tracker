@@ -11,5 +11,9 @@ public interface TrackedTripRepository extends JpaRepository<TrackedTrip, Long> 
 
     List<TrackedTrip> findByTypeOrderByScheduledDepartureDescIdDesc(TripType type);
 
+    /** La session « Téléphone » la plus récente commencée à cette heure ou avant. */
+    Optional<TrackedTrip> findFirstByTypeAndScheduledDepartureLessThanEqualOrderByScheduledDepartureDescIdDesc(
+            TripType type, java.time.LocalDateTime at);
+
     boolean existsByTypeAndIdentifier(TripType type, String identifier);
 }

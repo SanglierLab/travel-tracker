@@ -1,15 +1,6 @@
 # Valeurs par défaut embarquées dans le JAR (aucun secret ici).
 # Tout est surchargé par le fichier externe  ./config/application.yml  (monté dans /app/config en production).
 
-logging:
-  level:
-    root: INFO
-    fr.sanglierlab: DEBUG
-    org.springframework.web: INFO
-    org.hibernate.SQL: WARN
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
-
 spring:
   application:
     name: travel-tracker
@@ -70,4 +61,13 @@ management:
     health:
       show-details: never
 
-# app.* : voir AppProperties et docker/config/application.example.yml
+app:
+  # Comptes admin (autant que nécessaire). Hash bcrypt : voir README.md, section « Mot de passe admin ».
+  admins:
+    - username: Ludo
+      password-hash: '$2a$12$EdyJ84w.qBMBx1l.lqNEieS4HPQHUMCmfzZHtLGEVRQptnrH3NHhC'
+    - username: Nono
+      password-hash: '$2a$12$EdyJ84w.qBMBx1l.lqNEieS4HPQHUMCmfzZHtLGEVRQptnrH3NHhC'
+
+  # Token de l'API de positions (GPSLogger). 24 caractères minimum, aléatoire.
+  api-token: 'TEST'
