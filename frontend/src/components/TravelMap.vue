@@ -314,9 +314,10 @@ function drawTrack() {
       lineJoin: 'round',
       smoothFactor: 1.5,
     })
-      .bindTooltip(() => `${source.label} · ${formatDateTime(segment.start)} → ${formatDateTime(segment.end)}`, {
+      .bindTooltip(() => segmentTooltip(source, segment), {
         sticky: true,
-        className: 'pin-tip',
+        opacity: 1,
+        className: 'pin-tip pin-tip--stage',
       })
       .addTo(trackLayer)
   }
@@ -337,6 +338,20 @@ function drawTrack() {
   }
   fitInitial()
   updateRecenter()
+}
+
+// Infobulle d'un tronçon de tracé : la source en titre, puis le début et la fin sur deux lignes (même style que les autres infobulles).
+function segmentTooltip(source, segment) {
+  const body = document.createElement('div')
+  body.className = 'stage-tip'
+  const title = document.createElement('strong')
+  title.textContent = source.label
+  const start = document.createElement('span')
+  start.textContent = `Début : ${formatDateTime(segment.start)}`
+  const end = document.createElement('span')
+  end.textContent = `Fin : ${formatDateTime(segment.end)}`
+  body.append(title, start, end)
+  return body
 }
 
 // Trois lignes au plus : la source, l'ancienneté, et « en retard » le cas échéant.
